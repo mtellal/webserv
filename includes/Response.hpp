@@ -25,10 +25,14 @@ class Response {
 	int							_statusCode;
 	bool						_locBlocSelect;
 
-	void		createResponse(Server serv);
-	void		fileToStr();
-	Server		selectServerBlock();
-	Location	selectLocationBlock(Server serv);
+	// void						createResponse(Server serv, Location loc);
+	void						createResponse(Server serv, int loc);
+	void						fileToStr();
+	Server						selectServerBlock();
+	// Location					selectLocationBlock(Server serv);
+	int							selectLocationBlock(Server serv);
+	// std::vector<std::string>	getRightPath(Server serv, Location loc);
+	std::vector<std::string>	getRightPath(Server serv, int loc);
 };
 
 #endif

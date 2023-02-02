@@ -166,6 +166,7 @@ void	Directives::setRoot(std::vector<std::string> root, int *i) {
 	{
 		this->_rootSet = true;
 		this->_root = root[1];
+		// std::cout << "OKKKKK = " << root[1] << std::endl;
 	}
 	else
 	{

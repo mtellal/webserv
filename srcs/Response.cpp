@@ -9,14 +9,11 @@ Response::Response(Request req, std::vector<Server> vctServ) : _req(req), _vctSe
 					_locBlocSelect(false){
 	if (req.getMethod() == "GET")
 	{
-		// Selectionner le bloc server
 		Server serv = selectServerBlock();
-		// std::cout << serv << std::endl;
+		// Location loc = selectLocationBlock(serv);
+		int loc = selectLocationBlock(serv);
 
-		// Selectionner le bloc Location ?
-		Location loc = selectLocationBlock(serv);
-
-		createResponse(serv);
+		this->createResponse(serv ,loc);
 	}
 }
 
@@ -36,31 +33,101 @@ Response	&Response::operator=(Response const &rhs) {
 	return *this;
 }
 
-void	Response::createResponse(Server serv) {
-	std::string 				str;
-	std::vector<std::string>	index;
+// std::vector<std::string>	Response::getRightPath(Server serv, Location loc) {
+std::vector<std::string>	Response::getRightPath(Server serv, int loc) {
+	std::vector<std::string>	res;
+	std::string					root;
+	std::string					newPath;
+	Location					blocLoc = serv.getVctLocation()[loc];
 
-	if (this->_req.getPath() == "/")
+	if (this->_locBlocSelect and blocLoc.getRootSet())
+		root = blocLoc.getRoot();
+	else if (serv.getRootSet())
+		root = serv.getRoot();
+
+	// std::cout << "ROOT = " << root << std::endl;
+
+
+	// Remplacer par : si le path entree par l'utilisateur est un dossier
+	if (this->_req.getPath()[this->_req.getPath().size() - 1] == '/')
 	{
-		index = serv.getIndex();
-		for (size_t i = 0; i < index.size(); i++)
+		// std::cout << "=====================================" << std::endl;
+		std::vector<std::string>	index;
+
+		root.erase(0, 1);
+
+		if (this->_locBlocSelect and blocLoc.getIndexSet())
 		{
-			str += serv.getRoot();
-			str += this->_req.getPath();
-			str += index[i];
-			this->_path.push_back(str);
-			str.clear();
+			newPath = this->_req.getPath().erase(0, blocLoc.getPath().size());
+			root += newPath;
+			index = blocLoc.getIndex();
+			for (size_t i = 0; i < index.size(); i++)
+				res.push_back(index[i].insert(0, root));
 		}
+		else
+		{
+			root += "/";
+			index = serv.getIndex();
+			for (size_t i = 0; i < index.size(); i++)
+				res.push_back(index[i].insert(0, root));
+		}
+		// for (size_t i = 0; i < res.size(); i++)
+			// std::cout << res[i] << std::endl;
 	}
 	else
 	{
-		str += serv.getRoot();
-		str += this->_req.getPath();
-		this->_path.push_back(str);
+		// Sinon, pas besoin de prendre en compte index
+		if (this->_locBlocSelect and blocLoc.getIndexSet())
+		{
+			newPath = this->_req.getPath().erase(0, blocLoc.getPath().size());
+			root += newPath;
+			root.erase(0, 1);
+			res.push_back(root);
+			// std::cout << "A = " << root << std::endl;
+		}
+		else
+		{
+			newPath = this->_req.getPath();
+			root += newPath;
+			root.erase(0, 1);
+			res.push_back(root);
+			// std::cout << "B = " << root << std::endl;
+		}
 	}
+	return res;
+}
+
+
+// void	Response::createResponse(Server serv, Location loc) {
+void	Response::createResponse(Server serv, int loc) {
+	std::string 				str;
+	std::vector<std::string>	index;
+
+	this->_path = this->getRightPath(serv, loc);
+
+	// if (this->_req.getPath() == "/")
+	// {
+	// 	// std::cout << "A" << std::endl;
+	// 	index = serv.getIndex();
+	// 	for (size_t i = 0; i < index.size(); i++)
+	// 	{
+	// 		str += serv.getRoot();
+	// 		str += this->_req.getPath();
+	// 		str += index[i];
+	// 		this->_path.push_back(str);
+	// 		str.clear();
+	// 	}
+	// }
+	// else
+	// {
+	// 	// std::cout << "B" << std::endl;
+	// 	str += serv.getRoot();
+	// 	str += this->_req.getPath();
+	// 	this->_path.push_back(str);
+	// }
 	// for (size_t i = 0; i < this->_path.size(); i++)
 		// std::cout << "path = " << this->_path[i] << std::endl;
-	fileToStr();
+	this->fileToStr();
 }
 
 void	Response::fileToStr() {
@@ -70,7 +137,7 @@ void	Response::fileToStr() {
 	while (i < this->_path.size())
 	{
 		// std::cout << "path = " << this->_path[i] << std::endl;
-		this->_path[i].erase(0, 1);
+		// this->_path[i].erase(0, 1);
 		std::ifstream tmp(this->_path[i].c_str(), std::ios::in);
 
 		if (tmp)
@@ -89,20 +156,10 @@ void	Response::fileToStr() {
 		}
 	}
 
-
-	// char	buf[4096];
-	// char	c;
-	// int		j = 0;
-
-	// // memset(buf, 0, 4096);
 	Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, this->_path[i]);
 	res = header.getHeader();
 	// // std::cout << res << std::endl;
 	write(this->_req.getFd(), res.c_str(), res.length());
-
-
-
-
 
 	std::ifstream file(this->_path[i].c_str());
 	std::string str;
@@ -147,18 +204,18 @@ Server	Response::selectServerBlock() {
 	return tmp[0];
 }
 
-Location	Response::selectLocationBlock(Server serv) {
+// Location	Response::selectLocationBlock(Server serv) {
+int		Response::selectLocationBlock(Server serv) {
 	std::vector<Location>	vctLoc = serv.getVctLocation();
 	std::string				strBlocLoc;
-	Location				res;
+	Location				tmp;
+	int						res;
 	std::string				req = this->_req.getPath();
 	size_t j;
 
-	// std::cout << "ReqPath = " << req << std::endl;
 	for (size_t i = 0; i < vctLoc.size(); i++)
 	{
 		strBlocLoc = vctLoc[i].getPath();
-		// std::cout << "strLoc = " << strLoc << std::endl;
 		j = 0;
 		while (strBlocLoc[j])
 		{
@@ -167,11 +224,12 @@ Location	Response::selectLocationBlock(Server serv) {
 			j++;
 		}
 		if (j > 2 and (!strBlocLoc[j] or (strBlocLoc[j] == '/' and !strBlocLoc[j + 1]))
-			and (req[j] == '/' or !req[j]) and strBlocLoc.size() > res.getPath().size())
+			and (req[j] == '/' or !req[j]) and strBlocLoc.size() > tmp.getPath().size())
 		{
 			std::cout << "LOC = " << strBlocLoc << std::endl;
 			this->_locBlocSelect = true;
-			res = vctLoc[i];
+			tmp = vctLoc[i];
+			res = i;
 		}
 	}
 	return res;
