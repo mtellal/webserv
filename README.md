@@ -18,3 +18,8 @@ client_max_body_sixe : https://linuxhint.com/what-is-client-max-body-size-nginx/
 Methods a implementer : https://www.rfc-editor.org/rfc/rfc7231#section-4
 
 Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b4c8cb4f98109d5fc1f
+
+---------------------------------------------------------------------------------------------------
+
+#### SOCKET
+- https://www.howtogeek.com/devops/what-are-unix-sockets-and-how-do-they-work/
