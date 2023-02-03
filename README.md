@@ -23,4 +23,6 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 ## SOCKET
 - https://www.howtogeek.com/devops/what-are-unix-sockets-and-how-do-they-work/
-- https://developer.ibm.com/tutorials/l-sock/?mhsrc=ibmsearch_a&mhq=linux%20sockets%20
+- https://developer.ibm.com/tutorials/l-sock/?mhsrc=ibmsearch_a&mhq=linux%20sockets%20 </br>
+- https://beej.us/guide/bgnet/html/split/
+- https://www.isi.edu/~hussain/TEACH/Spring2014/notes/Steven00a.pdf
