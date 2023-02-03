@@ -23,3 +23,4 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 ## SOCKET
 - https://www.howtogeek.com/devops/what-are-unix-sockets-and-how-do-they-work/
+- https://developer.ibm.com/tutorials/l-sock/?mhsrc=ibmsearch_a&mhq=linux%20sockets%20
