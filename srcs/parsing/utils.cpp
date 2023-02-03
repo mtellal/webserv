@@ -1,10 +1,7 @@
 #include "../../includes/utils.hpp"
 #include <stdlib.h>
-
-
-
-// #include <iostream>
-
+#include <sstream>
+#include <sys/stat.h>
 
 int	ft_stoi(const std::string str, bool *err)
 {
@@ -106,4 +103,14 @@ std::vector<std::string>	ft_split(const char *str, const char *charset)
 		str += lenword;
 	}
 	return res;
+}
+
+std::string	ft_itos(int nbr)
+{
+	std::string s;
+	std::stringstream out;
+
+	out << nbr;
+	s = out.str();
+	return s;
 }

@@ -35,7 +35,11 @@ Directives	&Directives::operator=(Directives const &rhs) {
 	return *this;
 }
 
-std::vector<std::pair<int, std::string> >	Directives::getErrorPage() const {
+// std::vector<std::pair<int, std::string> >	Directives::getErrorPage() const {
+// 	return this->_errorPage;
+// }
+
+std::map<int, std::string>	Directives::getErrorPage() const {
 	return this->_errorPage;
 }
 
@@ -110,7 +114,8 @@ void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
 	{
 		if (!this->_errorPageSet)
 			this->_errorPageSet = true;
-		this->_errorPage.push_back(std::make_pair(nbError, str[2]));
+		this->_errorPage[nbError] = str[2];
+		// this->_errorPage.push_back(std::make_pair(nbError, str[2]));
 	}
 	else
 	{
@@ -240,17 +245,25 @@ void	Directives::setHttpRedir(std::vector<std::string> redir, int *i) {
 	}
 }
 
+// void	Directives::showErrorPage(std::ostream & o) const {
+// 	if (this->getErrorPageSet())
+// 	{
+// 		o << "Error Page\t:";
+// 		for (size_t i = 0; i < this->_errorPage.size(); i++)
+// 			o << " (" << this->_errorPage[i].first << " " << this->_errorPage[i].second << ")";
+// 	}
+// 	o << std::endl;
+// }
+
 void	Directives::showErrorPage(std::ostream & o) const {
 	if (this->getErrorPageSet())
 	{
 		o << "Error Page\t:";
-		for (size_t i = 0; i < this->_errorPage.size(); i++)
-			o << " (" << this->_errorPage[i].first << " " << this->_errorPage[i].second << ")";
+		for (std::map<int, std::string>::const_iterator it = this->_errorPage.begin(); it != this->_errorPage.end(); it++)
+			o << " (" << it->first << " " << it->second << ")";
 	}
 	o << std::endl;
 }
-
-
 
 void	Directives::showAutoindex(std::ostream & o) const {
 	if (this->getAutoindexSet())

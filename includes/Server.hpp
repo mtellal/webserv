@@ -27,7 +27,7 @@ class Server : public Directives {
 
 	void						showServerName(std::ostream & o) const;
 	void						showLocation(std::ostream & o, int i, Server const &rhs) const;
-	void						showErrorPageBis(std::ostream & o, int i, Server const &rhs) const;
+	// void						showErrorPageBis(std::ostream & o, int i, Server const &rhs) const;
 	void						showAutoindexBis(std::ostream & o, int i, Server const &rhs) const;
 	void						showIndexBis(std::ostream & o, int i, std::vector<Location> tmp) const;
 

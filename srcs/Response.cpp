@@ -3,17 +3,22 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <features.h>
+
 Response::Response() {}
 
 Response::Response(Request req, std::vector<Server> vctServ) : _req(req), _vctServ(vctServ),
-					_locBlocSelect(false){
+					_locBlocSelect(false), _isDir(false) {
 	if (req.getMethod() == "GET")
 	{
 		Server serv = selectServerBlock();
 		// Location loc = selectLocationBlock(serv);
 		int loc = selectLocationBlock(serv);
 
-		this->createResponse(serv ,loc);
+		this->fileToStr(serv ,loc);
 	}
 }
 
@@ -33,135 +38,206 @@ Response	&Response::operator=(Response const &rhs) {
 	return *this;
 }
 
-// std::vector<std::string>	Response::getRightPath(Server serv, Location loc) {
-std::vector<std::string>	Response::getRightPath(Server serv, int loc) {
-	std::vector<std::string>	res;
+bool	Response::getRightPath(Server serv, int loc) {
 	std::string					root;
 	std::string					newPath;
 	Location					blocLoc = serv.getVctLocation()[loc];
+	std::vector<std::string>	index;
+	std::vector<std::string>	errPages;
+	bool						res = false;
 
 	if (this->_locBlocSelect and blocLoc.getRootSet())
 		root = blocLoc.getRoot();
 	else if (serv.getRootSet())
 		root = serv.getRoot();
 
-	// std::cout << "ROOT = " << root << std::endl;
+	std::cout << "ROOT = " << root << std::endl;
 
 
-	// Remplacer par : si le path entree par l'utilisateur est un dossier
-	if (this->_req.getPath()[this->_req.getPath().size() - 1] == '/')
+	struct stat fileOrDir;
+
+	if (this->_locBlocSelect and blocLoc.getIndexSet())
 	{
-		// std::cout << "=====================================" << std::endl;
-		std::vector<std::string>	index;
-
 		root.erase(0, 1);
-
-		if (this->_locBlocSelect and blocLoc.getIndexSet())
+		newPath = this->_req.getPath().erase(0, blocLoc.getPath().size());
+		root += newPath;
+		stat(root.c_str(), &fileOrDir);
+		// La on verifie si c'est un dossier ou pas
+		if (S_ISREG(fileOrDir.st_mode))
 		{
-			newPath = this->_req.getPath().erase(0, blocLoc.getPath().size());
-			root += newPath;
+			std::cout << "LOC FICHIER" << std::endl;
+			this->_path.push_back(root);
+		}
+		else if (S_ISDIR(fileOrDir.st_mode))
+		{
+			std::cout << "LOC DOSSIER" << std::endl;
+			this->_isDir = true;
 			index = blocLoc.getIndex();
 			for (size_t i = 0; i < index.size(); i++)
-				res.push_back(index[i].insert(0, root));
+				this->_path.push_back(index[i].insert(0, root));
 		}
 		else
 		{
-			root += "/";
-			index = serv.getIndex();
-			for (size_t i = 0; i < index.size(); i++)
-				res.push_back(index[i].insert(0, root));
+			std::cout << "LOC ERR" << std::endl;
+			// this->_path.push_back(root);
+			res = true;
 		}
-		// for (size_t i = 0; i < res.size(); i++)
-			// std::cout << res[i] << std::endl;
 	}
 	else
 	{
-		// Sinon, pas besoin de prendre en compte index
-		if (this->_locBlocSelect and blocLoc.getIndexSet())
+		root.erase(0, 1);
+		newPath = this->_req.getPath();
+		root += newPath;
+		std::cout << "ROOT_BIS = " << root << std::endl;
+		stat(root.c_str(), &fileOrDir);
+		if (S_ISREG(fileOrDir.st_mode))
 		{
-			newPath = this->_req.getPath().erase(0, blocLoc.getPath().size());
-			root += newPath;
-			root.erase(0, 1);
-			res.push_back(root);
-			// std::cout << "A = " << root << std::endl;
+			std::cout << "PAS LOC FICHIER" << std::endl;
+			// newPath = this->_req.getPath();
+			// root += newPath;
+
+			// root.erase(0, 1);
+
+			this->_path.push_back(root);
+		}
+		else if (S_ISDIR(fileOrDir.st_mode))
+		{
+			std::cout << "PAS LOC DOSSIER" << std::endl;
+			this->_isDir = true;
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			index = serv.getIndex();
+			for (size_t i = 0; i < index.size(); i++)
+				this->_path.push_back(index[i].insert(0, root));
 		}
 		else
 		{
-			newPath = this->_req.getPath();
-			root += newPath;
-			root.erase(0, 1);
-			res.push_back(root);
-			// std::cout << "B = " << root << std::endl;
+			std::cout << "PAS LOC ERR" << std::endl;
+			// this->_path.push_back(root);
+			res = true;
 		}
 	}
+	for (size_t i = 0; i < this->_path.size(); i++)
+		std::cout << this->_path[i] << std::endl;
 	return res;
 }
 
-
-// void	Response::createResponse(Server serv, Location loc) {
-void	Response::createResponse(Server serv, int loc) {
-	std::string 				str;
-	std::vector<std::string>	index;
-
-	this->_path = this->getRightPath(serv, loc);
-
-	// if (this->_req.getPath() == "/")
-	// {
-	// 	// std::cout << "A" << std::endl;
-	// 	index = serv.getIndex();
-	// 	for (size_t i = 0; i < index.size(); i++)
-	// 	{
-	// 		str += serv.getRoot();
-	// 		str += this->_req.getPath();
-	// 		str += index[i];
-	// 		this->_path.push_back(str);
-	// 		str.clear();
-	// 	}
-	// }
-	// else
-	// {
-	// 	// std::cout << "B" << std::endl;
-	// 	str += serv.getRoot();
-	// 	str += this->_req.getPath();
-	// 	this->_path.push_back(str);
-	// }
-	// for (size_t i = 0; i < this->_path.size(); i++)
-		// std::cout << "path = " << this->_path[i] << std::endl;
-	this->fileToStr();
-}
-
-void	Response::fileToStr() {
+void	Response::fileToStr(Server serv, int loc) {
 	size_t		i = 0;
 	std::string	res;
+	std::string	rightPath;
+	Location	blocLoc = serv.getVctLocation()[loc];
+	bool		err = false;
 
-	while (i < this->_path.size())
+	if (!(err = this->getRightPath(serv, loc)))
 	{
-		// std::cout << "path = " << this->_path[i] << std::endl;
-		// this->_path[i].erase(0, 1);
-		std::ifstream tmp(this->_path[i].c_str(), std::ios::in);
+		while (i < this->_path.size())
+		{
+			std::ifstream tmp(this->_path[i].c_str(), std::ios::in);
 
-		if (tmp)
-		{
-			this->_statusCode = 200;
-			tmp.close();
-			break;
-		}
-		i++;
-		if (i == this->_path.size())
-		{
-			this->_statusCode = 404;
-			i--;
-			this->_path[i] = "html/404.html";
-			break ;
+			if (tmp)
+			{
+				rightPath = this->_path[i];
+				this->_statusCode = 200;
+				tmp.close();
+				break;
+			}
+			i++;
+			if (i == this->_path.size())
+			{
+				// std::cout << "BREAKKKKKKKKKKKKK" << std::endl;
+				err = true;
+				break ;
+			}
 		}
 	}
+	if (err)
+	{
+		// std::cout << "========================" << std::endl;
+		std::map<int, std::string>					mapErr;
+		std::map<int, std::string>::const_iterator	it;
+		std::string									root;
+		bool										pageFind = false;
 
-	Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, this->_path[i]);
+		if (this->_isDir)
+			this->_statusCode = 403;
+		else
+			this->_statusCode = 404;
+
+
+		if (this->_locBlocSelect and blocLoc.getRootSet())
+			root = blocLoc.getRoot();
+		else if (serv.getRootSet())
+			root = serv.getRoot();
+		// Verifier que les pages existent !!
+		if (this->_locBlocSelect and blocLoc.getErrorPageSet())
+		{
+			std::cout << "OK" << std::endl;
+			mapErr = blocLoc.getErrorPage();
+			it = mapErr.find(this->_statusCode);
+			if (it != mapErr.end())
+			{
+				std::cout << "OK BIS" << std::endl;
+				pageFind = true;
+				rightPath = it->second;
+				root = blocLoc.getRoot();
+				root.erase(0, 1);
+				root += "/";
+				root += rightPath;
+				rightPath = root;
+			}
+		}
+		if (!pageFind and it != mapErr.end())
+		{
+			mapErr = serv.getErrorPage();
+			it = mapErr.find(this->_statusCode);
+			std::cout << "NOPPPPPPPPPPPPPP" << std::endl;
+			if (it != mapErr.end())
+			{
+				pageFind = true;
+				rightPath = it->second;
+				root = serv.getRoot();
+				root.erase(0, 1);
+				root += "/";
+				root += rightPath;
+				rightPath = root;
+			}
+		}
+		
+		std::ifstream tmp(rightPath.c_str(), std::ios::in);
+
+		if (!tmp or !pageFind)
+		{
+			std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
+
+			file << "<!DOCTYPE html>" << std::endl;
+			file << "<html lang=\"en\">" << std::endl;
+			file << "<head>" << std::endl;
+			file << "	<meta charset=\"UTF-8\">" << std::endl;
+			file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
+			file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
+			file << "	<title>TMP Webserv " + ft_itos(this->_statusCode) + "</title>" << std::endl;
+			file << "</head>" << std::endl;
+			file << "<body>" << std::endl;
+			file << "	<h1>TMP Error " + ft_itos(this->_statusCode) + " BIS :(</h1>" << std::endl;
+			file << "</body>" << std::endl;
+			file << "</html>" << std::endl;
+			file.close();
+			rightPath = "/tmp/tmpFile.html";
+		}
+		else
+			tmp.close();
+		std::cout << "RIGHT PATH " << rightPath << std::endl;
+	}
+
+
+
+	Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
 	res = header.getHeader();
-	// // std::cout << res << std::endl;
+	// std::cout << res << std::endl;
 	write(this->_req.getFd(), res.c_str(), res.length());
 
-	std::ifstream file(this->_path[i].c_str());
+	std::ifstream file(rightPath.c_str());
 	std::string str;
 	if (file)
 	{
@@ -188,19 +264,10 @@ Server	Response::selectServerBlock() {
 		return tmp[0];
 
 	// Il faut egalement departager si besoin avec server_name
-	// Si ce msg apparait, plusieurs blocs ont etes pre-selectionnes
-	// mais pas departages.
-	std::cout << "Fct selectServerBlock err" << std::endl;
 
-	// for (size_t i = 0; i < tmp.size(); i++)
-	// {
-	// 	std::vector<std::string>	servName = tmp[i].getServerName();
-	// 	for (size_t j = 0; j < servName.size(); j++)
-	// 	{
-	// 		if (servName[j] == this->_req.getHost())
-	// 			return tmp[i];
-	// 	}
-	// }
+	// Si ce msg apparait, plusieurs blocs ont etes pre-selectionnes
+	// mais pas departages, il faut les departages avec server name.
+	std::cout << "Fct selectServerBlock err" << std::endl;
 	return tmp[0];
 }
 

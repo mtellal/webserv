@@ -296,8 +296,8 @@ void	Server::showLocation(std::ostream & o, int i, Server const &rhs) const {
 			tmp[i].showHttpMethods(o);
 		if (tmp[i].getCgiSet())
 			o << "\t\tCgi\t\t: " << tmp[i].getCgi() << std::endl;
-		if (tmp[i].getErrorPageSet())
-			rhs.showErrorPageBis(o, i, rhs);
+		// if (tmp[i].getErrorPageSet())
+		// 	rhs.showErrorPageBis(o, i, rhs);
 		if (tmp[i].getClientMaxBodySizeSet())
 			o << "\t\tclient max\t: " << rhs._vctLoation[i].getClientMaxBodySize() << std::endl;
 		if (tmp[i].getRootSet())
@@ -327,13 +327,13 @@ void	Server::showAutoindexBis(std::ostream & o, int i, Server const &rhs) const 
 	o << std::endl;
 }
 
-void	Server::showErrorPageBis(std::ostream & o, int i, Server const &rhs) const {
-	o << "\t\tError Page\t:";
-	std::vector<Location> tmp = rhs.getVctLocation();
-		for (size_t j = 0; j < tmp[i].getErrorPage().size(); j++)
-			o << " (" << tmp[i].getErrorPage()[j].first << " " << tmp[i].getErrorPage()[j].second << ")";
-	o << std::endl;
-}
+// void	Server::showErrorPageBis(std::ostream & o, int i, Server const &rhs) const {
+// 	o << "\t\tError Page\t:";
+// 	std::vector<Location> tmp = rhs.getVctLocation();
+// 		for (size_t j = 0; j < tmp[i].getErrorPage().size(); j++)
+// 			o << " (" << tmp[i].getErrorPage()[j].first << " " << tmp[i].getErrorPage()[j].second << ")";
+// 	o << std::endl;
+// }
 
 std::ostream &operator<<(std::ostream & o, Server const &rhs)
 {

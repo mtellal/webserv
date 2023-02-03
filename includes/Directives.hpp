@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include <ostream>
 #include <fstream>
 
@@ -19,7 +20,8 @@ class Directives {
 
 	Directives	&operator=(Directives const &rhs);
 
-	std::vector<std::pair<int, std::string> >	getErrorPage() const;
+	// std::vector<std::pair<int, std::string> >	getErrorPage() const;
+	std::map<int, std::string>					getErrorPage() const;
 	int											getClientMaxBodySize() const;
 	std::string									getRoot() const;
 	bool										getAutoindex() const;
@@ -46,7 +48,8 @@ class Directives {
 	void	showIndex(std::ostream & o) const;
 
 	protected:
-	std::vector<std::pair<int, std::string> >	_errorPage;
+	// std::vector<std::pair<int, std::string> >	_errorPage;
+	std::map<int, std::string>					_errorPage;
 	int											_clientMaxBodySize;
 	std::string									_root;
 	bool										_autoindex;
