@@ -1,4 +1,4 @@
-# webserv
+
 
 Serveur http a partie de 0 : https://medium.com/from-the-scratch/http-server-what-do-you-need-to-know-to-build-a-simple-http-server-from-scratch-d1ef8945e4fa
 
@@ -21,5 +21,5 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 ---------------------------------------------------------------------------------------------------
 
-#### SOCKET
+## SOCKET
 - https://www.howtogeek.com/devops/what-are-unix-sockets-and-how-do-they-work/
