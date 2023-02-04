@@ -113,7 +113,7 @@ int		Request::parsRequest(int fd) {
 		return 0;
 	}
 	buff[t] = '\0';
-	// std::cout << buff << std::endl;
+	std::cout << buff << std::endl;
 	vct = ft_split(buff, "\n");
 	// for (size_t i = 0; i < vct.size(); i++)
 		// std::cout << vct[i] << std::endl;
@@ -121,7 +121,7 @@ int		Request::parsRequest(int fd) {
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		tmp = ft_split(vct[i].c_str(), " ");
-		if (i == 0)
+		if (tmp[0] == "GET" or tmp[0] == "POST" or tmp[0] == "DELETE")
 		{
 			this->_method = tmp[0];
 			this->_httpVersion = tmp[2];
@@ -139,12 +139,11 @@ int		Request::parsRequest(int fd) {
 				}
 			}
 		}
-		else if (i == 1)
+		else if (tmp[0] == "Host:")
 		{
 			tmp = ft_split(tmp[1].c_str(), ":");
 			this->_host = tmp[0];
 			this->_port = tmp[1];
-			break ;
 		}
 	}
 	return 0;

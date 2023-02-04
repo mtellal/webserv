@@ -27,14 +27,18 @@ class Response {
 	bool						_locBlocSelect;
 	bool						_isDir;
 
-	// void						createResponse(Server serv, Location loc);
-	// void						createResponse(Server serv, int loc);
-	void						fileToStr(Server serv, int loc);
-	Server						selectServerBlock();
-	// Location					selectLocationBlock(Server serv);
-	int							selectLocationBlock(Server serv);
-	// std::vector<std::string>	getRightPath(Server serv, Location loc);
-	bool						getRightPath(Server serv, int loc);
+	std::string	getRightRoot(Server &serv, Location &blocLoc);
+	void		getRightPathLocation(Server serv, Location &blocLoc, bool &res);
+	void		getRightPathServer(Server serv, Location &blocLoc, bool &res);
+	std::string	getRightPathErr(Server serv, Location &blocLoc, bool &pageFind);
+
+
+	std::string	testAllPaths(bool &err);
+	std::string	createDefaultErrorPage();
+	void		fileToStr(Server serv, int loc);
+	Server		selectServerBlock();
+	int			selectLocationBlock(Server serv);
+	bool		getRightPath(Server serv, int loc);
 };
 
 #endif
