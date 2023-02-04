@@ -34,3 +34,8 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 ## TELNET
 - https://www.digitalocean.com/community/tutorials/telnet-command-linux-unix
+
+-------------------------------------------------------------------------------------------------------
+
+## BOOKS
+- Hands-On Network Programming with C ( not sure of the validity of this document, be aware, https://dokumen.pub/hands-on-network-programming-with-c-learn-socket-programming-in-c-and-write-secure-and-optimized-network-code-true-pdf-1nbsped-9781789349863.html)
