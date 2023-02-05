@@ -26,15 +26,18 @@ class Response {
 	int							_statusCode;
 	bool						_locBlocSelect;
 	bool						_isDir;
+	bool						_autoindex;
 
 	std::string	getRightRoot(Server &serv, Location &blocLoc);
 	void		getRightPathLocation(Server serv, Location &blocLoc, bool &res);
 	void		getRightPathServer(Server serv, Location &blocLoc, bool &res);
 	std::string	getRightPathErr(Server serv, Location &blocLoc, bool &pageFind);
+	void		getFileAndDir(Server serv, std::ofstream &file, bool getDir, std::string path);
 
 
 	std::string	testAllPaths(bool &err);
 	std::string	createDefaultErrorPage();
+	std::string	createAutoindexPage(Server serv);
 	void		fileToStr(Server serv, int loc);
 	Server		selectServerBlock();
 	int			selectLocationBlock(Server serv);

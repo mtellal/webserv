@@ -7,11 +7,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <features.h>
+#include <dirent.h>
+
 
 Response::Response() {}
 
 Response::Response(Request req, std::vector<Server> vctServ) : _req(req), _vctServ(vctServ),
-					_locBlocSelect(false), _isDir(false) {
+					_locBlocSelect(false), _isDir(false), _autoindex(false) {
 	// if (req.getMethod() == "GET")
 	// {
 		Server serv = selectServerBlock();
@@ -70,6 +72,10 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 		index = blocLoc.getIndex();
 		for (size_t i = 0; i < index.size(); i++)
 			this->_path.push_back(index[i].insert(0, root));
+		if (blocLoc.getAutoindexSet())
+			this->_autoindex = blocLoc.getAutoindex();
+		else if (serv.getAutoindexSet())
+			this->_autoindex = serv.getAutoindex();
 	}
 	else
 	{
@@ -103,6 +109,8 @@ void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
 		index = serv.getIndex();
 		for (size_t i = 0; i < index.size(); i++)
 			this->_path.push_back(index[i].insert(0, root));
+		if (serv.getAutoindexSet())
+			this->_autoindex = serv.getAutoindex();
 	}
 	else
 	{
@@ -210,6 +218,61 @@ std::string	Response::createDefaultErrorPage() {
 	return "/tmp/tmpFile.html";
 }
 
+void	Response::getFileAndDir(Server serv, std::ofstream &file, bool getDir, std::string path) {
+	DIR				*dir;
+	struct dirent	*entry;
+
+	if ((dir = opendir(path.c_str())) != NULL)
+	{
+		path += "/";
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if ((getDir and entry->d_type == DT_DIR) or (!getDir and entry->d_type != DT_DIR))
+			{
+				if (strlen(entry->d_name) != 1 or entry->d_name[0] != '.')
+				{
+					file << "<a href=\"http://" + serv.getHost() + ":" + ft_itos(serv.getPort()) +
+					this->_req.getPath() + "/" + entry->d_name + "\">" + entry->d_name;
+					if (entry->d_type == DT_DIR)
+						file << "/";
+					file << "</a><br>" << std::endl;
+				}
+			}
+		}
+		closedir(dir);
+	} 
+	else
+		perror("Impossible d'ouvrir le répertoire");
+}
+
+std::string	Response::createAutoindexPage(Server serv) {
+	std::string		path = this->_path[0];
+	size_t			pos = path.find_last_of('/');
+	std::ofstream	file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
+
+	path.erase(pos, path.size() - pos);
+
+	file << "<!DOCTYPE html>" << std::endl;
+	file << "<html lang=\"en\">" << std::endl;
+	file << "<head>" << std::endl;
+	file << "	<meta charset=\"UTF-8\">" << std::endl;
+	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
+	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
+	file << "	<title>Webserv Autoindex</title>" << std::endl;
+	file << "</head>" << std::endl;
+	file << "<body>" << std::endl;
+	file << "	<h1>Index of " + this->_req.getPath() + "</h1>" << std::endl;
+
+	this->getFileAndDir(serv, file, true, path);
+	this->getFileAndDir(serv, file, false, path);
+
+	file << "</body>" << std::endl;
+	file << "</html>" << std::endl;
+	file.close();
+
+	return "/tmp/tmpFile.html";
+}
+
 
 void	Response::fileToStr(Server serv, int loc) {
 	std::string	res;
@@ -218,7 +281,7 @@ void	Response::fileToStr(Server serv, int loc) {
 	bool		err = false;
 
 	if (!(err = this->getRightPath(serv, loc)))
-		rightPath = testAllPaths(err);
+		rightPath = this->testAllPaths(err);
 	if (err)
 	{
 		bool	pageFind = false;
@@ -228,12 +291,14 @@ void	Response::fileToStr(Server serv, int loc) {
 		else
 			this->_statusCode = 404;
 
-		rightPath = getRightPathErr(serv, blocLoc, pageFind);
+		rightPath = this->getRightPathErr(serv, blocLoc, pageFind);
 
 		std::ifstream tmp(rightPath.c_str(), std::ios::in);
 
-		if (!tmp or !pageFind)
-			rightPath = createDefaultErrorPage();
+		if (this->_autoindex)
+			rightPath = this->createAutoindexPage(serv);
+		else if (!tmp or !pageFind)
+			rightPath = this->createDefaultErrorPage();
 		else
 			tmp.close();
 	}
@@ -242,8 +307,6 @@ void	Response::fileToStr(Server serv, int loc) {
 
 	Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
 	res = header.getHeader();
-	// std::cout << res << std::endl;
-	write(this->_req.getFd(), res.c_str(), res.length());
 
 	std::ifstream file(rightPath.c_str());
 	std::string str;
@@ -253,7 +316,8 @@ void	Response::fileToStr(Server serv, int loc) {
 		ss << file.rdbuf();
 		str = ss.str();
 	}
-	write(this->_req.getFd(), str.c_str(), str.size());
+	res += str;
+	write(this->_req.getFd(), res.c_str(), res.size());
 	file.close();
 }
 

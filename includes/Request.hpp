@@ -39,7 +39,6 @@ class Request {
 	std::map<std::string, std::string>	_argsGet;
 
 	int			parsRequest(int fd);
-	// bool		parsArgs(std::string tmp);
 
 
 };

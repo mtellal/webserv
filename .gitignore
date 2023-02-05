@@ -1,0 +1,6 @@
+.vscode
+srcs/*.d
+srcs/*.o
+srcs/parsing/*.d
+srcs/parsing/*.o
+webserv
