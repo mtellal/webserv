@@ -224,7 +224,6 @@ void	Response::getFileAndDir(Server serv, std::ofstream &file, bool getDir, std:
 
 	if ((dir = opendir(path.c_str())) != NULL)
 	{
-		path += "/";
 		while ((entry = readdir(dir)) != NULL)
 		{
 			if ((getDir and entry->d_type == DT_DIR) or (!getDir and entry->d_type != DT_DIR))
@@ -232,10 +231,21 @@ void	Response::getFileAndDir(Server serv, std::ofstream &file, bool getDir, std:
 				if (strlen(entry->d_name) != 1 or entry->d_name[0] != '.')
 				{
 					file << "<a href=\"http://" + serv.getHost() + ":" + ft_itos(serv.getPort()) +
-					this->_req.getPath() + "/" + entry->d_name + "\">" + entry->d_name;
+					this->_req.getPath();
+					if (this->_req.getPath()[this->_req.getPath().size() - 1] != '/')
+						file << "/";
+					file << entry->d_name << "\">" << entry->d_name;
 					if (entry->d_type == DT_DIR)
 						file << "/";
 					file << "</a><br>" << std::endl;
+					// std::cout << "<a href=\"http://" + serv.getHost() + ":" + ft_itos(serv.getPort()) +
+					// this->_req.getPath();
+					// if (this->_req.getPath()[this->_req.getPath().size() - 1] != '/')
+					// 	std::cout << "/";
+					// std::cout << entry->d_name << "\">" << entry->d_name;
+					// if (entry->d_type == DT_DIR)
+					// 	std::cout << "/";
+					// std::cout << "</a><br>" << std::endl;
 				}
 			}
 		}
@@ -251,6 +261,7 @@ std::string	Response::createAutoindexPage(Server serv) {
 	std::ofstream	file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
 
 	path.erase(pos, path.size() - pos);
+	path += "/";
 
 	file << "<!DOCTYPE html>" << std::endl;
 	file << "<html lang=\"en\">" << std::endl;
@@ -364,7 +375,7 @@ int		Response::selectLocationBlock(Server serv) {
 		if (j > 2 and (!strBlocLoc[j] or (strBlocLoc[j] == '/' and !strBlocLoc[j + 1]))
 			and (req[j] == '/' or !req[j]) and strBlocLoc.size() > tmp.getPath().size())
 		{
-			std::cout << "LOC = " << strBlocLoc << std::endl;
+			// std::cout << "LOC = " << strBlocLoc << std::endl;
 			this->_locBlocSelect = true;
 			tmp = vctLoc[i];
 			res = i;
