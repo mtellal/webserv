@@ -125,6 +125,13 @@ void	SocketServer::createFdEpoll() {
 			perror("err epoll_ctl");
 		}
 	}
+	event.events = EPOLLIN;
+	event.data.fd = 0;
+	if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, 0, &event) == -1)
+	{
+		this->_errSocket = true;
+		perror("err epoll_ctl");
+	}
 }
 
 void	SocketServer::closeSockets() {
@@ -133,6 +140,7 @@ void	SocketServer::closeSockets() {
 		close(this->_serverFd[i]);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, this->_serverFd[i], NULL);
 	}
+	epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, 0, NULL);
 	close(this->_epollFd);
 }
 
@@ -187,6 +195,11 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
+		if (event[j].data.fd == 0)
+		{
+			// std::cout << "FD = 0" << std::endl;
+			return 1;
+		}
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
 		{
 			// std::cout << "ServerFd" << std::endl;
