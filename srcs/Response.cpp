@@ -356,15 +356,26 @@ Server	Response::selectServerBlock() {
 
 int		Response::selectLocationBlock(Server serv) {
 	std::vector<Location>	vctLoc = serv.getVctLocation();
-	std::string				strBlocLoc;
+	std::string 			strBlocLoc;
 	Location				tmp;
 	int						res;
 	std::string				req = this->_req.getPath();
 	size_t j;
 
+	// std::cout << "req = " << req << std::endl;
 	for (size_t i = 0; i < vctLoc.size(); i++)
 	{
 		strBlocLoc = vctLoc[i].getPath();
+		// std::cout << "strBlocLoc = " << strBlocLoc << std::endl;
+		if (strBlocLoc == "*.php" and req.size() > 4 and
+			!req.compare(req.size() - 4, 4, ".php"))
+		{
+			// std::cout << "PHP LOC = " << strBlocLoc << std::endl;
+			this->_locBlocSelect = true;
+			tmp = vctLoc[i];
+			// res = i;
+			return i;
+		}
 		j = 0;
 		while (strBlocLoc[j])
 		{
