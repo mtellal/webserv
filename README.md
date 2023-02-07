@@ -76,5 +76,7 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 -------------------------------------------------------------------------------------------------------
 
-## BOOKS
+## GENERAL RESSOURCES - BOOKS | TUTOS
 - Hands-On Network Programming with C - Lewis Van Winkle (https://github.com/mtellal/docs/blob/main/hands-on-network-programming-with-c-learn-socket-programming-in-c-and-write-secure-and-optimized-network-code-true-pdf-1nbsped-9781789349863_compress.pdf)
+- https://www.freesoft.org/CIE/Course/index.htm - Tuto (introduction to networks) 
+
