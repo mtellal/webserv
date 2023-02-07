@@ -51,11 +51,13 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 -----------------------------------------------------------------------------------------------------
 
-## FUNCTIONS
-### getaddrinfo
+### FUNCTIONS
+#### getaddrinfo
 - https://linuxhint.com/c-getaddrinfo-function-usage/
 
-
+### STRUCTS
+#### sockaddr - sockaddr_in 
+- https://blog.actorsfit.com/a?ID=00650-753e312f-e4a7-410f-b3e0-4604572635d2
 ---------------------------------------------------------------------------------------------------
 
 ### SOCKET
