@@ -12,8 +12,8 @@
 
 Response::Response() {}
 
-Response::Response(Request req, std::vector<Server> vctServ) : _req(req), _vctServ(vctServ),
-					_locBlocSelect(false), _isDir(false), _autoindex(false) {
+Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer) : _req(req), _vctServ(vctServ),
+					_clientServer(clientServer), _locBlocSelect(false), _isDir(false), _autoindex(false) {
 	// if (req.getMethod() == "GET")
 	// {
 		Server serv = selectServerBlock();
@@ -50,9 +50,9 @@ std::string	Response::getRightRoot(Server &serv, Location &blocLoc) {
 }
 
 void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
-	struct stat	fileOrDir;
-	std::string	root = this->getRightRoot(serv, blocLoc);
-	std::string	newPath;
+	struct stat					fileOrDir;
+	std::string					root = this->getRightRoot(serv, blocLoc);
+	std::string					newPath;
 	std::vector<std::string>	index;
 
 
@@ -69,6 +69,8 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 	{
 		// std::cout << "LOC DOSSIER" << std::endl;
 		this->_isDir = true;
+		if (root[root.size() - 1] != '/')
+			root += "/";
 		index = blocLoc.getIndex();
 		for (size_t i = 0; i < index.size(); i++)
 			this->_path.push_back(index[i].insert(0, root));
@@ -138,6 +140,8 @@ std::string	Response::testAllPaths(bool &err) {
 	size_t		i = 0;
 	std::string	rightPath;
 
+	// for (size_t j = 0; j < this->_path.size(); j++)
+	// 	std::cout << this->_path[j] << std::endl;
 	while (i < this->_path.size())
 	{
 		std::ifstream tmp(this->_path[i].c_str(), std::ios::in);
@@ -315,9 +319,10 @@ void	Response::fileToStr(Server serv, int loc) {
 	}
 
 
-
 	Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
 	res = header.getHeader();
+
+	// std::cout << res << std::endl;
 
 	std::ifstream file(rightPath.c_str());
 	std::string str;
@@ -333,25 +338,62 @@ void	Response::fileToStr(Server serv, int loc) {
 }
 
 Server	Response::selectServerBlock() {
-	std::vector<Server>	tmp;
-	std::vector<Server>	conf = this->_vctServ;
-	bool				err = false;
+	std::vector<Server>			tmp;
+	std::string					host;
+	std::vector<Server>			conf = this->_vctServ;
+	std::vector<std::string>	servName;
+	bool						err = false;
+	int							fd = this->_clientServer[this->_req.getFd()];
 
+	host = conf[fd].getHost();
+	// std::cout << host << std::endl;
+
+
+	// On check si il y a une correspondance parfaite entre host et port
 	for (size_t i = 0; i < conf.size(); i++)
 	{
-		if (conf[i].getHost() == this->_req.getHost() and
+		if (conf[i].getHost() == host and
 				conf[i].getPort() == ft_stoi(this->_req.getPort(), &err))
 			tmp.push_back(conf[i]);
 	}
+	// std::cout << "SIZE " << tmp.size() << std::endl;
 	if (tmp.size() == 1)
 		return tmp[0];
-
+	else if (tmp.size() > 1)
+		std::cout << "Fct selectServerBlock err, plusieurs blocs preselectionnes" << std::endl;
+	// else
+	// {
+	// 	for (size_t i = 0; i < conf.size(); i++)
+	// 	{
+	// 		if (conf[i].getPort() == ft_stoi(this->_req.getPort(), &err) and conf[i].getHost() == "0.0.0.0")
+	// 			tmp.push_back(conf[i]);
+	// 	}
+	// 	if (tmp.size() == 1)
+	// 		return tmp[0];
+	// 	else
+	// 	{
+	// 		for (size_t i = 0; i < tmp.size(); i++)
+	// 		{
+	// 			if (tmp[i].getServerNameSet())
+	// 			{
+	// 				servName = tmp[i].getServerName();
+	// 				for (size_t j = 0; j < servName.size(); j++)
+	// 				{
+	// 					if (servName[j] == this->_req.getHost())
+	// 						return tmp[i];
+	// 				}
+	// 			}
+	// 		}
+	// 		return tmp[0];
+	// 	}
+	// }
 	// Il faut egalement departager si besoin avec server_name
 
 	// Si ce msg apparait, plusieurs blocs ont etes pre-selectionnes
 	// mais pas departages, il faut les departages avec server name.
 	std::cout << "Fct selectServerBlock err" << std::endl;
 	return tmp[0];
+	// return conf[0];
 }
 
 int		Response::selectLocationBlock(Server serv) {

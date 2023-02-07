@@ -9,7 +9,7 @@ class Response {
 
 	public:
 	Response();
-	Response(Request req, std::vector<Server> vctServ);
+	Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer);
 	Response(Response const &src);
 	~Response();
 
@@ -19,6 +19,7 @@ class Response {
 	Request						_req;
 	// Header						_header;
 	std::vector<Server>			_vctServ;
+	std::map<int, int>			_clientServer;
 	std::vector<std::string>	_path;
 	std::vector<std::string>	_errPath;
 	std::ifstream				_file;

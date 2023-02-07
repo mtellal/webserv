@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 }
 
 /*
-	Verifier que les blocks ne sont pas vides ??
-	Gerer le ';' dans le parsing ??
+	Possible d'avoir dans le fichier de conf 2 bloc server avec la meme directive listen
+	mais a departager avec server_name ?
+	Ameliorer le header qui doit etre similaire a celui de nginx
 */

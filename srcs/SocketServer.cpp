@@ -28,6 +28,7 @@ SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 		this->_vctServ = rhs.getVctServer();
 		this->_serverFd = rhs.getServerFd();
 		this->_sockAddr = rhs.getSockAddr();
+		this->_clientServer = rhs.getClientServer();
 		this->_epollFd = rhs.getEpollFd();
 		this->_errSocket = rhs.getErrSocket();
 	}
@@ -45,6 +46,11 @@ std::vector<int>			SocketServer::getServerFd() const {
 std::vector<sockaddr_in>	SocketServer::getSockAddr() const {
 	return this->_sockAddr;
 }
+
+std::map<int, int>			SocketServer::getClientServer() const {
+	return this->_clientServer;
+}
+
 
 int							SocketServer::getEpollFd() const {
 	return this->_epollFd;
@@ -217,7 +223,7 @@ int		SocketServer::epollWait() {
 				epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, event[j].data.fd, NULL);
 			}
 			else
-				Response	rep(req, this->getVctServer());
+				Response	rep(req, this->getVctServer(), this->getClientServer());
 		}
 	}
 	return 0;
@@ -242,6 +248,7 @@ void	SocketServer::createConnection(int i) {
 	event.events = EPOLLIN;
 	event.data.fd = fd;
 	// Besoin de stocker ce fd ?
+	this->_clientServer.insert(std::make_pair(fd, i));
 	if (epoll_ctl(this->_epollFd, EPOLLIN, fd, &event) == -1)
 	{
 		perror("err epoll_ctl");
