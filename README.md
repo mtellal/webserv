@@ -66,7 +66,7 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 - https://beej.us/guide/bgnet/html/split/
 - https://www.isi.edu/~hussain/TEACH/Spring2014/notes/Steven00a.pdf
 
-##### close connection TCP 
+##### close connection TCP | why use setsockopt | bind error: error msg already use 
 - https://hea-www.harvard.edu/~fine/Tech/addrinuse.html
 
 #### BYTE ORDER
