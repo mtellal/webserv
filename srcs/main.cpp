@@ -27,5 +27,5 @@ int main(int argc, char **argv)
 /*
 	Possible d'avoir dans le fichier de conf 2 bloc server avec la meme directive listen
 	mais a departager avec server_name ?
-	Ameliorer le header qui doit etre similaire a celui de nginx
+	Types MIME
 */

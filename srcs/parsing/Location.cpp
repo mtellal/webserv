@@ -84,7 +84,7 @@ bool	Location::charAccepted(char c) {
 void	Location::readBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string words[8] = { "http_methods", "cgi", "error_page", "client_max_body_size",
+	std::string key[8] = { "http_methods", "cgi", "error_page", "client_max_body_size",
 						 "root", "autoindex", "index", "return" };
 
 	*i += 1;
@@ -98,7 +98,7 @@ void	Location::readBlock(std::ifstream &file, int *i) {
 				return ;
 			while (j < 8)
 			{
-				if (tmp[0] == words[j])
+				if (tmp[0] == key[j])
 				{
 					if (!this->checkFormatDir(tmp, i))
 					{

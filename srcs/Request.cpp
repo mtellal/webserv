@@ -7,6 +7,13 @@ Request::Request() {}
 
 Request::Request(int fd) : _fd(fd), _errRequest(false), _parsArgsGet(false),
 							_closeConnection(false){
+	this->functPtr[0] = &Request::setMethodVersionPath;
+	this->functPtr[1] = &Request::setMethodVersionPath;
+	this->functPtr[2] = &Request::setMethodVersionPath;
+	this->functPtr[3] = &Request::setHostPort;
+	this->functPtr[4] = &Request::setConnection;
+
+
 	if (parsRequest(fd))
 		this->_errRequest = true;
 }
@@ -23,11 +30,13 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_fd = rhs._fd;
 		this->_errRequest = rhs._errRequest;
 		this->_parsArgsGet = rhs._parsArgsGet;
+		this->_closeConnection = rhs._closeConnection;
 		this->_method = rhs._method;
 		this->_path = rhs._path;
 		this->_httpVersion = rhs._httpVersion;
 		this->_host = rhs._host;
 		this->_port = rhs._port;
+		this->_connection = rhs._connection;
 		this->_argsGet = rhs._argsGet;
 	}
 	return *this;
@@ -65,6 +74,10 @@ std::string	Request::getPort() const {
 	return this->_port;
 }
 
+std::string	Request::getConnection() const {
+	return this->_connection;
+}
+
 // bool	Request::parsArgs(std::string tmp) {
 // 	int	i = 0;
 // 	int	split = 0;
@@ -99,53 +112,70 @@ std::string	Request::getPort() const {
 // 	return true;
 // }
 
+void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
+	std::vector<std::string>	splitBis;
+
+	this->_method = strSplit[0];
+	strSplit[2].erase(strSplit[2].size() - 1, 1);
+	this->_httpVersion = strSplit[2];
+	// if (!this->parsArgs(strSplit[1]))
+	// 	return 1;
+	strSplit = ft_split(strSplit[1].c_str(), "?");
+	this->_path = strSplit[0];
+	if (this->_parsArgsGet)
+	{
+		strSplit = ft_split(strSplit[1].c_str(), "&");
+		for (size_t j = 0; j < strSplit.size(); j++)
+		{
+			splitBis = ft_split(strSplit[j].c_str(), "=");
+			this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
+		}
+	}
+}
+
+void	Request::setHostPort(std::vector<std::string> strSplit) {
+	strSplit = ft_split(strSplit[1].c_str(), ":");
+	this->_host = strSplit[0];
+	this->_port = strSplit[1];
+}
+
+void	Request::setConnection(std::vector<std::string> strSplit) {
+	strSplit[1].erase(strSplit[1].size() - 1, 1);
+	this->_connection = strSplit[1];
+}
+
+
 int		Request::parsRequest(int fd) {
 	char						buff[4096];
+	int							oct;
 	std::vector<std::string>	vct;
-	std::vector<std::string>	tmp;
+	std::vector<std::string>	strSplit;
 	std::vector<std::string>	tmpBis;
+	std::string					key[5] = { "GET", "POST", "DELETE", "Host:", "Connection:"};
+
 
 	memset(buff, 0, 4096);
-	int t = recv(fd, buff, 4096, 0);
-	if (!t)
+	oct = recv(fd, buff, 4096, 0);
+	if (!oct)
 	{
 		this->_closeConnection = true;
 		return 0;
 	}
-	buff[t] = '\0';
+	buff[oct] = '\0';
 
-	// std::cout << buff << std::endl;
+	std::cout << buff << std::endl;
 
 	vct = ft_split(buff, "\n");
-	// for (size_t i = 0; i < vct.size(); i++)
-		// std::cout << vct[i] << std::endl;
-
 	for (size_t i = 0; i < vct.size(); i++)
 	{
-		tmp = ft_split(vct[i].c_str(), " ");
-		if (tmp[0] == "GET" or tmp[0] == "POST" or tmp[0] == "DELETE")
+		strSplit = ft_split(vct[i].c_str(), " ");
+		for (size_t j = 0; j < 5; j++)
 		{
-			this->_method = tmp[0];
-			this->_httpVersion = tmp[2];
-			// if (!this->parsArgs(tmp[1]))
-			// 	return 1;
-			tmp = ft_split(tmp[1].c_str(), "?");
-			this->_path = tmp[0];
-			if (this->_parsArgsGet)
+			if (strSplit[0] == key[j])
 			{
-				tmp = ft_split(tmp[1].c_str(), "&");
-				for (size_t j = 0; j < tmp.size(); j++)
-				{
-					tmpBis = ft_split(tmp[j].c_str(), "=");
-					this->_argsGet.insert(std::pair<std::string, std::string>(tmpBis[0], tmpBis[1]));
-				}
+				(this->*functPtr[j])(strSplit);
+				break ;
 			}
-		}
-		else if (tmp[0] == "Host:")
-		{
-			tmp = ft_split(tmp[1].c_str(), ":");
-			this->_host = tmp[0];
-			this->_port = tmp[1];
 		}
 	}
 	return 0;

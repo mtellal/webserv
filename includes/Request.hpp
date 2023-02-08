@@ -25,6 +25,7 @@ class Request {
 	std::string	getHttpVersion() const;
 	std::string	getHost() const;
 	std::string	getPort() const;
+	std::string	getConnection() const;
 
 	private:
 	int									_fd;
@@ -36,9 +37,16 @@ class Request {
 	std::string							_httpVersion;
 	std::string							_host;
 	std::string							_port;
+	std::string							_connection;
 	std::map<std::string, std::string>	_argsGet;
 
-	int			parsRequest(int fd);
+	void	(Request::*functPtr[5])(std::vector<std::string>);
+
+	int		parsRequest(int fd);
+
+	void	setMethodVersionPath(std::vector<std::string> strSplit);
+	void	setHostPort(std::vector<std::string> strSplit);
+	void	setConnection(std::vector<std::string> strSplit);
 
 
 };

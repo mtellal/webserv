@@ -60,8 +60,6 @@ bool						SocketServer::getErrSocket() const {
 	return this->_errSocket;
 }
 
-/* Pour chaque server, on cree un socket, on lui donne un nom (avec bind) et des 
- options et on le met en ecoute avec listen (en attente de connexion) */
 void	SocketServer::initSocket() {
 	int	socket_fd;
 	int	opt = 1;
@@ -108,9 +106,6 @@ void	SocketServer::createSockaddr(int i) {
 	this->_sockAddr.push_back(addr);
 }
 
-/* epoll va nous permettre de gerer l'ensemble de nos fd avec la meme fonction
- avec les evenements. On cree notre fd epoll avec epoll_create et on ajoute tous 
- nos fd server dans epoll avec epoll_ctl (avec l'option EPOLL_CTL_ADD) */
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 
@@ -179,13 +174,6 @@ int		SocketServer::isServerFd(int fd) const {
 	return -1;
 }
 
-/* On attend qu'il se passe un evenement avec epoll_wait (une connection sur l'un 
- de nos fd server), si c'est la premiere fois qu'un client se connecte a notre
- server, on cree un fd a ce client, on l'ajoute dans notre epoll (comme pour nos
- fd server precedement) et on l'ajoute a un vector pour ne pas le recree
- lorsqu'il s'y connectera une seconde fois.
- Si le fd client existe deja on passe a la partie communication entre le client
- et le server */
 int		SocketServer::epollWait() {
 	// changer 5 (faire une macro pour les events)
 	struct epoll_event	event[5];
@@ -202,15 +190,9 @@ int		SocketServer::epollWait() {
 	for (int j = 0; j < nbrFd; j++)
 	{
 		if (event[j].data.fd == 0)
-		{
-			// std::cout << "FD = 0" << std::endl;
 			return 1;
-		}
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
-		{
-			// std::cout << "ServerFd" << std::endl;
 			createConnection(i);
-		}
 		else
 		{
 			// std::cout << "NotServerFd" << std::endl;
@@ -218,12 +200,13 @@ int		SocketServer::epollWait() {
 			if (req.getErrRequest())
 				return 1;
 			else if (req.getcloseConnection())
-			{
-				close(event[j].data.fd);
-				epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, event[j].data.fd, NULL);
-			}
+				this->closeConnection(event[j].data.fd);
 			else
+			{
 				Response	rep(req, this->getVctServer(), this->getClientServer());
+				if (rep.getCloseConnection())
+					this->closeConnection(event[j].data.fd);
+			}
 		}
 	}
 	return 0;
@@ -247,7 +230,6 @@ void	SocketServer::createConnection(int i) {
 
 	event.events = EPOLLIN;
 	event.data.fd = fd;
-	// Besoin de stocker ce fd ?
 	this->_clientServer.insert(std::make_pair(fd, i));
 	if (epoll_ctl(this->_epollFd, EPOLLIN, fd, &event) == -1)
 	{
@@ -255,4 +237,9 @@ void	SocketServer::createConnection(int i) {
 		this->_errSocket = true;
 		return ;
 	}
+}
+
+void	SocketServer::closeConnection(int fd) {
+	close(fd);
+	epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, fd, NULL);
 }

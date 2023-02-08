@@ -1,14 +1,14 @@
 #ifndef HEADER_HPP
 # define HEADER_HPP
 
+# include "Request.hpp"
 # include <string>
 
 class Header {
 
 	public:
 	Header();
-	Header(std::string httpVersion, int statusCode, 
-		std::string contentType, std::string file);
+	Header(Request req, std::string file, int statusCode);
 	Header(Header const &src);
 	~Header();
 
@@ -18,13 +18,15 @@ class Header {
 
 
 	private:
-	std::string	_httpVersion;
+	Request	_req;
 	int			_statusCode;
-	std::string	_contentType;
 	std::string	_file;
-	// std::string	_contentLen;
 
 	std::string	ft_itos(int nbr) const;
+	std::string	getContentType() const;
+	std::string	getDate() const;
+	std::string	getContentLength() const;
+	std::string	getCodeDescription() const;
 
 };
 

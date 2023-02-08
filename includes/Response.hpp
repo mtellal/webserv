@@ -15,9 +15,10 @@ class Response {
 
 	Response	&operator=(Response const &rhs);
 
+	bool		getCloseConnection() const;
+
 	private:
 	Request						_req;
-	// Header						_header;
 	std::vector<Server>			_vctServ;
 	std::map<int, int>			_clientServer;
 	std::vector<std::string>	_path;
@@ -28,6 +29,7 @@ class Response {
 	bool						_locBlocSelect;
 	bool						_isDir;
 	bool						_autoindex;
+	bool						_closeConnection;
 
 	std::string	getRightRoot(Server &serv, Location &blocLoc);
 	void		getRightPathLocation(Server serv, Location &blocLoc, bool &res);

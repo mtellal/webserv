@@ -13,7 +13,7 @@
 Response::Response() {}
 
 Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer) : _req(req), _vctServ(vctServ),
-					_clientServer(clientServer), _locBlocSelect(false), _isDir(false), _autoindex(false) {
+					_clientServer(clientServer), _locBlocSelect(false), _isDir(false), _autoindex(false), _closeConnection(false) {
 	// if (req.getMethod() == "GET")
 	// {
 		Server serv = selectServerBlock();
@@ -34,7 +34,15 @@ Response	&Response::operator=(Response const &rhs) {
 	{
 		this->_req = rhs._req;
 		this->_vctServ = rhs._vctServ;
+		this->_clientServer = rhs._clientServer;
 		this->_path = rhs._path;
+		this->_errPath = rhs._errPath;
+		this->_httpRep = rhs._httpRep;
+		this->_statusCode = rhs._statusCode;
+		this->_locBlocSelect = rhs._locBlocSelect;
+		this->_isDir = rhs._isDir;
+		this->_autoindex = rhs._autoindex;
+		this->_closeConnection = rhs._closeConnection;
 	}
 	return *this;
 }
@@ -62,12 +70,12 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
 	{
-		// std::cout << "LOC FICHIER" << std::endl;
+		std::cout << "LOC FICHIER" << std::endl;
 		this->_path.push_back(root);
 	}
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
-		// std::cout << "LOC DOSSIER" << std::endl;
+		std::cout << "LOC DOSSIER" << std::endl;
 		this->_isDir = true;
 		if (root[root.size() - 1] != '/')
 			root += "/";
@@ -81,7 +89,7 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 	}
 	else
 	{
-		// std::cout << "LOC ERR" << std::endl;
+		std::cout << "LOC ERR" << std::endl;
 		res = true;
 	}
 }
@@ -99,12 +107,12 @@ void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
 	{
-		// std::cout << "PAS LOC FICHIER" << std::endl;
+		std::cout << "PAS LOC FICHIER" << std::endl;
 		this->_path.push_back(root);
 	}
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
-		// std::cout << "PAS LOC DOSSIER" << std::endl;
+		std::cout << "PAS LOC DOSSIER" << std::endl;
 		this->_isDir = true;
 		if (root[root.size() - 1] != '/')
 			root += "/";
@@ -116,7 +124,7 @@ void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
 	}
 	else
 	{
-		// std::cout << "PAS LOC ERR" << std::endl;
+		std::cout << "PAS LOC ERR" << std::endl;
 		res = true;
 	}
 }
@@ -319,10 +327,11 @@ void	Response::fileToStr(Server serv, int loc) {
 	}
 
 
-	Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
+	// Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
+	Header	header(this->_req, rightPath, this->_statusCode);
 	res = header.getHeader();
 
-	// std::cout << res << std::endl;
+	std::cout << res << std::endl;
 
 	std::ifstream file(rightPath.c_str());
 	std::string str;
@@ -335,6 +344,9 @@ void	Response::fileToStr(Server serv, int loc) {
 	res += str;
 	write(this->_req.getFd(), res.c_str(), res.size());
 	file.close();
+
+	if (this->_req.getConnection() == "close")
+		this->_closeConnection = true;
 }
 
 Server	Response::selectServerBlock() {
@@ -435,4 +447,8 @@ int		Response::selectLocationBlock(Server serv) {
 		}
 	}
 	return res;
+}
+
+bool		Response::getCloseConnection() const {
+	return this->_closeConnection;
 }

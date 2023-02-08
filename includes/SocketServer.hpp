@@ -45,6 +45,7 @@ class SocketServer {
 	int		isServerFd(int fd) const;
 	int		epollWait();
 	void	createConnection(int i);
+	void	closeConnection(int fd);
 
 
 	// int		getIndexConnection(int fd) const;
