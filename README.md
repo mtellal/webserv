@@ -72,6 +72,10 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 #### BYTE ORDER
 - https://www.quora.com/What-are-network-byte-order-and-host-byte-order-in-computer-networking
 
+### MULTIPLEXING
+#### select()
+- https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+
 ------------------------------------------------------------------------------------------------------
 
 #### TELNET
