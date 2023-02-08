@@ -75,6 +75,7 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 ### MULTIPLEXING
 #### select()
 - https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+- https://jvns.ca/blog/2017/06/03/async-io-on-linux--select--poll--and-epoll/
 
 ------------------------------------------------------------------------------------------------------
 
