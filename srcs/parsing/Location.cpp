@@ -24,6 +24,8 @@ Location::Location(Location const &src) : Directives(src) {
 Location::~Location() {}
 
 Location	&Location::operator=(Location const &rhs) {
+	Directives::operator=(rhs);
+
 	if (this != &rhs)
 	{
 		this->_httpMethods = rhs._httpMethods;

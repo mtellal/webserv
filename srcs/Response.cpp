@@ -15,11 +15,14 @@ Response::Response() {}
 Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer) : _req(req), _vctServ(vctServ),
 					_clientServer(clientServer), _locBlocSelect(false), _isDir(false), _autoindex(false), _closeConnection(false) {
 	// if (req.getMethod() == "GET")
-	// {
+	// {z
 		Server serv = selectServerBlock();
-		int loc = selectLocationBlock(serv);
+		// int loc = selectLocationBlock(serv);
+		this->selectLocationBlock(serv);
+		// if (this->_locBlocSelect)
+			// std::cout << "Bloc SELECT" << std::endl;
 
-		this->fileToStr(serv ,loc);
+		this->fileToStr(serv);
 	// }
 }
 
@@ -40,6 +43,7 @@ Response	&Response::operator=(Response const &rhs) {
 		this->_httpRep = rhs._httpRep;
 		this->_statusCode = rhs._statusCode;
 		this->_locBlocSelect = rhs._locBlocSelect;
+		this->_locBloc = rhs._locBloc;
 		this->_isDir = rhs._isDir;
 		this->_autoindex = rhs._autoindex;
 		this->_closeConnection = rhs._closeConnection;
@@ -47,25 +51,25 @@ Response	&Response::operator=(Response const &rhs) {
 	return *this;
 }
 
-std::string	Response::getRightRoot(Server &serv, Location &blocLoc) {
+std::string	Response::getRightRoot(Server &serv) {
 	std::string	root;
 
-	if (this->_locBlocSelect and blocLoc.getRootSet())
-		root = blocLoc.getRoot();
+	if (this->_locBlocSelect and this->_locBloc.getRootSet())
+		root = this->_locBloc.getRoot();
 	else if (serv.getRootSet())
 		root = serv.getRoot();
 	return root;
 }
 
-void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
+void	Response::getRightPathLocation(Server serv, bool &res) {
 	struct stat					fileOrDir;
-	std::string					root = this->getRightRoot(serv, blocLoc);
+	std::string					root = this->getRightRoot(serv);
 	std::string					newPath;
 	std::vector<std::string>	index;
 
 
 	root.erase(0, 1);
-	newPath = this->_req.getPath().erase(0, blocLoc.getPath().size());
+	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	root += newPath;
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
@@ -79,11 +83,11 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 		this->_isDir = true;
 		if (root[root.size() - 1] != '/')
 			root += "/";
-		index = blocLoc.getIndex();
+		index = this->_locBloc.getIndex();
 		for (size_t i = 0; i < index.size(); i++)
 			this->_path.push_back(index[i].insert(0, root));
-		if (blocLoc.getAutoindexSet())
-			this->_autoindex = blocLoc.getAutoindex();
+		if (this->_locBloc.getAutoindexSet())
+			this->_autoindex = this->_locBloc.getAutoindex();
 		else if (serv.getAutoindexSet())
 			this->_autoindex = serv.getAutoindex();
 	}
@@ -94,9 +98,9 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 	}
 }
 
-void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
+void	Response::getRightPathServer(Server serv, bool &res) {
 	struct stat					fileOrDir;
-	std::string					root = this->getRightRoot(serv, blocLoc);
+	std::string					root = this->getRightRoot(serv);
 	std::string					newPath;
 	std::vector<std::string>	index;
 
@@ -130,14 +134,14 @@ void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
 }
 
 
-bool	Response::getRightPath(Server serv, int loc) {
-	Location					blocLoc = serv.getVctLocation()[loc];
+bool	Response::getRightPath(Server serv) {
+	// Location					blocLoc = serv.getVctLocation()[loc];
 	bool						res = false;
 
-	if (this->_locBlocSelect and blocLoc.getIndexSet())
-		this->getRightPathLocation(serv, blocLoc, res);
+	if (this->_locBlocSelect and this->_locBloc.getIndexSet())
+		this->getRightPathLocation(serv, res);
 	else
-		this->getRightPathServer(serv, blocLoc, res);
+		this->getRightPathServer(serv, res);
 
 	// for (size_t i = 0; i < this->_path.size(); i++)
 		// std::cout << this->_path[i] << std::endl;
@@ -172,21 +176,21 @@ std::string	Response::testAllPaths(bool &err) {
 	return rightPath;
 }
 
-std::string	Response::getRightPathErr(Server serv, Location &blocLoc, bool &pageFind) {
-	std::string									root = getRightRoot(serv, blocLoc);
+std::string	Response::getRightPathErr(Server serv, bool &pageFind) {
+	std::string									root = getRightRoot(serv);
 	std::map<int, std::string>					mapErr;
 	std::map<int, std::string>::const_iterator	it;
 	std::string									rightPath;
 
-	if (this->_locBlocSelect and blocLoc.getErrorPageSet())
+	if (this->_locBlocSelect and this->_locBloc.getErrorPageSet())
 	{
-		mapErr = blocLoc.getErrorPage();
+		mapErr = this->_locBloc.getErrorPage();
 		it = mapErr.find(this->_statusCode);
 		if (it != mapErr.end())
 		{
 			pageFind = true;
 			rightPath = it->second;
-			root = blocLoc.getRoot();
+			root = this->_locBloc.getRoot();
 			root.erase(0, 1);
 			root += "/";
 			root += rightPath;
@@ -297,13 +301,13 @@ std::string	Response::createAutoindexPage(Server serv) {
 }
 
 
-void	Response::fileToStr(Server serv, int loc) {
+void	Response::fileToStr(Server serv) {
 	std::string	res;
 	std::string	rightPath;
-	Location	blocLoc = serv.getVctLocation()[loc];
+	// Location	blocLoc = serv.getVctLocation()[loc];
 	bool		err = false;
 
-	if (!(err = this->getRightPath(serv, loc)))
+	if (!(err = this->getRightPath(serv)))
 		rightPath = this->testAllPaths(err);
 	if (err)
 	{
@@ -314,7 +318,7 @@ void	Response::fileToStr(Server serv, int loc) {
 		else
 			this->_statusCode = 404;
 
-		rightPath = this->getRightPathErr(serv, blocLoc, pageFind);
+		rightPath = this->getRightPathErr(serv, pageFind);
 
 		std::ifstream tmp(rightPath.c_str(), std::ios::in | std::ios::binary);
 
@@ -415,11 +419,11 @@ Server	Response::selectServerBlock() {
 	// return conf[0];
 }
 
-int		Response::selectLocationBlock(Server serv) {
+void	Response::selectLocationBlock(Server serv) {
 	std::vector<Location>	vctLoc = serv.getVctLocation();
 	std::string 			strBlocLoc;
 	Location				tmp;
-	int						res;
+	// int						res;
 	std::string				req = this->_req.getPath();
 	size_t j;
 
@@ -433,9 +437,11 @@ int		Response::selectLocationBlock(Server serv) {
 		{
 			// std::cout << "PHP LOC = " << strBlocLoc << std::endl;
 			this->_locBlocSelect = true;
-			tmp = vctLoc[i];
+			this->_locBloc = vctLoc[i];
+			// tmp = vctLoc[i];
 			// res = i;
-			return i;
+			// return i;
+			return ;
 		}
 		j = 0;
 		while (strBlocLoc[j])
@@ -444,16 +450,18 @@ int		Response::selectLocationBlock(Server serv) {
 				break ;
 			j++;
 		}
-		if (j > 2 and (!strBlocLoc[j] or (strBlocLoc[j] == '/' and !strBlocLoc[j + 1]))
-			and (req[j] == '/' or !req[j]) and strBlocLoc.size() > tmp.getPath().size())
+		if ((j > 2 and (!strBlocLoc[j] or (strBlocLoc[j] == '/' and !strBlocLoc[j + 1]))
+			and (req[j] == '/' or !req[j]) and strBlocLoc.size() > tmp.getPath().size()))
 		{
 			// std::cout << "LOC = " << strBlocLoc << std::endl;
 			this->_locBlocSelect = true;
 			tmp = vctLoc[i];
-			res = i;
+			// res = i;
 		}
 	}
-	return res;
+	if (this->_locBlocSelect)
+		this->_locBloc = tmp;
+	// return res;
 }
 
 bool		Response::getCloseConnection() const {

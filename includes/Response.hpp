@@ -27,24 +27,25 @@ class Response {
 	std::string					_httpRep;
 	int							_statusCode;
 	bool						_locBlocSelect;
+	Location					_locBloc;
 	bool						_isDir;
 	bool						_autoindex;
 	bool						_closeConnection;
 
-	std::string	getRightRoot(Server &serv, Location &blocLoc);
-	void		getRightPathLocation(Server serv, Location &blocLoc, bool &res);
-	void		getRightPathServer(Server serv, Location &blocLoc, bool &res);
-	std::string	getRightPathErr(Server serv, Location &blocLoc, bool &pageFind);
+	std::string	getRightRoot(Server &serv);
+	void		getRightPathLocation(Server serv, bool &res);
+	void		getRightPathServer(Server serv, bool &res);
+	std::string	getRightPathErr(Server serv, bool &pageFind);
 	void		getFileAndDir(Server serv, std::ofstream &file, bool getDir, std::string path);
 
 
 	std::string	testAllPaths(bool &err);
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage(Server serv);
-	void		fileToStr(Server serv, int loc);
+	void		fileToStr(Server serv);
 	Server		selectServerBlock();
-	int			selectLocationBlock(Server serv);
-	bool		getRightPath(Server serv, int loc);
+	void		selectLocationBlock(Server serv);
+	bool		getRightPath(Server serv);
 };
 
 #endif
