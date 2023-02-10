@@ -8,7 +8,7 @@ class Header {
 
 	public:
 	Header();
-	Header(Request req, std::string file, int statusCode);
+	Header(Request req, std::string file, int *statusCode);
 	Header(Header const &src);
 	~Header();
 
@@ -18,8 +18,8 @@ class Header {
 
 
 	private:
-	Request	_req;
-	int			_statusCode;
+	Request		_req;
+	int			*_statusCode;
 	std::string	_file;
 
 	std::string	ft_itos(int nbr) const;

@@ -6,12 +6,13 @@
 Request::Request() {}
 
 Request::Request(int fd) : _fd(fd), _errRequest(false), _parsArgsGet(false),
-							_closeConnection(false){
+							_closeConnection(false), _connectionSet(false), _acceptSet(false) {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
 	this->functPtr[3] = &Request::setHostPort;
 	this->functPtr[4] = &Request::setConnection;
+	this->functPtr[5] = &Request::setAccept;
 
 
 	if (parsRequest(fd))
@@ -37,6 +38,9 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_host = rhs._host;
 		this->_port = rhs._port;
 		this->_connection = rhs._connection;
+		this->_connectionSet = rhs._connectionSet;
+		this->_accept = rhs._accept;
+		this->_acceptSet = rhs._acceptSet;
 		this->_argsGet = rhs._argsGet;
 	}
 	return *this;
@@ -76,6 +80,18 @@ std::string	Request::getPort() const {
 
 std::string	Request::getConnection() const {
 	return this->_connection;
+}
+
+bool		Request::getConnectionSet() const {
+	return this->_connectionSet;
+}
+
+std::string	Request::getAccept() const {
+	return this->_accept;
+}
+
+bool		Request::getAcceptSet() const {
+	return this->_acceptSet;
 }
 
 // bool	Request::parsArgs(std::string tmp) {
@@ -142,6 +158,13 @@ void	Request::setHostPort(std::vector<std::string> strSplit) {
 void	Request::setConnection(std::vector<std::string> strSplit) {
 	strSplit[1].erase(strSplit[1].size() - 1, 1);
 	this->_connection = strSplit[1];
+	this->_connectionSet = true;
+}
+
+void	Request::setAccept(std::vector<std::string> strSplit) {
+	strSplit[1].erase(strSplit[1].size() - 1, 1);
+	this->_accept = strSplit[1];
+	this->_acceptSet = true;
 }
 
 
@@ -151,7 +174,8 @@ int		Request::parsRequest(int fd) {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	tmpBis;
-	std::string					key[5] = { "GET", "POST", "DELETE", "Host:", "Connection:"};
+	std::string					key[6] = { "GET", "POST", "DELETE", "Host:",
+										"Connection:", "Accept:"};
 
 
 	memset(buff, 0, 4096);
@@ -163,13 +187,13 @@ int		Request::parsRequest(int fd) {
 	}
 	buff[oct] = '\0';
 
-	std::cout << buff << std::endl;
+	// std::cout << buff << std::endl;
 
 	vct = ft_split(buff, "\n");
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");
-		for (size_t j = 0; j < 5; j++)
+		for (size_t j = 0; j < 6; j++)
 		{
 			if (strSplit[0] == key[j])
 			{

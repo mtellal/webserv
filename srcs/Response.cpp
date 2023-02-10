@@ -70,12 +70,12 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
 	{
-		std::cout << "LOC FICHIER" << std::endl;
+		// std::cout << "LOC FICHIER" << std::endl;
 		this->_path.push_back(root);
 	}
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
-		std::cout << "LOC DOSSIER" << std::endl;
+		// std::cout << "LOC DOSSIER" << std::endl;
 		this->_isDir = true;
 		if (root[root.size() - 1] != '/')
 			root += "/";
@@ -89,7 +89,7 @@ void	Response::getRightPathLocation(Server serv, Location &blocLoc, bool &res) {
 	}
 	else
 	{
-		std::cout << "LOC ERR" << std::endl;
+		// std::cout << "LOC ERR" << std::endl;
 		res = true;
 	}
 }
@@ -107,12 +107,12 @@ void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
 	{
-		std::cout << "PAS LOC FICHIER" << std::endl;
+		// std::cout << "PAS LOC FICHIER" << std::endl;
 		this->_path.push_back(root);
 	}
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
-		std::cout << "PAS LOC DOSSIER" << std::endl;
+		// std::cout << "PAS LOC DOSSIER" << std::endl;
 		this->_isDir = true;
 		if (root[root.size() - 1] != '/')
 			root += "/";
@@ -124,7 +124,7 @@ void	Response::getRightPathServer(Server serv, Location &blocLoc, bool &res) {
 	}
 	else
 	{
-		std::cout << "PAS LOC ERR" << std::endl;
+		// std::cout << "PAS LOC ERR" << std::endl;
 		res = true;
 	}
 }
@@ -152,7 +152,7 @@ std::string	Response::testAllPaths(bool &err) {
 	// 	std::cout << this->_path[j] << std::endl;
 	while (i < this->_path.size())
 	{
-		std::ifstream tmp(this->_path[i].c_str(), std::ios::in);
+		std::ifstream tmp(this->_path[i].c_str(), std::ios::in | std::ios::binary);
 
 		if (tmp)
 		{
@@ -316,7 +316,7 @@ void	Response::fileToStr(Server serv, int loc) {
 
 		rightPath = this->getRightPathErr(serv, blocLoc, pageFind);
 
-		std::ifstream tmp(rightPath.c_str(), std::ios::in);
+		std::ifstream tmp(rightPath.c_str(), std::ios::in | std::ios::binary);
 
 		if (this->_autoindex)
 			rightPath = this->createAutoindexPage(serv);
@@ -328,12 +328,19 @@ void	Response::fileToStr(Server serv, int loc) {
 
 
 	// Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
-	Header	header(this->_req, rightPath, this->_statusCode);
+	Header	header(this->_req, rightPath, &this->_statusCode);
 	res = header.getHeader();
 
-	std::cout << res << std::endl;
+	if (this->_statusCode == 406)
+	{
+		rightPath = this->createDefaultErrorPage();
+		Header	headerBis(this->_req, rightPath, &this->_statusCode);
+		res = header.getHeader();
+	}
 
-	std::ifstream file(rightPath.c_str());
+	// std::cout << res << std::endl;
+
+	std::ifstream file(rightPath.c_str(), std::ios::in | std::ios::binary);
 	std::string str;
 	if (file)
 	{

@@ -26,6 +26,10 @@ class Request {
 	std::string	getHost() const;
 	std::string	getPort() const;
 	std::string	getConnection() const;
+	std::string	getAccept() const;
+
+	bool		getConnectionSet() const;
+	bool		getAcceptSet() const;
 
 	private:
 	int									_fd;
@@ -38,15 +42,19 @@ class Request {
 	std::string							_host;
 	std::string							_port;
 	std::string							_connection;
+	bool								_connectionSet;
+	std::string							_accept;
+	bool								_acceptSet;
 	std::map<std::string, std::string>	_argsGet;
 
-	void	(Request::*functPtr[5])(std::vector<std::string>);
+	void	(Request::*functPtr[6])(std::vector<std::string>);
 
 	int		parsRequest(int fd);
 
 	void	setMethodVersionPath(std::vector<std::string> strSplit);
 	void	setHostPort(std::vector<std::string> strSplit);
 	void	setConnection(std::vector<std::string> strSplit);
+	void	setAccept(std::vector<std::string> strSplit);
 
 
 };

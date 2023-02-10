@@ -28,4 +28,10 @@ int main(int argc, char **argv)
 	Possible d'avoir dans le fichier de conf 2 bloc server avec la meme directive listen
 	mais a departager avec server_name ?
 	Types MIME
+
+	https://www.w3.org/Protocols/rfc2616/rfc2616.html
+
+
+	Mime: https://wiki.debian.org/fr/MIME
+	ET https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
 */
