@@ -106,3 +106,6 @@ xhtml) </br>
 
 
 - https://httpwg.org/specs/
+
+`• Limit client body size.` </br>
+- https://www.tecmint.com/limit-file-upload-size-in-nginx/
