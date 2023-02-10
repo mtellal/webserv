@@ -88,3 +88,12 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 - Hands-On Network Programming with C - Lewis Van Winkle (https://github.com/mtellal/docs/blob/main/hands-on-network-programming-with-c-learn-socket-programming-in-c-and-write-secure-and-optimized-network-code-true-pdf-1nbsped-9781789349863_compress.pdf)
 - https://www.freesoft.org/CIE/Course/index.htm - Tuto (introduction to networks) 
 
+RFC 7230: Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and
+Routing (https://tools.ietf.org/html/rfc7230) </br>
+RFC 7231: Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content (https://
+tools.ietf.org/html/rfc7231) </br>
+RFC 1866: Hypertext Markup Language – 2.0 (https://tools.ietf.org/html/
+rfc1866) </br>
+RFC 3986: Uniform Resource Identifier (URI): Generic Syntax (https://tools.ietf.
+org/html/rfc3986)
+
