@@ -97,3 +97,10 @@ rfc1866) </br>
 RFC 3986: Uniform Resource Identifier (URI): Generic Syntax (https://tools.ietf.
 org/html/rfc3986)
 
+RFC 7230: Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing
+(https://tools.ietf.org/html/rfc7230) </br>
+RFC 7231: Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content (https://
+tools.ietf.org/html/rfc7231) </br>
+Media Types (https://www.iana.org/assignments/media-types/media-types.
+xhtml) </br>
+
