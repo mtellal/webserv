@@ -111,3 +111,5 @@ xhtml) </br>
 - https://www.tecmint.com/limit-file-upload-size-in-nginx/
 
 - http://www.purplepixie.org/cgi/howto.php
+- https://www.ibm.com/docs/en/i/7.3?topic=programming-cgi-process
+- http://www.rebol.com/docs/cgi2.html
