@@ -109,3 +109,5 @@ xhtml) </br>
 
 `• Limit client body size.` </br>
 - https://www.tecmint.com/limit-file-upload-size-in-nginx/
+
+- http://www.purplepixie.org/cgi/howto.php
