@@ -4,22 +4,28 @@ CC			= c++
 
 CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
 
-SRCS	=	srcs/main.cpp \
-			srcs/parsing/Configuration.cpp \
-			srcs/parsing/Server.cpp \
-			srcs/parsing/Directives.cpp \
-			srcs/parsing/Location.cpp \
-			srcs/parsing/utils.cpp \
-			srcs/SocketServer.cpp \
-			srcs/Request.cpp \
-			srcs/Response.cpp \
-			srcs/Header.cpp
+SRCS	=	main.cpp \
+			parsing/Configuration.cpp \
+			parsing/Server.cpp \
+			parsing/Directives.cpp \
+			parsing/Location.cpp \
+			parsing/utils.cpp \
+			SocketServer.cpp \
+			Request.cpp \
+			Response.cpp \
+			Header.cpp
 
-OBJS		= $(SRCS:.cpp=.o)
+SRCDIR		= srcs
 
-DEPS		= $(SRCS:.cpp=.d)
+OBJDIR		= obj
 
-%.o: %.cpp
+OBJS		= $(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
+
+DEPS		= $(OBJS:.o=.d)
+
+obj/%.o: srcs/%.cpp
+	@mkdir -p $(OBJDIR)
+	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) -MMD -c $< -o $@ -I include
 
 all: $(NAME)
@@ -30,6 +36,7 @@ $(NAME): $(OBJS)
 clean:
 	rm -f $(OBJS)
 	rm -f $(DEPS)
+	@rm -rf $(OBJDIR)
 
 fclean: clean
 	rm -f $(NAME)
