@@ -27,6 +27,7 @@ class Directives {
 	bool										getAutoindex() const;
 	std::vector<std::string>					getIndex() const;
 	std::string									getHttpRedir() const;
+	std::vector<std::string>					getHttpMethods() const;
 	bool										getErrorDirectives() const;
 
 	void	setErrorPage(std::vector<std::string> str, int *i);
@@ -35,6 +36,7 @@ class Directives {
 	void	setAutoindex(std::vector<std::string> autoindex, int *i);
 	void	setIndex(std::vector<std::string> index, int *i);
 	void	setHttpRedir(std::vector<std::string> redir, int *i);
+	void	setHttpMethods(std::vector<std::string> redir, int *i);
 
 	bool	getErrorPageSet() const;
 	bool	getClientMaxBodySizeSet() const;
@@ -42,6 +44,7 @@ class Directives {
 	bool	getAutoindexSet() const;
 	bool	getIndexSet() const;
 	bool	getHttpRedirSet() const;
+	bool	getHttpMethodsSet() const;
 
 	void	showErrorPage(std::ostream & o) const;
 	void	showAutoindex(std::ostream & o) const;
@@ -62,6 +65,9 @@ class Directives {
 	bool										_indexSet;
 	bool										_httpRedirSet;
 	bool										_errorDirectives;
+	std::vector<std::string>					_httpMethods;
+	bool										_httpMethodsSet;
+
 
 	bool	checkFormatDir(std::vector<std::string> host, int *i);
 };

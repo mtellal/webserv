@@ -14,6 +14,12 @@ int main(int argc, char **argv)
 	if (argc == 2)
 		file = argv[1];
 	Configuration	conf(file);
+
+
+
+
+
+
 	// std::vector<Server> test = conf.getVctServer();
 	if (conf.get_errorConf())
 		return 1;

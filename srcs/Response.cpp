@@ -67,8 +67,8 @@ void	Response::getRightPathLocation(Server serv, bool &res) {
 	std::string					newPath;
 	std::vector<std::string>	index;
 
-
-	root.erase(0, 1);
+	if (root[0] == '/')
+		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	root += newPath;
 	stat(root.c_str(), &fileOrDir);
@@ -104,7 +104,8 @@ void	Response::getRightPathServer(Server serv, bool &res) {
 	std::string					newPath;
 	std::vector<std::string>	index;
 
-	root.erase(0, 1);
+	if (root[0] == '/')
+		root.erase(0, 1);
 	newPath = this->_req.getPath();
 	root += newPath;
 	// std::cout << "ROOT_BIS = " << root << std::endl;
@@ -329,6 +330,7 @@ void	Response::fileToStr(Server serv) {
 		else
 			tmp.close();
 	}
+
 
 
 	// Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);

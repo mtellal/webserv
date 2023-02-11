@@ -39,7 +39,7 @@ std::string	Header::getHeader() const {
 
 	res = this->_req.getHttpVersion() + " " + ft_itos(*this->_statusCode) + " " + this->getCodeDescription() + "\n";
 	res += "Content-Type: " + this->getContentType() + "\n";
-	res += "Server: webserv/1.0\n";
+	res += "Server: Webserv/1.0\n";
 	res += "Date: " + this->getDate() + "\n";
 	res += "Last-Modified: " + this->getLastModified();
 	res += "Host: " + this->_req.getHost() + ":" + this->_req.getPort() + "\n";

@@ -5,7 +5,7 @@
 Directives::Directives() :  _clientMaxBodySize(1), _root("html"), _autoindex(false),
 						_errorPageSet(false), _clientMaxBodySizeSet(false),
 						_rootSet(false), _autoindexSet(false), _indexSet(false),
-						_httpRedirSet(false), _errorDirectives(false) {
+						_httpRedirSet(false), _errorDirectives(false), _httpMethodsSet(false) {
 	this->_index.push_back("index.html");
 }
 
@@ -31,6 +31,9 @@ Directives	&Directives::operator=(Directives const &rhs) {
 		this->_indexSet = rhs._indexSet;
 		this->_httpRedirSet = rhs._httpRedirSet;
 		this->_errorDirectives = rhs._errorDirectives;
+		this->_httpMethods = rhs._httpMethods;
+		this->_httpMethodsSet = rhs._httpMethodsSet;
+
 	}
 	return *this;
 }
@@ -89,6 +92,10 @@ bool						Directives::getIndexSet() const {
 
 bool						Directives::getHttpRedirSet() const {
 	return this->_httpRedirSet;
+}
+
+std::vector<std::string>	Directives::getHttpMethods() const {
+	return this->_httpMethods;
 }
 
 void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
@@ -242,6 +249,30 @@ void	Directives::setHttpRedir(std::vector<std::string> redir, int *i) {
 	{
 		this->_errorDirectives = true;
 		std::cout << "Error: at line " << *i << " return is already set" << std::endl;
+	}
+}
+
+void	Directives::setHttpMethods(std::vector<std::string> methods, int *i) {
+	if (methods.size() < 2)
+	{
+		this->_errorDirectives = true;
+		std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
+	}
+	else
+	{
+		for (size_t j = 1; j < methods.size(); j++)
+		{
+			if (methods[j] == "GET" or methods[j] == "POST" or methods[j] == "DELETE")
+			{
+				this->_httpMethodsSet = true;
+				this->_httpMethods.push_back(methods[j]);
+			}
+			else
+			{
+				this->_errorDirectives = true;
+				std::cout << "Error: at line " << *i << " incorrect HTTP methods" << std::endl;
+			}
+		}
 	}
 }
 

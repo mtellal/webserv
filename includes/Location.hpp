@@ -13,7 +13,7 @@ class Location : public Directives {
 
 	Location	&operator=(Location const &rhs);
 
-	std::vector<std::string>		getHttpMethods();
+	// std::vector<std::string>		getHttpMethods();
 	std::string						getCgi();
 	std::string						getPath();
 	bool							getErrorLoc();
@@ -24,10 +24,10 @@ class Location : public Directives {
 
 
 	protected:
-	std::vector<std::string>	_httpMethods;
+	// std::vector<std::string>	_httpMethods;
 	std::string					_cgi;
 	std::string					_path;
-	bool						_httpMethodsSet;
+	// bool						_httpMethodsSet;
 	bool						_cgiSet;
 	bool						_errorLoc;
 
@@ -39,7 +39,7 @@ class Location : public Directives {
 	bool	charAccepted(char c);
 	void	readBlock(std::ifstream &file, int *i);
 
-	void	setHttpMethods(std::vector<std::string> methods, int *i);
+	// void	setHttpMethods(std::vector<std::string> methods, int *i);
 	void	setCgi(std::vector<std::string> cgi, int *i);
 };
 

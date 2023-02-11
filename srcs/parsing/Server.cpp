@@ -13,6 +13,7 @@ Server::Server(std::ifstream &file, int *i) : Directives(),  _host("0.0.0.0"),
 	this->functPtr[5] = &Directives::setAutoindex;
 	this->functPtr[6] = &Directives::setIndex;
 	this->functPtr[7] = &Directives::setHttpRedir;
+	this->functPtr[8] = &Directives::setHttpMethods;
 
 	this->readfile(file, i);
 }
@@ -24,6 +25,8 @@ Server::Server(Server const &src) : Directives(src) {
 Server::~Server() {}
 
 Server	&Server::operator=(Server const &rhs) {
+	Directives::operator=(rhs);
+
 	if (this != &rhs)
 	{
 		this->_vctLoation = rhs._vctLoation;
@@ -202,8 +205,8 @@ void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 void	Server::readfile(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string words[8] = { "listen", "server_name", "error_page", "client_max_body_size",
-						 "root", "autoindex", "index", "return" };
+	std::string words[9] = { "listen", "server_name", "error_page", "client_max_body_size",
+						 "root", "autoindex", "index", "return", "http_methods" };
 
 	*i += 1;
 	while (std::getline(file, line))
@@ -227,7 +230,7 @@ void	Server::readfile(std::ifstream &file, int *i) {
 			}
 			else
 			{
-				while (j < 8)
+				while (j < 9)
 				{
 					if (tmp[0] == words[j])
 					{
@@ -241,7 +244,7 @@ void	Server::readfile(std::ifstream &file, int *i) {
 						break ;
 					}
 					j++;
-					if (j == 8)
+					if (j == 9)
 					{
 						this->_errorServer = true;
 						std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;

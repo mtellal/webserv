@@ -2,9 +2,9 @@
 
 Location::Location() {}
 
-Location::Location(std::ifstream &file, int *i, std::vector<std::string> loc) : _httpMethodsSet(false),
-																_cgiSet(false), _errorLoc(false) {
-	this->functPtr[0] = &Location::setHttpMethods;
+Location::Location(std::ifstream &file, int *i, std::vector<std::string> loc) : _cgiSet(false),
+																		_errorLoc(false) {
+	this->functPtr[0] = &Directives::setHttpMethods;
 	this->functPtr[1] = &Location::setCgi;
 	this->functPtr[2] = &Directives::setErrorPage;
 	this->functPtr[3] = &Directives::setClientMaxBodySize;
@@ -28,19 +28,19 @@ Location	&Location::operator=(Location const &rhs) {
 
 	if (this != &rhs)
 	{
-		this->_httpMethods = rhs._httpMethods;
+		// this->_httpMethods = rhs._httpMethods;
 		this->_cgi = rhs._cgi;
 		this->_path = rhs._path;
-		this->_httpMethodsSet = rhs._httpMethodsSet;
+		// this->_httpMethodsSet = rhs._httpMethodsSet;
 		this->_cgiSet = rhs._cgiSet;
 		this->_errorLoc = rhs._errorLoc;
 	}
 	return *this;
 }
 
-std::vector<std::string>		Location::getHttpMethods() {
-	return this->_httpMethods;
-}
+// std::vector<std::string>		Location::getHttpMethods() {
+// 	return this->_httpMethods;
+// }
 
 std::string						Location::getCgi() {
 	return this->_cgi;
@@ -123,29 +123,29 @@ void	Location::readBlock(std::ifstream &file, int *i) {
 	}
 }
 
-void	Location::setHttpMethods(std::vector<std::string> methods, int *i) {
-	if (methods.size() < 2)
-	{
-		this->_errorLoc = true;
-		std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
-	}
-	else
-	{
-		for (size_t j = 1; j < methods.size(); j++)
-		{
-			if (methods[j] == "GET" or methods[j] == "POST" or methods[j] == "DELETE")
-			{
-				this->_httpMethodsSet = true;
-				this->_httpMethods.push_back(methods[j]);
-			}
-			else
-			{
-				this->_errorLoc = true;
-				std::cout << "Error: at line " << *i << " incorrect HTTP methods" << std::endl;
-			}
-		}
-	}
-}
+// void	Location::setHttpMethods(std::vector<std::string> methods, int *i) {
+// 	if (methods.size() < 2)
+// 	{
+// 		this->_errorLoc = true;
+// 		std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
+// 	}
+// 	else
+// 	{
+// 		for (size_t j = 1; j < methods.size(); j++)
+// 		{
+// 			if (methods[j] == "GET" or methods[j] == "POST" or methods[j] == "DELETE")
+// 			{
+// 				this->_httpMethodsSet = true;
+// 				this->_httpMethods.push_back(methods[j]);
+// 			}
+// 			else
+// 			{
+// 				this->_errorLoc = true;
+// 				std::cout << "Error: at line " << *i << " incorrect HTTP methods" << std::endl;
+// 			}
+// 		}
+// 	}
+// }
 
 void	Location::setCgi(std::vector<std::string> cgi, int *i) {
 	if (cgi.size()!= 2)

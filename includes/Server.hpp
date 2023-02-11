@@ -41,7 +41,7 @@ class Server : public Directives {
 	bool						_portSet;
 	bool						_serverNameSet;
 	bool						_errorServer;
-	void						(Server::*functPtr[8])(std::vector<std::string>, int *i);
+	void						(Server::*functPtr[9])(std::vector<std::string>, int *i);
 
 	void						setHost(std::vector<std::string> host, int *i);
 	bool						checkFormatHost(std::string host);
