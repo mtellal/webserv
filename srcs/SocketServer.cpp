@@ -136,6 +136,12 @@ void	SocketServer::createFdEpoll() {
 }
 
 void	SocketServer::closeSockets() {
+	for (std::map<int, int>::iterator it = this->_clientServer.begin() ; it != this->_clientServer.end(); it++)
+	{
+		this->_clientServer.erase(it->first);
+		close(it->first);
+		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, it->first, NULL);
+	}
 	for (size_t i = 0; i < this->_vctServ.size(); i++)
 	{
 		close(this->_serverFd[i]);
@@ -243,6 +249,9 @@ void	SocketServer::createConnection(int i) {
 }
 
 void	SocketServer::closeConnection(int fd) {
+	this->_clientServer.erase(fd);
+	// int ret = this->_clientServer.erase(fd);
+	// std::cout << "Elements suppr: " << ret << std::endl;
 	close(fd);
 	epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, fd, NULL);
 }

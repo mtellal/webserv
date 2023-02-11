@@ -6,13 +6,16 @@
 Request::Request() {}
 
 Request::Request(int fd) : _fd(fd), _errRequest(false), _parsArgsGet(false),
-							_closeConnection(false), _connectionSet(false), _acceptSet(false) {
+							_closeConnection(false), _connectionSet(false), _acceptSet(false),
+							_refererSet(false), _agentSet(false) {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
 	this->functPtr[3] = &Request::setHostPort;
 	this->functPtr[4] = &Request::setConnection;
 	this->functPtr[5] = &Request::setAccept;
+	this->functPtr[6] = &Request::setReferer;
+	this->functPtr[7] = &Request::setAgent;
 
 
 	if (parsRequest(fd))
@@ -42,6 +45,10 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_accept = rhs._accept;
 		this->_acceptSet = rhs._acceptSet;
 		this->_argsGet = rhs._argsGet;
+		this->_refererSet = rhs._refererSet;
+		this->_referer = rhs._referer;
+		this->_agentSet = rhs._agentSet;
+		this->_agent = rhs._agent;
 	}
 	return *this;
 }
@@ -82,6 +89,14 @@ std::string	Request::getConnection() const {
 	return this->_connection;
 }
 
+std::string	Request::getReferer() const {
+	return this->_referer;
+}
+
+std::string	Request::getAgent() const {
+	return this->_agent;
+}
+
 bool		Request::getConnectionSet() const {
 	return this->_connectionSet;
 }
@@ -92,6 +107,14 @@ std::string	Request::getAccept() const {
 
 bool		Request::getAcceptSet() const {
 	return this->_acceptSet;
+}
+
+bool		Request::getRefererSet() const {
+	return this->_refererSet;
+}
+
+bool		Request::getAgentSet() const {
+	return this->_agentSet;
 }
 
 // bool	Request::parsArgs(std::string tmp) {
@@ -167,6 +190,22 @@ void	Request::setAccept(std::vector<std::string> strSplit) {
 	this->_acceptSet = true;
 }
 
+void	Request::setReferer(std::vector<std::string> strSplit) {
+	strSplit[1].erase(strSplit[1].size() - 1, 1);
+	this->_referer = strSplit[1];
+	this->_refererSet = true;
+}
+
+void	Request::setAgent(std::vector<std::string> strSplit) {
+	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
+	for (size_t i = 1; i < strSplit.size(); i++)
+	{
+		if (i != 1)
+			this->_agent += " ";
+		this->_agent += strSplit[i];
+	}
+	this->_agentSet = true;
+}
 
 int		Request::parsRequest(int fd) {
 	char						buff[4096];
@@ -174,8 +213,9 @@ int		Request::parsRequest(int fd) {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	tmpBis;
-	std::string					key[6] = { "GET", "POST", "DELETE", "Host:",
-										"Connection:", "Accept:"};
+	std::string					key[8] = { "GET", "POST", "DELETE", "Host:",
+										"Connection:", "Accept:", "Referer:",
+										"User-Agent:"};
 
 
 	memset(buff, 0, 4096);
@@ -193,7 +233,7 @@ int		Request::parsRequest(int fd) {
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");
-		for (size_t j = 0; j < 6; j++)
+		for (size_t j = 0; j < 8; j++)
 		{
 			if (strSplit[0] == key[j])
 			{

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
+#include <ctime>
 
 Header::Header() {}
 
@@ -40,13 +41,31 @@ std::string	Header::getHeader() const {
 	res += "Content-Type: " + this->getContentType() + "\n";
 	res += "Server: webserv/1.0\n";
 	res += "Date: " + this->getDate() + "\n";
+	res += "Last-Modified: " + this->getLastModified();
+	res += "Host: " + this->_req.getHost() + ":" + this->_req.getPort() + "\n";
 	if (this->_req.getConnectionSet())
 		res += "Connection: " + this->_req.getConnection() + "\n";
+	if (this->_req.getRefererSet())
+		res += "Referer: " + this->_req.getReferer() + "\n";
+	if (this->_req.getAgentSet())
+		res += "User-Agent: " + this->_req.getAgent() + "\n";
 	res += "Content-Length: " + this->getContentLength() + "\n\n";
 
 	// std::cout << res << std::endl;
 
 	return res;
+	/*
+	Accept-Charset
+	Accept-Language
+	Allow
+	Authorization
+	Content-Language
+	Content-Location
+	Retry-After
+	Transfert-Encoding
+	User-Agent			// Easy
+	WWW-Authenticate
+	*/
 }
 
 std::string	Header::ft_itos(int nbr) const {
@@ -119,7 +138,6 @@ std::string	Header::getContentType() const {
 	return "406";
 }
 
-
 std::string	Header::getDate() const {
 	std::string date;
 	time_t tmm = time(0);
@@ -147,4 +165,13 @@ std::string	Header::getCodeDescription() const {
 	else if (*this->_statusCode == 406)
 		return "Not Acceptable";
 	return "";
+}
+
+
+std::string	Header::getLastModified() const {
+	struct stat s;
+
+	stat(this->_file.c_str(), &s);
+
+	return ctime(&s.st_mtime);
 }

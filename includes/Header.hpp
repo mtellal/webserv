@@ -27,6 +27,7 @@ class Header {
 	std::string	getDate() const;
 	std::string	getContentLength() const;
 	std::string	getCodeDescription() const;
+	std::string	getLastModified() const;
 
 };
 

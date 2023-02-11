@@ -3,7 +3,7 @@
 Server::Server() {}
 
 Server::Server(std::ifstream &file, int *i) : Directives(),  _host("0.0.0.0"),
-									_port(80), _hostSet(false), _portSet(false), 
+									_port(8080), _hostSet(false), _portSet(false), 
 									_serverNameSet(false), _errorServer(false) {
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
@@ -123,7 +123,7 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 			{
 				this->_hostSet = true;
 				this->_host = host[1];
-				this->setPort("80", i);
+				// this->setPort(this->_port, i);
 			}
 			else
 			{

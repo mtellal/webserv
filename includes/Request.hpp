@@ -27,9 +27,13 @@ class Request {
 	std::string	getPort() const;
 	std::string	getConnection() const;
 	std::string	getAccept() const;
+	std::string	getReferer() const;
+	std::string	getAgent() const;
 
 	bool		getConnectionSet() const;
 	bool		getAcceptSet() const;
+	bool		getRefererSet() const;
+	bool		getAgentSet() const;
 
 	private:
 	int									_fd;
@@ -46,8 +50,12 @@ class Request {
 	std::string							_accept;
 	bool								_acceptSet;
 	std::map<std::string, std::string>	_argsGet;
+	bool								_refererSet;
+	std::string							_referer;
+	bool								_agentSet;
+	std::string							_agent;
 
-	void	(Request::*functPtr[6])(std::vector<std::string>);
+	void	(Request::*functPtr[8])(std::vector<std::string>);
 
 	int		parsRequest(int fd);
 
@@ -55,6 +63,8 @@ class Request {
 	void	setHostPort(std::vector<std::string> strSplit);
 	void	setConnection(std::vector<std::string> strSplit);
 	void	setAccept(std::vector<std::string> strSplit);
+	void	setReferer(std::vector<std::string> strSplit);
+	void	setAgent(std::vector<std::string> strSplit);
 
 
 };

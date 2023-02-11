@@ -25,12 +25,12 @@ int main(int argc, char **argv)
 }
 
 /*
-	Possible d'avoir dans le fichier de conf 2 bloc server avec la meme directive listen
-	mais a departager avec server_name ?
+	Possible d'avoir dans le fichier de conf 2 bloc server avec le meme port et
+	donc a departager avec server_name ?
+	Http Methods uniquement dans bloc location ou aussi dans bloc Server ?
+
 	Types MIME
-
 	https://www.w3.org/Protocols/rfc2616/rfc2616.html
-
 
 	Mime: https://wiki.debian.org/fr/MIME
 	ET https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
