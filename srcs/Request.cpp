@@ -175,6 +175,7 @@ void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 void	Request::setHostPort(std::vector<std::string> strSplit) {
 	strSplit = ft_split(strSplit[1].c_str(), ":");
 	this->_host = strSplit[0];
+	strSplit[1].erase(strSplit[1].size() - 1, 1);
 	this->_port = strSplit[1];
 }
 

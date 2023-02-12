@@ -7,6 +7,7 @@ Directives::Directives() :  _clientMaxBodySize(1), _root("html"), _autoindex(fal
 						_rootSet(false), _autoindexSet(false), _indexSet(false),
 						_httpRedirSet(false), _errorDirectives(false), _httpMethodsSet(false) {
 	this->_index.push_back("index.html");
+	this->_httpMethods.push_back("GET");
 }
 
 Directives::Directives(Directives const &src) {
@@ -264,8 +265,20 @@ void	Directives::setHttpMethods(std::vector<std::string> methods, int *i) {
 		{
 			if (methods[j] == "GET" or methods[j] == "POST" or methods[j] == "DELETE")
 			{
-				this->_httpMethodsSet = true;
-				this->_httpMethods.push_back(methods[j]);
+				bool	alreadySet = false;
+
+				if (!this->_httpMethodsSet)
+				{
+					this->_httpMethodsSet = true;
+					this->_httpMethods.clear();
+				}
+				for (size_t k = 1; k < this->_httpMethods.size(); k++)
+				{
+					if (this->_httpMethods[k] == methods[j])
+						alreadySet = true;
+				}
+				if (!alreadySet)
+					this->_httpMethods.push_back(methods[j]);
 			}
 			else
 			{

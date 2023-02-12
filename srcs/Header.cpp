@@ -9,8 +9,9 @@
 
 Header::Header() {}
 
-Header::Header(Request req, std::string file, int *statusCode) : _req(req), _statusCode(statusCode),
-				_file(file) {
+Header::Header(Request req, std::string file, int *statusCode, Server serv, Response *rep) : _req(req), _statusCode(statusCode),
+				_file(file), _serv(serv), _rep(rep){
+	(void)this->_rep;
 }
 
 Header::Header(Header const &src) {
@@ -25,6 +26,7 @@ Header	&Header::operator=(Header const &rhs) {
 		this->_req = rhs._req;
 		this->_statusCode = rhs._statusCode;
 		this->_file = rhs._file;
+		this->_serv = rhs._serv;
 	}
 	return *this;
 }
@@ -49,22 +51,22 @@ std::string	Header::getHeader() const {
 		res += "Referer: " + this->_req.getReferer() + "\n";
 	if (this->_req.getAgentSet())
 		res += "User-Agent: " + this->_req.getAgent() + "\n";
+	res += "Allow: " + this->getAllow() + "\n";
 	res += "Content-Length: " + this->getContentLength() + "\n\n";
 
 	// std::cout << res << std::endl;
 
 	return res;
 	/*
-	Accept-Charset
-	Accept-Language
-	Allow
-	Authorization
-	Content-Language
-	Content-Location
-	Retry-After
-	Transfert-Encoding
-	User-Agent			// Easy
-	WWW-Authenticate
+	Directives de l'ancien sujet pas implementes :
+		Accept-Charset
+		Accept-Language
+		Authorization
+		Content-Language
+		Content-Location
+		Retry-After
+		Transfert-Encoding
+		WWW-Authenticate
 	*/
 }
 
@@ -91,8 +93,6 @@ std::string	Header::getContentType() const {
 	extension = splitextension[splitextension.size() - 1];
 	if (this->_req.getAcceptSet())
 		splitAccept = ft_split(this->_req.getAccept().c_str(), ",;");
-
-
 
 	while (std::getline(file, line))
 	{
@@ -174,4 +174,22 @@ std::string	Header::getLastModified() const {
 	stat(this->_file.c_str(), &s);
 
 	return ctime(&s.st_mtime);
+}
+
+std::string	Header::getAllow() const {
+	std::string					ret;
+	std::vector<std::string>	allow;
+
+	if (this->_rep->getlocBlocSelect() and this->_rep->getLocBloc().getHttpMethodsSet())
+		allow = this->_rep->getLocBloc().getHttpMethods();
+	else
+		allow = this->_rep->getServ().getHttpMethods();
+
+	for (size_t i = 0; i < allow.size(); i++)
+	{
+		if (i != 0)
+			ret += ", ";
+		ret += allow[i];
+	}
+	return ret;
 }

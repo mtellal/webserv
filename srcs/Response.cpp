@@ -16,13 +16,20 @@ Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> 
 					_clientServer(clientServer), _locBlocSelect(false), _isDir(false), _autoindex(false), _closeConnection(false) {
 	// if (req.getMethod() == "GET")
 	// {z
-		Server serv = selectServerBlock();
+
+
+
+		// Server serv = selectServerBlock();
+		this->_serv = selectServerBlock();
+
+
+
 		// int loc = selectLocationBlock(serv);
-		this->selectLocationBlock(serv);
+		this->selectLocationBlock();
 		// if (this->_locBlocSelect)
 			// std::cout << "Bloc SELECT" << std::endl;
 
-		this->fileToStr(serv);
+		this->fileToStr();
 	// }
 }
 
@@ -35,6 +42,7 @@ Response::~Response() {}
 Response	&Response::operator=(Response const &rhs) {
 	if (this != &rhs)
 	{
+		this->_serv = rhs._serv;
 		this->_req = rhs._req;
 		this->_vctServ = rhs._vctServ;
 		this->_clientServer = rhs._clientServer;
@@ -51,19 +59,35 @@ Response	&Response::operator=(Response const &rhs) {
 	return *this;
 }
 
-std::string	Response::getRightRoot(Server &serv) {
+Server		Response::getServ() const {
+	return this->_serv;
+}
+
+bool		Response::getlocBlocSelect() const {
+	return this->_locBlocSelect;
+}
+
+Location	Response::getLocBloc() const {
+	return this->_locBloc;
+}
+
+bool		Response::getCloseConnection() const {
+	return this->_closeConnection;
+}
+
+std::string	Response::rightRoot() {
 	std::string	root;
 
 	if (this->_locBlocSelect and this->_locBloc.getRootSet())
 		root = this->_locBloc.getRoot();
-	else if (serv.getRootSet())
-		root = serv.getRoot();
+	else if (this->_serv.getRootSet())
+		root = this->_serv.getRoot();
 	return root;
 }
 
-void	Response::getRightPathLocation(Server serv, bool &res) {
+void	Response::rightPathLocation(bool &res) {
 	struct stat					fileOrDir;
-	std::string					root = this->getRightRoot(serv);
+	std::string					root = this->rightRoot();
 	std::string					newPath;
 	std::vector<std::string>	index;
 
@@ -88,8 +112,8 @@ void	Response::getRightPathLocation(Server serv, bool &res) {
 			this->_path.push_back(index[i].insert(0, root));
 		if (this->_locBloc.getAutoindexSet())
 			this->_autoindex = this->_locBloc.getAutoindex();
-		else if (serv.getAutoindexSet())
-			this->_autoindex = serv.getAutoindex();
+		else if (this->_serv.getAutoindexSet())
+			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
 	{
@@ -98,9 +122,9 @@ void	Response::getRightPathLocation(Server serv, bool &res) {
 	}
 }
 
-void	Response::getRightPathServer(Server serv, bool &res) {
+void	Response::rightPathServer(bool &res) {
 	struct stat					fileOrDir;
-	std::string					root = this->getRightRoot(serv);
+	std::string					root = this->rightRoot();
 	std::string					newPath;
 	std::vector<std::string>	index;
 
@@ -121,11 +145,11 @@ void	Response::getRightPathServer(Server serv, bool &res) {
 		this->_isDir = true;
 		if (root[root.size() - 1] != '/')
 			root += "/";
-		index = serv.getIndex();
+		index = this->_serv.getIndex();
 		for (size_t i = 0; i < index.size(); i++)
 			this->_path.push_back(index[i].insert(0, root));
-		if (serv.getAutoindexSet())
-			this->_autoindex = serv.getAutoindex();
+		if (this->_serv.getAutoindexSet())
+			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
 	{
@@ -135,14 +159,14 @@ void	Response::getRightPathServer(Server serv, bool &res) {
 }
 
 
-bool	Response::getRightPath(Server serv) {
+bool	Response::rightPath() {
 	// Location					blocLoc = serv.getVctLocation()[loc];
 	bool						res = false;
 
 	if (this->_locBlocSelect and this->_locBloc.getIndexSet())
-		this->getRightPathLocation(serv, res);
+		this->rightPathLocation(res);
 	else
-		this->getRightPathServer(serv, res);
+		this->rightPathServer(res);
 
 	// for (size_t i = 0; i < this->_path.size(); i++)
 		// std::cout << this->_path[i] << std::endl;
@@ -177,8 +201,8 @@ std::string	Response::testAllPaths(bool &err) {
 	return rightPath;
 }
 
-std::string	Response::getRightPathErr(Server serv, bool &pageFind) {
-	std::string									root = getRightRoot(serv);
+std::string	Response::rightPathErr(bool &pageFind) {
+	std::string									root = rightRoot();
 	std::map<int, std::string>					mapErr;
 	std::map<int, std::string>::const_iterator	it;
 	std::string									rightPath;
@@ -200,13 +224,13 @@ std::string	Response::getRightPathErr(Server serv, bool &pageFind) {
 	}
 	if (!pageFind and it != mapErr.end())
 	{
-		mapErr = serv.getErrorPage();
+		mapErr = this->_serv.getErrorPage();
 		it = mapErr.find(this->_statusCode);
 		if (it != mapErr.end())
 		{
 			pageFind = true;
 			rightPath = it->second;
-			root = serv.getRoot();
+			root = this->_serv.getRoot();
 			root.erase(0, 1);
 			root += "/";
 			root += rightPath;
@@ -235,7 +259,7 @@ std::string	Response::createDefaultErrorPage() {
 	return "/tmp/tmpFile.html";
 }
 
-void	Response::getFileAndDir(Server serv, std::ofstream &file, bool getDir, std::string path) {
+void	Response::fileAndDir(std::ofstream &file, bool getDir, std::string path) {
 	DIR				*dir;
 	struct dirent	*entry;
 
@@ -247,7 +271,7 @@ void	Response::getFileAndDir(Server serv, std::ofstream &file, bool getDir, std:
 			{
 				if (strlen(entry->d_name) != 1 or entry->d_name[0] != '.')
 				{
-					file << "<a href=\"http://" + serv.getHost() + ":" + ft_itos(serv.getPort()) +
+					file << "<a href=\"http://" + this->_serv.getHost() + ":" + ft_itos(this->_serv.getPort()) +
 					this->_req.getPath();
 					if (this->_req.getPath()[this->_req.getPath().size() - 1] != '/')
 						file << "/";
@@ -272,7 +296,7 @@ void	Response::getFileAndDir(Server serv, std::ofstream &file, bool getDir, std:
 		perror("Impossible d'ouvrir le répertoire");
 }
 
-std::string	Response::createAutoindexPage(Server serv) {
+std::string	Response::createAutoindexPage() {
 	std::string		path = this->_path[0];
 	size_t			pos = path.find_last_of('/');
 	std::ofstream	file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
@@ -291,8 +315,8 @@ std::string	Response::createAutoindexPage(Server serv) {
 	file << "<body>" << std::endl;
 	file << "	<h1>Index of " + this->_req.getPath() + "</h1>" << std::endl;
 
-	this->getFileAndDir(serv, file, true, path);
-	this->getFileAndDir(serv, file, false, path);
+	this->fileAndDir(file, true, path);
+	this->fileAndDir(file, false, path);
 
 	file << "</body>" << std::endl;
 	file << "</html>" << std::endl;
@@ -302,14 +326,14 @@ std::string	Response::createAutoindexPage(Server serv) {
 }
 
 
-void	Response::fileToStr(Server serv) {
+void	Response::fileToStr() {
 	std::string	res;
-	std::string	rightPath;
+	std::string	path;
 	// Location	blocLoc = serv.getVctLocation()[loc];
 	bool		err = false;
 
-	if (!(err = this->getRightPath(serv)))
-		rightPath = this->testAllPaths(err);
+	if (!(err = this->rightPath()))
+		path = this->testAllPaths(err);
 	if (err)
 	{
 		bool	pageFind = false;
@@ -319,34 +343,33 @@ void	Response::fileToStr(Server serv) {
 		else
 			this->_statusCode = 404;
 
-		rightPath = this->getRightPathErr(serv, pageFind);
+		path = this->rightPathErr(pageFind);
 
-		std::ifstream tmp(rightPath.c_str(), std::ios::in | std::ios::binary);
+		std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
 		if (this->_autoindex)
-			rightPath = this->createAutoindexPage(serv);
+			path = this->createAutoindexPage();
 		else if (!tmp or !pageFind)
-			rightPath = this->createDefaultErrorPage();
+			path = this->createDefaultErrorPage();
 		else
 			tmp.close();
 	}
 
+	Response tmp = *this;
 
-
-	// Header	header("HTTP/1.1", this->_statusCode, this->_httpRep, rightPath);
-	Header	header(this->_req, rightPath, &this->_statusCode);
+	Header	header(this->_req, path, &this->_statusCode, this->_serv, &tmp);
 	res = header.getHeader();
 
 	if (this->_statusCode == 406)
 	{
-		rightPath = this->createDefaultErrorPage();
-		Header	headerBis(this->_req, rightPath, &this->_statusCode);
+		path = this->createDefaultErrorPage();
+		Header	headerBis(this->_req, path, &this->_statusCode, this->_serv, &tmp);
 		res = header.getHeader();
 	}
 
 	// std::cout << res << std::endl;
 
-	std::ifstream file(rightPath.c_str(), std::ios::in | std::ios::binary);
+	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 	std::string str;
 	if (file)
 	{
@@ -421,8 +444,8 @@ Server	Response::selectServerBlock() {
 	// return conf[0];
 }
 
-void	Response::selectLocationBlock(Server serv) {
-	std::vector<Location>	vctLoc = serv.getVctLocation();
+void	Response::selectLocationBlock() {
+	std::vector<Location>	vctLoc = this->_serv.getVctLocation();
 	std::string 			strBlocLoc;
 	Location				tmp;
 	// int						res;
@@ -464,8 +487,4 @@ void	Response::selectLocationBlock(Server serv) {
 	if (this->_locBlocSelect)
 		this->_locBloc = tmp;
 	// return res;
-}
-
-bool		Response::getCloseConnection() const {
-	return this->_closeConnection;
 }

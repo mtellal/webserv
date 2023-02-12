@@ -15,9 +15,13 @@ class Response {
 
 	Response	&operator=(Response const &rhs);
 
+	Server		getServ() const;
+	bool		getlocBlocSelect() const;
+	Location	getLocBloc() const;
 	bool		getCloseConnection() const;
 
 	private:
+	Server						_serv;
 	Request						_req;
 	std::vector<Server>			_vctServ;
 	std::map<int, int>			_clientServer;
@@ -32,20 +36,20 @@ class Response {
 	bool						_autoindex;
 	bool						_closeConnection;
 
-	std::string	getRightRoot(Server &serv);
-	void		getRightPathLocation(Server serv, bool &res);
-	void		getRightPathServer(Server serv, bool &res);
-	std::string	getRightPathErr(Server serv, bool &pageFind);
-	void		getFileAndDir(Server serv, std::ofstream &file, bool getDir, std::string path);
+	std::string	rightRoot();
+	void		rightPathLocation(bool &res);
+	void		rightPathServer(bool &res);
+	std::string	rightPathErr(bool &pageFind);
+	void		fileAndDir(std::ofstream &file, bool getDir, std::string path);
 
 
 	std::string	testAllPaths(bool &err);
 	std::string	createDefaultErrorPage();
-	std::string	createAutoindexPage(Server serv);
-	void		fileToStr(Server serv);
+	std::string	createAutoindexPage();
+	void		fileToStr();
 	Server		selectServerBlock();
-	void		selectLocationBlock(Server serv);
-	bool		getRightPath(Server serv);
+	void		selectLocationBlock();
+	bool		rightPath();
 };
 
 #endif
