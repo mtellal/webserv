@@ -20,7 +20,6 @@ class Directives {
 
 	Directives	&operator=(Directives const &rhs);
 
-	// std::vector<std::pair<int, std::string> >	getErrorPage() const;
 	std::map<int, std::string>					getErrorPage() const;
 	int											getClientMaxBodySize() const;
 	std::string									getRoot() const;
@@ -51,7 +50,6 @@ class Directives {
 	void	showIndex(std::ostream & o) const;
 
 	protected:
-	// std::vector<std::pair<int, std::string> >	_errorPage;
 	std::map<int, std::string>					_errorPage;
 	int											_clientMaxBodySize;
 	std::string									_root;

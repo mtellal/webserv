@@ -14,12 +14,6 @@ int main(int argc, char **argv)
 	if (argc == 2)
 		file = argv[1];
 	Configuration	conf(file);
-
-
-
-
-
-
 	// std::vector<Server> test = conf.getVctServer();
 	if (conf.get_errorConf())
 		return 1;
@@ -34,7 +28,8 @@ int main(int argc, char **argv)
 	Possible d'avoir dans le fichier de conf 2 bloc server avec le meme port et
 	donc a departager avec server_name ?
 	Http Methods uniquement dans bloc location ou aussi dans bloc Server ?
-	On met des http_methods par default ?
+	On met des http_methods par default (Je pense GET par default) ?
+	Cree une directive si la requete est un dossier et que autoindex est off.
 
 	Types MIME
 	https://www.w3.org/Protocols/rfc2616/rfc2616.html

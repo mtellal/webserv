@@ -36,11 +36,12 @@ class Response {
 	bool						_autoindex;
 	bool						_closeConnection;
 
-	std::string	rightRoot();
-	void		rightPathLocation(bool &res);
-	void		rightPathServer(bool &res);
-	std::string	rightPathErr(bool &pageFind);
-	void		fileAndDir(std::ofstream &file, bool getDir, std::string path);
+	std::string					rightRoot();
+	std::vector<std::string>	rightIndex();
+	void						rightPathLocation(bool &res);
+	void						rightPathServer(bool &res);
+	std::string					rightPathErr(bool &pageFind);
+	void						fileAndDir(std::ofstream &file, bool getDir, std::string path);
 
 
 	std::string	testAllPaths(bool &err);

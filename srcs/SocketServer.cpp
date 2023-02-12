@@ -83,8 +83,7 @@ void	SocketServer::initSocket() {
 		}
 		if (nonBlockFd(socket_fd))
 			return ;
-		// Modifier le 5
-		if (listen(socket_fd, 5) == -1)
+		if (listen(socket_fd, NB_EVENTS) == -1)
 		{
 			perror("listen error");
 			this->_errSocket = true;
@@ -109,8 +108,7 @@ void	SocketServer::createSockaddr(int i) {
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 
-	// Modifier 5
-	this->_epollFd = epoll_create(5);
+	this->_epollFd = epoll_create(NB_EVENTS);
 	if (this->_epollFd == -1)
 	{
 		this->_errSocket = true;
@@ -181,12 +179,11 @@ int		SocketServer::isServerFd(int fd) const {
 }
 
 int		SocketServer::epollWait() {
-	// changer 5 (faire une macro pour les events)
-	struct epoll_event	event[5];
+	struct epoll_event	event[NB_EVENTS];
 	int			nbrFd;
 	int			i;
 
-	nbrFd = epoll_wait(this->_epollFd, event, 5, -1);
+	nbrFd = epoll_wait(this->_epollFd, event, NB_EVENTS, -1);
 	if (nbrFd == -1)
 	{
 		perror("epoll_wait");
@@ -250,8 +247,6 @@ void	SocketServer::createConnection(int i) {
 
 void	SocketServer::closeConnection(int fd) {
 	this->_clientServer.erase(fd);
-	// int ret = this->_clientServer.erase(fd);
-	// std::cout << "Elements suppr: " << ret << std::endl;
 	close(fd);
 	epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, fd, NULL);
 }

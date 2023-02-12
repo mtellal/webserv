@@ -19,7 +19,6 @@ int	ft_stoi(const std::string str, bool *err)
 	}
 	if (str[i] < '0' and str[i] > '9')
 	{
-		// std::cout << "1" << std::endl;
 		*err = true;
 		return 0;
 	}
@@ -28,12 +27,6 @@ int	ft_stoi(const std::string str, bool *err)
 		res = res * 10 + str[i] - 48;
 		i++;
 	}
-	// if (str[i] != '\0')
-	// {
-	// 	std::cout << "2" << std::endl;
-	// 	*err = true;
-	// 	return 0;
-	// }
 	return res * sign;
 }
 

@@ -11,6 +11,8 @@
 # include <map>
 # include <utility>
 
+# define NB_EVENTS 5
+
 class SocketServer {
 
 	public:
@@ -47,8 +49,6 @@ class SocketServer {
 	void	createConnection(int i);
 	void	closeConnection(int fd);
 
-
-	// int		getIndexConnection(int fd) const;
 };
 
 #endif

@@ -11,7 +11,6 @@ Header::Header() {}
 
 Header::Header(Request req, std::string file, int *statusCode, Server serv, Response *rep) : _req(req), _statusCode(statusCode),
 				_file(file), _serv(serv), _rep(rep){
-	(void)this->_rep;
 }
 
 Header::Header(Header const &src) {
