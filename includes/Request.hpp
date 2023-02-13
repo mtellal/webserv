@@ -4,6 +4,8 @@
 # include <string>
 # include <iostream>
 # include <sys/socket.h>
+# include <sys/types.h>
+# include <netdb.h>
 # include <vector>
 # include <map>
 

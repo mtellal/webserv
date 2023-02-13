@@ -1,4 +1,4 @@
-#include "../includes/SocketServer.hpp"
+#include "SocketServer.hpp"
 #include "../includes/Response.hpp"
 #include <string.h>
 
@@ -60,7 +60,59 @@ bool						SocketServer::getErrSocket() const {
 	return this->_errSocket;
 }
 
-void	SocketServer::initSocket() {
+void	SocketServer::errorSocket(std::string s)
+{
+	perror(s.c_str());
+	_errSocket = true;
+	return ;
+}
+
+void	SocketServer::initSocket()
+{
+	int				opt;
+	int				serv_socket;
+	struct addrinfo hints;
+	struct addrinfo *res = NULL;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+
+	for (size_t i = 0; i < _vctServ.size(); i++)
+	{
+		std::string port(8080);
+
+		if (getaddrinfo(_vctServ[i].getHost().c_str(), port.c_str(), &hints, &res) != 0)
+			return (errorSocket("getaddrinfo call failed"));
+
+		// sockaddr == sockaddr_in
+		_sockAddr.push_back(*(struct sockaddr_in *)res->ai_addr);
+		
+		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
+			return (errorSocket("socket call failed"));
+
+		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+		_serverFd.push_back(serv_socket);
+
+		if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
+			return (errorSocket("bind call failed"));
+		
+		freeaddrinfo((struct addrinfo *)res);
+		res = NULL;
+
+		if (nonBlockFd(serv_socket))
+			return ;
+		if (listen(serv_socket, NB_EVENTS) == -1)
+			return (errorSocket("Listen call failed"));
+
+	}
+
+}
+
+
+/* void	SocketServer::initSocket() {
 	int	socket_fd;
 	int	opt = 1;
 
@@ -104,7 +156,7 @@ void	SocketServer::createSockaddr(int i) {
 	// addr.sin_zero ??
 	this->_sockAddr.push_back(addr);
 }
-
+ */
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 

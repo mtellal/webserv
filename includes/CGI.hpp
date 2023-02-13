@@ -31,11 +31,12 @@ class CGI
 
     private:
 
-        int         stdin;
-        int         stdout;
+        int                                 _stdin;
+        int                                 _stdout;
+        std::map<std::string, std::string>  _env;
 
-        std::string AUTH_TYPE;              // http auth
-        std::string CONTENT_LENGHT;
+/*      std::string AUTH_TYPE;              // http auth
+        std::string CONTENT_LENGTH;
         std::string CONTENT_TYPE;
         std::string GATEWAY_INTERFACE;      // CGI/1.1 gateway review number 
         std::string PATH_INFO;              // path between ressource and query string
@@ -51,8 +52,8 @@ class CGI
         std::string SERVER_PORT;
         std::string SRVER_PROTOCOL;
         std::string SERVER_SOFTWARE;        // server auth, in http header
-
-        void    initEnv();
+*/
+        void    initEnv(const Request &);
 
 };
 
