@@ -118,3 +118,5 @@ xhtml) </br>
 #### CGI
 - https://www.garshol.priv.no/download/text/http-tut.html
 - http://www.mnuwer.dbasedeveloper.co.uk/dlearn/web/session01.htm
+- https://www.quora.com/unanswered/What-is-CGI-BIN-How-do-you-use-CGI-BIN
+- https://www.fini.net/pub/PerlClass/SkudContent/perlcgi.pdf
