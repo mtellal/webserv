@@ -35,6 +35,7 @@ class Response {
 	bool						_isDir;
 	bool						_autoindex;
 	bool						_closeConnection;
+	bool						_isResFormPage;
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();
@@ -47,10 +48,14 @@ class Response {
 	std::string	testAllPaths(bool &err);
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage();
-	void		fileToStr();
+	std::string	createResFormPage();
+	// std::string	argsToStr();
+	void		checkError();
 	Server		selectServerBlock();
 	void		selectLocationBlock();
 	bool		rightPath();
+	void		sendHeader(std::string path);
+	void		sendPage(std::string path);
 };
 
 #endif

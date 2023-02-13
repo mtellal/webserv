@@ -29,6 +29,10 @@ class Request {
 	std::string	getAccept() const;
 	std::string	getReferer() const;
 	std::string	getAgent() const;
+	std::string	getServerName() const;
+	std::string	getAuthentification() const;
+	std::string	getContentLength() const;
+	std::string	getContentType() const;
 
 	bool		getConnectionSet() const;
 	bool		getAcceptSet() const;
@@ -38,7 +42,7 @@ class Request {
 	private:
 	int									_fd;
 	bool								_errRequest;
-	bool								_parsArgsGet;
+	bool								_argsSet;
 	bool								_closeConnection;
 	std::string							_method;
 	std::string							_path;
@@ -49,15 +53,20 @@ class Request {
 	bool								_connectionSet;
 	std::string							_accept;
 	bool								_acceptSet;
-	std::map<std::string, std::string>	_argsGet;
+	std::map<std::string, std::string>	_args;
 	bool								_refererSet;
 	std::string							_referer;
 	bool								_agentSet;
 	std::string							_agent;
+	std::string							_serverName;
+	std::string							_authentification;
+	std::string							_contentLength;
+	std::string							_contentType;
 
-	void	(Request::*functPtr[8])(std::vector<std::string>);
+	void	(Request::*functPtr[11])(std::vector<std::string>);
 
 	int		parsRequest(int fd);
+	void	parsArgs(std::string tmp);
 
 	void	setMethodVersionPath(std::vector<std::string> strSplit);
 	void	setHostPort(std::vector<std::string> strSplit);
@@ -65,6 +74,10 @@ class Request {
 	void	setAccept(std::vector<std::string> strSplit);
 	void	setReferer(std::vector<std::string> strSplit);
 	void	setAgent(std::vector<std::string> strSplit);
+	void	setAuthentification(std::vector<std::string> strSplit);
+	void	setContentLength(std::vector<std::string> strSplit);
+	void	setContentType(std::vector<std::string> strSplit);
+
 
 
 };

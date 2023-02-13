@@ -29,6 +29,8 @@ class Header {
 	Response	*_rep;
 
 	std::string	ft_itos(int nbr) const;
+	std::string	parsContentTypeFile(std::vector<std::string> splitAccept) const;
+
 	std::string	getContentType() const;
 	std::string	getDate() const;
 	std::string	getContentLength() const;
