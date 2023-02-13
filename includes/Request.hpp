@@ -10,12 +10,14 @@
 class Request {
 
 	public:
-	Request();
-	Request(int fd);
-	Request(Request const &src);
-	~Request();
+	
+		Request();
+		Request(int fd);
+		Request(Request const &src);
+		~Request();
 
-	Request	&operator=(Request const &rhs);
+		Request	&operator=(Request const &rhs);
+
 
 	int			getFd() const;
 	bool		getErrRequest() const;
@@ -32,14 +34,15 @@ class Request {
 	std::string	getServerName() const;
 	std::string	getAuthentification() const;
 	std::string	getContentLength() const;
-	std::string	getContentType() const;
+	std::string	getContentType() cont;
 
-	bool		getConnectionSet() const;
-	bool		getAcceptSet() const;
-	bool		getRefererSet() const;
-	bool		getAgentSet() const;
+		bool		getConnectionSet() const;
+		bool		getAcceptSet() const;
+		bool		getRefererSet() const;
+		bool		getAgentSet() const;
 
 	private:
+
 	int									_fd;
 	bool								_errRequest;
 	bool								_argsSet;
@@ -77,7 +80,6 @@ class Request {
 	void	setAuthentification(std::vector<std::string> strSplit);
 	void	setContentLength(std::vector<std::string> strSplit);
 	void	setContentType(std::vector<std::string> strSplit);
-
 
 
 };
