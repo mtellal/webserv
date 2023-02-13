@@ -30,10 +30,9 @@ int main(int argc, char **argv)
 	Http Methods uniquement dans bloc location ou aussi dans bloc Server ?
 	On met des http_methods par default (Je pense GET par default) ?
 	Cree une directive si la requete est un dossier et que autoindex est off.
+	Prender en compte les methods (405 	Method Not Allowed)
 
-	Types MIME
-	https://www.w3.org/Protocols/rfc2616/rfc2616.html
-
-	Mime: https://wiki.debian.org/fr/MIME
-	ET https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+	Arguments POST + Securisation du formulaire :
+	https://www.electro-info.ovh/les-formulaires-en-PHP
+	GET ne permet pas l'upload de fichiers
 */

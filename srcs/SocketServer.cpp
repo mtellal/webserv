@@ -195,13 +195,9 @@ int		SocketServer::epollWait() {
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
-		{
-			// std::cout << "ServerFd" << std::endl;
 			createConnection(i);
-		}
 		else
 		{
-			// std::cout << "NotServerFd" << std::endl;
 			Request		req(event[j].data.fd);
 			if (req.getErrRequest())
 				return 1;

@@ -2,7 +2,11 @@ NAME		= webserv
 
 CC			= c++
 
-INC			= -I includes/
+
+
+
+INC			= -I includes/ 
+
 
 CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
 

@@ -40,7 +40,7 @@ std::string	Header::getHeader() const {
 
 	res = this->_req.getHttpVersion() + " " + ft_itos(*this->_statusCode) + " " + this->getCodeDescription() + "\n";
 	res += "Content-Type: " + this->getContentType() + "\n";
-	res += "Server: Webserv/1.0\n";
+	res += "Server: " + this->_req.getServerName() + "\n";
 	res += "Date: " + this->getDate() + "\n";
 	res += "Last-Modified: " + this->getLastModified();
 	res += "Host: " + this->_req.getHost() + ":" + this->_req.getPort() + "\n";
@@ -53,20 +53,7 @@ std::string	Header::getHeader() const {
 	res += "Allow: " + this->getAllow() + "\n";
 	res += "Content-Length: " + this->getContentLength() + "\n\n";
 
-	// std::cout << res << std::endl;
-
 	return res;
-	/*
-	Directives de l'ancien sujet pas implementes :
-		Accept-Charset
-		Accept-Language
-		Authorization
-		Content-Language
-		Content-Location
-		Retry-After
-		Transfert-Encoding
-		WWW-Authenticate
-	*/
 }
 
 std::string	Header::ft_itos(int nbr) const {
@@ -80,19 +67,40 @@ std::string	Header::ft_itos(int nbr) const {
 
 std::string	Header::getContentType() const {
 
-	std::ifstream				file("./utils/types.txt");
-	std::string					line;
+	std::string					type;
+	std::string					extension;
+	std::vector<std::string>	splitAccept;
+
+	if (this->_req.getAcceptSet())
+		splitAccept = ft_split(this->_req.getAccept().c_str(), ",;");
+	type = this->parsContentTypeFile(splitAccept);
+	if (type != "")
+		return type;
+
+	if (!this->_req.getAcceptSet())
+		return "text/plain";
+	for (size_t i = 1; i < splitAccept.size(); i++)
+	{
+		if (splitAccept[i] == "*/*" or splitAccept[i] == "text/*" or
+			splitAccept[i] == "text/plain")
+			return "text/plain";
+	}
+	// Si rien ne correspond, renvoyer le code 406 (Not Acceptable)
+
+	return "406";
+}
+
+std::string	Header::parsContentTypeFile(std::vector<std::string> splitAccept) const {
 	std::vector<std::string>	splitLine;
-	std::vector<std::string>	splitextension;
+	std::ifstream				file("./utils/types.txt");
 	std::string					extension;
 	std::string					fileExtension;
-	std::vector<std::string>	splitAccept;
+	std::vector<std::string>	splitextension;
+	std::string					line;
+
 
 	splitextension = ft_split(this->_file.c_str(), ".");
 	extension = splitextension[splitextension.size() - 1];
-	if (this->_req.getAcceptSet())
-		splitAccept = ft_split(this->_req.getAccept().c_str(), ",;");
-
 	while (std::getline(file, line))
 	{
 		splitLine = ft_split(line.c_str(), "\t ");
@@ -123,19 +131,9 @@ std::string	Header::getContentType() const {
 		}
 	}
 	file.close();
-
-	if (!this->_req.getAcceptSet())
-		return "text/plain";
-	for (size_t i = 1; i < splitAccept.size(); i++)
-	{
-		if (splitAccept[i] == "*/*" or splitAccept[i] == "text/*" or
-			splitAccept[i] == "text/plain")
-			return "text/plain";
-	}
-	// Si rien ne correspond, renvoyer le code 406 (Not Acceptable)
-
-	return "406";
+	return "";
 }
+
 
 std::string	Header::getDate() const {
 	std::string date;

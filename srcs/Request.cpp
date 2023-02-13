@@ -5,9 +5,9 @@
 
 Request::Request() {}
 
-Request::Request(int fd) : _fd(fd), _errRequest(false), _parsArgsGet(false),
+Request::Request(int fd) : _fd(fd), _errRequest(false), _argsSet(false),
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
-							_refererSet(false), _agentSet(false) {
+							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0") {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
@@ -16,6 +16,9 @@ Request::Request(int fd) : _fd(fd), _errRequest(false), _parsArgsGet(false),
 	this->functPtr[5] = &Request::setAccept;
 	this->functPtr[6] = &Request::setReferer;
 	this->functPtr[7] = &Request::setAgent;
+	this->functPtr[8] = &Request::setAuthentification;
+	this->functPtr[9] = &Request::setContentLength;
+	this->functPtr[10] = &Request::setContentType;
 
 
 	if (parsRequest(fd))
@@ -33,7 +36,7 @@ Request	&Request::operator=(Request const &rhs) {
 	{
 		this->_fd = rhs._fd;
 		this->_errRequest = rhs._errRequest;
-		this->_parsArgsGet = rhs._parsArgsGet;
+		this->_argsSet = rhs._argsSet;
 		this->_closeConnection = rhs._closeConnection;
 		this->_method = rhs._method;
 		this->_path = rhs._path;
@@ -44,11 +47,12 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_connectionSet = rhs._connectionSet;
 		this->_accept = rhs._accept;
 		this->_acceptSet = rhs._acceptSet;
-		this->_argsGet = rhs._argsGet;
+		this->_args = rhs._args;
 		this->_refererSet = rhs._refererSet;
 		this->_referer = rhs._referer;
 		this->_agentSet = rhs._agentSet;
 		this->_agent = rhs._agent;
+		this->_serverName = rhs._serverName;
 	}
 	return *this;
 }
@@ -97,6 +101,21 @@ std::string	Request::getAgent() const {
 	return this->_agent;
 }
 
+std::string	Request::getServerName() const {
+	return this->_serverName;
+}
+
+std::string	Request::getAuthentification() const {
+	return this->_authentification;
+}
+std::string	Request::getContentLength() const {
+	return this->_contentLength;
+}
+
+std::string	Request::getContentType() const {
+	return this->_contentType;
+}
+
 bool		Request::getConnectionSet() const {
 	return this->_connectionSet;
 }
@@ -117,39 +136,24 @@ bool		Request::getAgentSet() const {
 	return this->_agentSet;
 }
 
-// bool	Request::parsArgs(std::string tmp) {
-// 	int	i = 0;
-// 	int	split = 0;
-// 	int	args = 0;
+void	Request::parsArgs(std::string arg) {
+	std::vector<std::string>	args;
+	std::vector<std::string>	keyValue;
 
-// 	while (tmp[i])
-// 	{
-// 		if (tmp[i] == '?')
-// 		{
-// 			if (tmp[i + 1] and tmp[i + 1] != '?' and split == 0)
-// 				split++;
-// 			else
-// 			{
-// 				// Message a modifier, renvoyer une page special ??
-// 				std::cout << "1 Err arg requete" << std::endl;
-// 				return false;
-// 			}
-// 		}
-// 		else if (tmp[i] == '=')
-// 		{
-// 			if (!tmp[i + 1] or tmp[i + 1] == '=')
-// 			{
-// 				// Message a modifier, renvoyer une page special ??
-// 				std::cout << "1 Err arg requete" << std::endl;
-// 				return false;
-// 			}
-// 			this->_parsArgsGet = true;
-// 			args++;
-// 		}
-// 		i++;
-// 	}
-// 	return true;
-// }
+	this->_argsSet = true;
+	args = ft_split(arg.c_str(), "&");
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		keyValue = ft_split(args[i].c_str(), "=");
+		// keyValue[keyValue.size() - 1].erase(keyValue.size() - 1, 1);
+		if (keyValue.size() == 1)
+			this->_args.insert(std::make_pair(keyValue[0], ""));
+		else
+			this->_args.insert(std::make_pair(keyValue[0], keyValue[1]));
+	}
+	// for (std::map<std::string, std::string>::iterator it = this->_args.begin(); it != this->_args.end(); it++)
+	// 	std::cout << it->first << " " << it->second << std::endl;
+}
 
 void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	std::vector<std::string>	splitBis;
@@ -157,19 +161,21 @@ void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	this->_method = strSplit[0];
 	strSplit[2].erase(strSplit[2].size() - 1, 1);
 	this->_httpVersion = strSplit[2];
-	// if (!this->parsArgs(strSplit[1]))
-	// 	return 1;
 	strSplit = ft_split(strSplit[1].c_str(), "?");
+	if (strSplit.size() == 2)
+		this->parsArgs(strSplit[1]);
+	// if (!this->parsArgs(strSplit[1]))
+		// return 1;
 	this->_path = strSplit[0];
-	if (this->_parsArgsGet)
-	{
-		strSplit = ft_split(strSplit[1].c_str(), "&");
-		for (size_t j = 0; j < strSplit.size(); j++)
-		{
-			splitBis = ft_split(strSplit[j].c_str(), "=");
-			this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
-		}
-	}
+	// if (this->_parsArgsGet)
+	// {
+	// 	strSplit = ft_split(strSplit[1].c_str(), "&");
+	// 	for (size_t j = 0; j < strSplit.size(); j++)
+	// 	{
+	// 		splitBis = ft_split(strSplit[j].c_str(), "=");
+	// 		this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
+	// 	}
+	// }
 }
 
 void	Request::setHostPort(std::vector<std::string> strSplit) {
@@ -208,16 +214,40 @@ void	Request::setAgent(std::vector<std::string> strSplit) {
 	this->_agentSet = true;
 }
 
+void	Request::setAuthentification(std::vector<std::string> strSplit) {
+	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
+	for (size_t i = 1; i < strSplit.size(); i++)
+	{
+		if (i != 1)
+			this->_authentification += " ";
+		this->_authentification += strSplit[i];
+	}
+}
+
+void	Request::setContentLength(std::vector<std::string> strSplit) {
+	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
+	this->_contentLength = strSplit[1];
+}
+
+void	Request::setContentType(std::vector<std::string> strSplit) {
+	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
+	for (size_t i = 1; i < strSplit.size(); i++)
+	{
+		if (i != 1)
+			this->_contentType += " ";
+		this->_contentType += strSplit[i];
+	}
+}
+
 int		Request::parsRequest(int fd) {
 	char						buff[4096];
 	int							oct;
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	tmpBis;
-	std::string					key[8] = { "GET", "POST", "DELETE", "Host:",
-										"Connection:", "Accept:", "Referer:",
-										"User-Agent:"};
-
+	std::string					key[11] = { "GET", "POST", "DELETE", "Host:",
+					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification",
+					"Content-Length", "Content-Type"};
 
 	memset(buff, 0, 4096);
 	oct = recv(fd, buff, 4096, 0);
@@ -234,7 +264,7 @@ int		Request::parsRequest(int fd) {
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");
-		for (size_t j = 0; j < 8; j++)
+		for (size_t j = 0; j < 11; j++)
 		{
 			if (strSplit[0] == key[j])
 			{
