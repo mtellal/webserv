@@ -49,7 +49,7 @@ class Response {
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage();
 	std::string	createResFormPage();
-	// std::string	argsToStr();
+	std::string	argsToStr();
 	void		checkError();
 	Server		selectServerBlock();
 	void		selectLocationBlock();

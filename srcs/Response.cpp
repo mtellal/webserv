@@ -310,25 +310,36 @@ std::string	Response::createAutoindexPage() {
 	return "/tmp/tmpFile.html";
 }
 
-// std::string	Response::createResFormPage() {
-// 	std::string	res;
+std::string	Response::argsToStr() {
+	std::map<std::string, std::string>	args;
+	std::string							res;
 
+	args = this->_req.getArgs();
 
-// 	// if (this->_a)
-// }
+	res += args["titre"];
+	res += " ";
+	res += args["nom"];
+	res += " ";
+	res += args["prenom"];
+	res += " a ";
+	res += args["age"];
+	res += " ans, ";
+	if (args["titre"] == "M.")
+		res += "il ";
+	else
+		res += "elle ";
+	if (args["bDebutant"] == "on")
+		res += "debute en php";
+	else
+		res += "est un pro en php";
+
+	return res;
+}
 
 
 
 std::string	Response::createResFormPage() {
 	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
-
-/*
-	titre (mr mme)
-	nom
-	prenom
-	age
-	bDebutant
-*/
 
 	file << "<!DOCTYPE html>" << std::endl;
 	file << "<html lang=\"en\">" << std::endl;
@@ -339,9 +350,7 @@ std::string	Response::createResFormPage() {
 	file << "	<title>Form</title>" << std::endl;
 	file << "</head>" << std::endl;
 	file << "<body>" << std::endl;
-	file << "	<p>TEST</p>" << std::endl;
-	// file << "	<p>" + "Vous avez " + this->_req. + " ans</p>" << std::endl;
-	// file << "	" + this->argsToStr() << std::endl;
+	file << "	<p>" + this->argsToStr() + "</p>"<< std::endl;
 	file << "</body>" << std::endl;
 	file << "</html>" << std::endl;
 	file.close();

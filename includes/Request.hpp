@@ -19,22 +19,23 @@ class Request {
 		Request	&operator=(Request const &rhs);
 
 
-	int			getFd() const;
-	bool		getErrRequest() const;
-	bool		getcloseConnection() const;
-	std::string	getMethod() const;
-	std::string	getPath() const;
-	std::string	getHttpVersion() const;
-	std::string	getHost() const;
-	std::string	getPort() const;
-	std::string	getConnection() const;
-	std::string	getAccept() const;
-	std::string	getReferer() const;
-	std::string	getAgent() const;
-	std::string	getServerName() const;
-	std::string	getAuthentification() const;
-	std::string	getContentLength() const;
-	std::string	getContentType() cont;
+	int									getFd() const;
+	bool								getErrRequest() const;
+	bool								getcloseConnection() const;
+	std::string							getMethod() const;
+	std::string							getPath() const;
+	std::string							getHttpVersion() const;
+	std::string							getHost() const;
+	std::string							getPort() const;
+	std::string							getConnection() const;
+	std::string							getAccept() const;
+	std::string							getReferer() const;
+	std::string							getAgent() const;
+	std::string							getServerName() const;
+	std::string							getAuthentification() const;
+	std::string							getContentLength() const;
+	std::string							getContentType() const;
+	std::map<std::string, std::string>	getArgs() const;
 
 		bool		getConnectionSet() const;
 		bool		getAcceptSet() const;

@@ -116,12 +116,16 @@ std::string	Request::getContentType() const {
 	return this->_contentType;
 }
 
-bool		Request::getConnectionSet() const {
-	return this->_connectionSet;
-}
-
 std::string	Request::getAccept() const {
 	return this->_accept;
+}
+
+std::map<std::string, std::string>	Request::getArgs() const {
+	return this->_args;
+}
+
+bool		Request::getConnectionSet() const {
+	return this->_connectionSet;
 }
 
 bool		Request::getAcceptSet() const {
