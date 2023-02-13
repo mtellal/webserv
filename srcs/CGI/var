@@ -1,0 +1,17 @@
+AUTH_TYPE;              // http auth
+CONTENT_LENGHT;
+CONTENT_TYPE;
+GATEWAY_INTERFACE;      // CGI/1.1 gateway review number 
+PATH_INFO;              // path between ressource and query string
+PATH_TRANSLATED;        // path translated from filesystem (/usr/login/Documents/.../file.html)
+QUERY_STRING;
+REMOTE_ADDR;
+REMOTE_HOST;
+REMOTE_IDENT;           // use for identification
+REMOTE_USER;
+REMOTE_MTEHOD;
+SCRIPT_NAME;            // contains th ecurrent script's path;
+SERVER_NAME;
+SERVER_PORT;
+SRVER_PROTOCOL;
+SERVER_SOFTWARE;        // server auth, in http header

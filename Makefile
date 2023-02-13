@@ -2,6 +2,8 @@ NAME		= webserv
 
 CC			= c++
 
+INC			= -I includes/
+
 CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
 
 SRCS	=	main.cpp \
@@ -13,7 +15,8 @@ SRCS	=	main.cpp \
 			SocketServer.cpp \
 			Request.cpp \
 			Response.cpp \
-			Header.cpp
+			Header.cpp \
+			CGI/CGI.cpp
 
 SRCDIR		= srcs
 
@@ -26,12 +29,12 @@ DEPS		= $(OBJS:.o=.d)
 obj/%.o: srcs/%.cpp
 	@mkdir -p $(OBJDIR)
 	@mkdir -p $(@D)
-	$(CC) $(CPPFLAGS) -MMD -c $< -o $@ -I include
+	$(CC) $(CPPFLAGS) $(INC) -MMD -c $< -o $@ -I include
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CPPFLAGS) $(OBJS) -o $(NAME)
+	$(CC) $(CPPFLAGS) $(INC) $(OBJS) -o $(NAME)
 
 clean:
 	rm -f $(OBJS)

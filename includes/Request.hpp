@@ -10,61 +10,63 @@
 class Request {
 
 	public:
-	Request();
-	Request(int fd);
-	Request(Request const &src);
-	~Request();
+	
+		Request();
+		Request(int fd);
+		Request(Request const &src);
+		~Request();
 
-	Request	&operator=(Request const &rhs);
+		Request	&operator=(Request const &rhs);
 
-	int			getFd() const;
-	bool		getErrRequest() const;
-	bool		getcloseConnection() const;
-	std::string	getMethod() const;
-	std::string	getPath() const;
-	std::string	getHttpVersion() const;
-	std::string	getHost() const;
-	std::string	getPort() const;
-	std::string	getConnection() const;
-	std::string	getAccept() const;
-	std::string	getReferer() const;
-	std::string	getAgent() const;
+		int			getFd() const;
+		bool		getErrRequest() const;
+		bool		getcloseConnection() const;
+		std::string	getMethod() const;
+		std::string	getPath() const;
+		std::string	getHttpVersion() const;
+		std::string	getHost() const;
+		std::string	getPort() const;
+		std::string	getConnection() const;
+		std::string	getAccept() const;
+		std::string	getReferer() const;
+		std::string	getAgent() const;
 
-	bool		getConnectionSet() const;
-	bool		getAcceptSet() const;
-	bool		getRefererSet() const;
-	bool		getAgentSet() const;
+		bool		getConnectionSet() const;
+		bool		getAcceptSet() const;
+		bool		getRefererSet() const;
+		bool		getAgentSet() const;
 
 	private:
-	int									_fd;
-	bool								_errRequest;
-	bool								_parsArgsGet;
-	bool								_closeConnection;
-	std::string							_method;
-	std::string							_path;
-	std::string							_httpVersion;
-	std::string							_host;
-	std::string							_port;
-	std::string							_connection;
-	bool								_connectionSet;
-	std::string							_accept;
-	bool								_acceptSet;
-	std::map<std::string, std::string>	_argsGet;
-	bool								_refererSet;
-	std::string							_referer;
-	bool								_agentSet;
-	std::string							_agent;
 
-	void	(Request::*functPtr[8])(std::vector<std::string>);
+		int									_fd;
+		bool								_errRequest;
+		bool								_parsArgsGet;
+		bool								_closeConnection;
+		std::string							_method;
+		std::string							_path;
+		std::string							_httpVersion;
+		std::string							_host;
+		std::string							_port;
+		std::string							_connection;
+		bool								_connectionSet;
+		std::string							_accept;
+		bool								_acceptSet;
+		std::map<std::string, std::string>	_argsGet;
+		bool								_refererSet;
+		std::string							_referer;
+		bool								_agentSet;
+		std::string							_agent;
 
-	int		parsRequest(int fd);
+		void	(Request::*functPtr[8])(std::vector<std::string>);
 
-	void	setMethodVersionPath(std::vector<std::string> strSplit);
-	void	setHostPort(std::vector<std::string> strSplit);
-	void	setConnection(std::vector<std::string> strSplit);
-	void	setAccept(std::vector<std::string> strSplit);
-	void	setReferer(std::vector<std::string> strSplit);
-	void	setAgent(std::vector<std::string> strSplit);
+		int		parsRequest(int fd);
+
+		void	setMethodVersionPath(std::vector<std::string> strSplit);
+		void	setHostPort(std::vector<std::string> strSplit);
+		void	setConnection(std::vector<std::string> strSplit);
+		void	setAccept(std::vector<std::string> strSplit);
+		void	setReferer(std::vector<std::string> strSplit);
+		void	setAgent(std::vector<std::string> strSplit);
 
 
 };
