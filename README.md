@@ -113,3 +113,8 @@ xhtml) </br>
 - http://www.purplepixie.org/cgi/howto.php
 - https://www.ibm.com/docs/en/i/7.3?topic=programming-cgi-process
 - http://www.rebol.com/docs/cgi2.html
+
+
+#### CGI
+- https://www.garshol.priv.no/download/text/http-tut.html
+- http://www.mnuwer.dbasedeveloper.co.uk/dlearn/web/session01.htm
