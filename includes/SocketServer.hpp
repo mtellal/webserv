@@ -2,10 +2,19 @@
 # define SOCKETSERVER_HPP
 
 # include "Configuration.hpp"
+
 # include <sys/socket.h>
 # include <netinet/in.h>
+# include <sys/types.h>
+#include <netdb.h>
+#include <cstdlib>
+#include <stdio.h>
+
 # include <arpa/inet.h>
 # include <sys/epoll.h>
+
+# include <stdlib.h>
+
 # include <unistd.h>
 # include <fcntl.h>
 # include <map>
@@ -39,6 +48,7 @@ class SocketServer {
 	int							_epollFd;
 	bool						_errSocket;
 
+	void	errorSocket(std::string s);
 	void	initSocket();
 	void	createSockaddr(int i);
 	void	createFdEpoll();

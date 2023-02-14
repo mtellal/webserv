@@ -7,7 +7,8 @@ Request::Request() {}
 
 Request::Request(int fd) : _fd(fd), _errRequest(false), _argsSet(false),
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
-							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0") {
+							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0")
+{
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
@@ -249,9 +250,12 @@ int		Request::parsRequest(int fd) {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	tmpBis;
-	std::string					key[11] = { "GET", "POST", "DELETE", "Host:",
-					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification",
-					"Content-Length", "Content-Type"};
+	std::string					key[11] =
+	{
+		"GET", "POST", "DELETE", "Host:",
+		"Connection:", "Accept:", "Referer:", "User-Agent:",
+		"Authentification", "Content-Length", "Content-Type"
+	};
 
 	memset(buff, 0, 4096);
 	oct = recv(fd, buff, 4096, 0);
@@ -262,7 +266,7 @@ int		Request::parsRequest(int fd) {
 	}
 	buff[oct] = '\0';
 
-	// std::cout << buff << std::endl;
+	std::cout << buff << std::endl;
 
 	vct = ft_split(buff, "\n");
 	for (size_t i = 0; i < vct.size(); i++)

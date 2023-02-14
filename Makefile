@@ -2,9 +2,6 @@ NAME		= webserv
 
 CC			= c++
 
-
-
-
 INC			= -I includes/ 
 
 
