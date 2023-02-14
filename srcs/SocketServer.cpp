@@ -81,9 +81,7 @@ void	SocketServer::initSocket()
 
 	for (size_t i = 0; i < _vctServ.size(); i++)
 	{
-		std::string port(8080);
-
-		if (getaddrinfo(_vctServ[i].getHost().c_str(), port.c_str(), &hints, &res) != 0)
+		if (getaddrinfo(_vctServ[i].getHost().c_str(), ft_itos(_vctServ[i].getPort()).c_str(), &hints, &res) != 0)
 			return (errorSocket("getaddrinfo call failed"));
 
 		// sockaddr == sockaddr_in
@@ -112,7 +110,7 @@ void	SocketServer::initSocket()
 }
 
 
-/* void	SocketServer::initSocket() {
+/*  void	SocketServer::initSocket() {
 	int	socket_fd;
 	int	opt = 1;
 
@@ -157,6 +155,8 @@ void	SocketServer::createSockaddr(int i) {
 	this->_sockAddr.push_back(addr);
 }
  */
+
+
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 
