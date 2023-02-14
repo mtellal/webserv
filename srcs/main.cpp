@@ -31,6 +31,9 @@ int main(int argc, char **argv)
 	On met des http_methods par default (Je pense GET par default) ?
 	Cree une directive si la requete est un dossier et que autoindex est off.
 	Prender en compte les methods (405 	Method Not Allowed)
+	Pour get et post, checker le format des args envoyes
+	Voir 4096
+	location / ?
 
 	Arguments POST + Securisation du formulaire :
 	https://www.electro-info.ovh/les-formulaires-en-PHP

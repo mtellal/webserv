@@ -1,5 +1,5 @@
 #include "SocketServer.hpp"
-#include "../includes/Response.hpp"
+#include "Response.hpp"
 #include <string.h>
 
 SocketServer::SocketServer() {}

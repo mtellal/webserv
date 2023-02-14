@@ -47,7 +47,9 @@ class Request {
 	int									_fd;
 	bool								_errRequest;
 	bool								_queryStringSet;
+	bool								_boundarySet;
 	bool								_closeConnection;
+	std::string							_boundary;
 	std::string							_method;
 	std::string							_path;
 	std::string							_httpVersion;
@@ -81,6 +83,7 @@ class Request {
 	void	setAuthentification(std::vector<std::string> strSplit);
 	void	setContentLength(std::vector<std::string> strSplit);
 	void	setContentType(std::vector<std::string> strSplit);
+	void	setGetParams(std::vector<std::string> vct, size_t *i);
 
 
 };

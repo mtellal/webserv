@@ -331,7 +331,7 @@ std::string	Response::argsToStr() {
 	if (args["bDebutant"] == "on")
 		res += "debute en php";
 	else
-		res += "est un pro en php";
+		res += "est pro en php";
 
 	return res;
 }
