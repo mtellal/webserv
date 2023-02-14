@@ -314,7 +314,7 @@ std::string	Response::argsToStr() {
 	std::map<std::string, std::string>	args;
 	std::string							res;
 
-	args = this->_req.getArgs();
+	args = this->_req.getQueryString();
 
 	res += args["titre"];
 	res += " ";

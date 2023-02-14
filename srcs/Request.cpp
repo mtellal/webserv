@@ -5,10 +5,9 @@
 
 Request::Request() {}
 
-Request::Request(int fd) : _fd(fd), _errRequest(false), _argsSet(false),
+Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false),
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
-							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0")
-{
+							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0") {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
@@ -37,7 +36,7 @@ Request	&Request::operator=(Request const &rhs) {
 	{
 		this->_fd = rhs._fd;
 		this->_errRequest = rhs._errRequest;
-		this->_argsSet = rhs._argsSet;
+		this->_queryStringSet = rhs._queryStringSet;
 		this->_closeConnection = rhs._closeConnection;
 		this->_method = rhs._method;
 		this->_path = rhs._path;
@@ -48,7 +47,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_connectionSet = rhs._connectionSet;
 		this->_accept = rhs._accept;
 		this->_acceptSet = rhs._acceptSet;
-		this->_args = rhs._args;
+		this->_queryString = rhs._queryString;
 		this->_refererSet = rhs._refererSet;
 		this->_referer = rhs._referer;
 		this->_agentSet = rhs._agentSet;
@@ -121,8 +120,8 @@ std::string	Request::getAccept() const {
 	return this->_accept;
 }
 
-std::map<std::string, std::string>	Request::getArgs() const {
-	return this->_args;
+std::map<std::string, std::string>	Request::getQueryString() const {
+	return this->_queryString;
 }
 
 bool		Request::getConnectionSet() const {
@@ -145,16 +144,16 @@ void	Request::parsArgs(std::string arg) {
 	std::vector<std::string>	args;
 	std::vector<std::string>	keyValue;
 
-	this->_argsSet = true;
+	this->_queryStringSet = true;
 	args = ft_split(arg.c_str(), "&");
 	for (size_t i = 0; i < args.size(); i++)
 	{
 		keyValue = ft_split(args[i].c_str(), "=");
 		// keyValue[keyValue.size() - 1].erase(keyValue.size() - 1, 1);
 		if (keyValue.size() == 1)
-			this->_args.insert(std::make_pair(keyValue[0], ""));
+			this->_queryString.insert(std::make_pair(keyValue[0], ""));
 		else
-			this->_args.insert(std::make_pair(keyValue[0], keyValue[1]));
+			this->_queryString.insert(std::make_pair(keyValue[0], keyValue[1]));
 	}
 	// for (std::map<std::string, std::string>::iterator it = this->_args.begin(); it != this->_args.end(); it++)
 	// 	std::cout << it->first << " " << it->second << std::endl;
@@ -250,12 +249,9 @@ int		Request::parsRequest(int fd) {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	tmpBis;
-	std::string					key[11] =
-	{
-		"GET", "POST", "DELETE", "Host:",
-		"Connection:", "Accept:", "Referer:", "User-Agent:",
-		"Authentification", "Content-Length", "Content-Type"
-	};
+	std::string					key[11] = { "GET", "POST", "DELETE", "Host:",
+					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification",
+					"Content-Length", "Content-Type"};
 
 	memset(buff, 0, 4096);
 	oct = recv(fd, buff, 4096, 0);
@@ -266,7 +262,7 @@ int		Request::parsRequest(int fd) {
 	}
 	buff[oct] = '\0';
 
-	std::cout << buff << std::endl;
+	// std::cout << buff << std::endl;
 
 	vct = ft_split(buff, "\n");
 	for (size_t i = 0; i < vct.size(); i++)
