@@ -1,16 +1,19 @@
 #include "../includes/Configuration.hpp"
 #include "../includes/SocketServer.hpp"
+#include "CGI.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **env)
 {
 	std::string	file;
+ 
+	(void)argv;
 
 	if (argc > 2)
 	{
 		std::cout << "Error: 2 args maximum expected" << std::endl;
 		return 1;
 	}
-	file = "configuration_file/default.conf";
+	/* file = "configuration_file/default.conf";
 	if (argc == 2)
 		file = argv[1];
 	Configuration	conf(file);
@@ -20,7 +23,11 @@ int main(int argc, char **argv)
 	// std::cout << conf << std::endl;
 	SocketServer	serv(conf);
 	if (serv.getErrSocket())
-		return 1;
+		return 1; */
+
+	CGI cgi;
+	std::string s = cgi.execute("./cgi-bin/php-cgi", env);
+	std::cout << s << std::endl;
 	return 0;
 }
 
