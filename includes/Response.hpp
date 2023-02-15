@@ -9,7 +9,7 @@ class Response {
 
 	public:
 	Response();
-	Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer);
+	Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp);
 	Response(Response const &src);
 	~Response();
 
@@ -36,6 +36,7 @@ class Response {
 	bool						_autoindex;
 	bool						_closeConnection;
 	bool						_isResFormPage;
+	char						**_envp;
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();

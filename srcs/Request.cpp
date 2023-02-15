@@ -5,10 +5,9 @@
 
 Request::Request() {}
 
-Request::Request(int fd) : _fd(fd), _errRequest(false), _argsSet(false),
+Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), _boundarySet(false),
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
-							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0")
-{
+							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0") {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
@@ -37,7 +36,8 @@ Request	&Request::operator=(Request const &rhs) {
 	{
 		this->_fd = rhs._fd;
 		this->_errRequest = rhs._errRequest;
-		this->_argsSet = rhs._argsSet;
+		this->_queryStringSet = rhs._queryStringSet;
+		this->_boundarySet = rhs._boundarySet;
 		this->_closeConnection = rhs._closeConnection;
 		this->_method = rhs._method;
 		this->_path = rhs._path;
@@ -48,7 +48,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_connectionSet = rhs._connectionSet;
 		this->_accept = rhs._accept;
 		this->_acceptSet = rhs._acceptSet;
-		this->_args = rhs._args;
+		this->_queryString = rhs._queryString;
 		this->_refererSet = rhs._refererSet;
 		this->_referer = rhs._referer;
 		this->_agentSet = rhs._agentSet;
@@ -121,8 +121,8 @@ std::string	Request::getAccept() const {
 	return this->_accept;
 }
 
-std::map<std::string, std::string>	Request::getArgs() const {
-	return this->_args;
+std::map<std::string, std::string>	Request::getQueryString() const {
+	return this->_queryString;
 }
 
 bool		Request::getConnectionSet() const {
@@ -145,16 +145,15 @@ void	Request::parsArgs(std::string arg) {
 	std::vector<std::string>	args;
 	std::vector<std::string>	keyValue;
 
-	this->_argsSet = true;
+	this->_queryStringSet = true;
 	args = ft_split(arg.c_str(), "&");
 	for (size_t i = 0; i < args.size(); i++)
 	{
 		keyValue = ft_split(args[i].c_str(), "=");
-		// keyValue[keyValue.size() - 1].erase(keyValue.size() - 1, 1);
 		if (keyValue.size() == 1)
-			this->_args.insert(std::make_pair(keyValue[0], ""));
+			this->_queryString.insert(std::make_pair(keyValue[0], ""));
 		else
-			this->_args.insert(std::make_pair(keyValue[0], keyValue[1]));
+			this->_queryString.insert(std::make_pair(keyValue[0], keyValue[1]));
 	}
 	// for (std::map<std::string, std::string>::iterator it = this->_args.begin(); it != this->_args.end(); it++)
 	// 	std::cout << it->first << " " << it->second << std::endl;
@@ -164,7 +163,6 @@ void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	std::vector<std::string>	splitBis;
 
 	this->_method = strSplit[0];
-	strSplit[2].erase(strSplit[2].size() - 1, 1);
 	this->_httpVersion = strSplit[2];
 	strSplit = ft_split(strSplit[1].c_str(), "?");
 	if (strSplit.size() == 2)
@@ -186,30 +184,25 @@ void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 void	Request::setHostPort(std::vector<std::string> strSplit) {
 	strSplit = ft_split(strSplit[1].c_str(), ":");
 	this->_host = strSplit[0];
-	strSplit[1].erase(strSplit[1].size() - 1, 1);
 	this->_port = strSplit[1];
 }
 
 void	Request::setConnection(std::vector<std::string> strSplit) {
-	strSplit[1].erase(strSplit[1].size() - 1, 1);
 	this->_connection = strSplit[1];
 	this->_connectionSet = true;
 }
 
 void	Request::setAccept(std::vector<std::string> strSplit) {
-	strSplit[1].erase(strSplit[1].size() - 1, 1);
 	this->_accept = strSplit[1];
 	this->_acceptSet = true;
 }
 
 void	Request::setReferer(std::vector<std::string> strSplit) {
-	strSplit[1].erase(strSplit[1].size() - 1, 1);
 	this->_referer = strSplit[1];
 	this->_refererSet = true;
 }
 
 void	Request::setAgent(std::vector<std::string> strSplit) {
-	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
@@ -220,7 +213,6 @@ void	Request::setAgent(std::vector<std::string> strSplit) {
 }
 
 void	Request::setAuthentification(std::vector<std::string> strSplit) {
-	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
@@ -230,18 +222,57 @@ void	Request::setAuthentification(std::vector<std::string> strSplit) {
 }
 
 void	Request::setContentLength(std::vector<std::string> strSplit) {
-	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
 	this->_contentLength = strSplit[1];
 }
 
 void	Request::setContentType(std::vector<std::string> strSplit) {
-	strSplit[strSplit.size() - 1].erase(strSplit[strSplit.size() - 1].size() - 1, 1);
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
 			this->_contentType += " ";
 		this->_contentType += strSplit[i];
 	}
+	for (size_t i = 1; i < strSplit.size(); i++)
+		std::cout << i << " " << strSplit[i] << std::endl;
+	if (strSplit.size() == 3 and strSplit[1] == "multipart/form-data;" and
+		strSplit[2].find("boundary=") != std::string::npos)
+	{
+		strSplit = ft_split(strSplit[2].c_str(), "=\"");
+		this->_boundarySet = true;
+		this->_boundary = "--";
+		this->_boundary += strSplit[1];
+		// std::cout << "Boundary = " << this->_boundary << std::endl;
+	}
+}
+
+void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
+	std::vector<std::string>	strSplit;
+	std::string					endBoundary = this->_boundary + "--";
+	std::string					name;
+	std::string					value;
+
+	while (*i < vct.size() and vct[*i] != endBoundary)
+	{
+		strSplit = ft_split(vct[*i].c_str(), " ");
+		if (strSplit[0] == "Content-Disposition:")
+		{
+			for (size_t j = 0; j < strSplit.size(); j++)
+			{
+				if (strSplit[j].find("name=") != std::string::npos)
+				{
+					// Tester si dans le code html, il n'y a pas de name ou que le name est vide
+					name = ft_split(strSplit[j].c_str(), "=\"")[1];
+					break ;
+				}
+			}
+			*i += 2;
+			value = vct[*i];
+			this->_queryString.insert(std::make_pair(name, value));
+		}
+		*i += 1;
+	}
+	// for (std::map<std::string, std::string>::iterator it = this->_queryString.begin(); it != this->_queryString.end(); it++)
+		// std::cout << it->first << " " << it->second << std::endl;
 }
 
 int		Request::parsRequest(int fd) {
@@ -249,13 +280,11 @@ int		Request::parsRequest(int fd) {
 	int							oct;
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
+	std::vector<std::string>	strSplitBoundary;
 	std::vector<std::string>	tmpBis;
-	std::string					key[11] =
-	{
-		"GET", "POST", "DELETE", "Host:",
-		"Connection:", "Accept:", "Referer:", "User-Agent:",
-		"Authentification", "Content-Length", "Content-Type"
-	};
+	std::string					key[11] = { "GET", "POST", "DELETE", "Host:",
+					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification:",
+					"Content-Length:", "Content-Type:"};
 
 	memset(buff, 0, 4096);
 	oct = recv(fd, buff, 4096, 0);
@@ -266,18 +295,25 @@ int		Request::parsRequest(int fd) {
 	}
 	buff[oct] = '\0';
 
-	std::cout << buff << std::endl;
+	// std::cout << buff << std::endl;
 
 	vct = ft_split(buff, "\n");
 	for (size_t i = 0; i < vct.size(); i++)
+		vct[i].erase(vct[i].size() - 1, 1);
+	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");
-		for (size_t j = 0; j < 11; j++)
+		if (this->_boundarySet and strSplit[0] == this->_boundary)
+			this->setGetParams(vct, &i);
+		else
 		{
-			if (strSplit[0] == key[j])
+			for (size_t j = 0; j < 11; j++)
 			{
-				(this->*functPtr[j])(strSplit);
-				break ;
+				if (strSplit[0] == key[j])
+				{
+					(this->*functPtr[j])(strSplit);
+					break ;
+				}
 			}
 		}
 	}

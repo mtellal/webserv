@@ -4,8 +4,6 @@
 # include <string>
 # include <iostream>
 # include <sys/socket.h>
-# include <sys/types.h>
-# include <netdb.h>
 # include <vector>
 # include <map>
 
@@ -37,7 +35,7 @@ class Request {
 	std::string							getAuthentification() const;
 	std::string							getContentLength() const;
 	std::string							getContentType() const;
-	std::map<std::string, std::string>	getArgs() const;
+	std::map<std::string, std::string>	getQueryString() const;
 
 		bool		getConnectionSet() const;
 		bool		getAcceptSet() const;
@@ -48,8 +46,10 @@ class Request {
 
 	int									_fd;
 	bool								_errRequest;
-	bool								_argsSet;
+	bool								_queryStringSet;
+	bool								_boundarySet;
 	bool								_closeConnection;
+	std::string							_boundary;
 	std::string							_method;
 	std::string							_path;
 	std::string							_httpVersion;
@@ -59,7 +59,7 @@ class Request {
 	bool								_connectionSet;
 	std::string							_accept;
 	bool								_acceptSet;
-	std::map<std::string, std::string>	_args;
+	std::map<std::string, std::string>	_queryString;
 	bool								_refererSet;
 	std::string							_referer;
 	bool								_agentSet;
@@ -83,6 +83,7 @@ class Request {
 	void	setAuthentification(std::vector<std::string> strSplit);
 	void	setContentLength(std::vector<std::string> strSplit);
 	void	setContentType(std::vector<std::string> strSplit);
+	void	setGetParams(std::vector<std::string> vct, size_t *i);
 
 
 };

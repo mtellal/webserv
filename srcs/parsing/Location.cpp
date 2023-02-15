@@ -2,16 +2,15 @@
 
 Location::Location() {}
 
-Location::Location(std::ifstream &file, int *i, std::vector<std::string> loc) : _cgiSet(false),
-																		_errorLoc(false) {
+Location::Location(std::ifstream &file, int *i, std::vector<std::string> loc) : _errorLoc(false) {
 	this->functPtr[0] = &Directives::setHttpMethods;
-	this->functPtr[1] = &Location::setCgi;
-	this->functPtr[2] = &Directives::setErrorPage;
-	this->functPtr[3] = &Directives::setClientMaxBodySize;
-	this->functPtr[4] = &Directives::setRoot;
-	this->functPtr[5] = &Directives::setAutoindex;
-	this->functPtr[6] = &Directives::setIndex;
-	this->functPtr[7] = &Directives::setHttpRedir;
+	this->functPtr[1] = &Directives::setErrorPage;
+	this->functPtr[2] = &Directives::setClientMaxBodySize;
+	this->functPtr[3] = &Directives::setRoot;
+	this->functPtr[4] = &Directives::setAutoindex;
+	this->functPtr[5] = &Directives::setIndex;
+	this->functPtr[6] = &Directives::setHttpRedir;
+	this->functPtr[7] = &Location::setCgi;
 
 	this->setPath(i, loc[1]);
 	this->readBlock(file, i);
@@ -28,17 +27,17 @@ Location	&Location::operator=(Location const &rhs) {
 
 	if (this != &rhs)
 	{
-		this->_cgi = rhs._cgi;
+		// this->_cgi = rhs._cgi;
 		this->_path = rhs._path;
-		this->_cgiSet = rhs._cgiSet;
+		// this->_cgiSet = rhs._cgiSet;
 		this->_errorLoc = rhs._errorLoc;
 	}
 	return *this;
 }
 
-std::string						Location::getCgi() {
-	return this->_cgi;
-}
+// std::string						Location::getCgi() {
+// 	return this->_cgi;
+// }
 
 std::string						Location::getPath() {
 	return this->_path;
@@ -52,9 +51,9 @@ bool	Location::getHttpMethodsSet() {
 	return this->_httpMethodsSet;
 }
 
-bool	Location::getCgiSet() {
-	return this->_cgiSet;
-}
+// bool	Location::getCgiSet() {
+// 	return this->_cgiSet;
+// }
 
 void	Location::setPath(int *i, std::string loc) {
 	// chars ok : min maj / * .
@@ -80,8 +79,8 @@ bool	Location::charAccepted(char c) {
 void	Location::readBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string key[8] = { "http_methods", "cgi", "error_page", "client_max_body_size",
-						 "root", "autoindex", "index", "return" };
+	std::string key[8] = { "http_methods", "error_page", "client_max_body_size",
+						 "root", "autoindex", "index", "return", "cgi" };
 
 	*i += 1;
 	while (getline(file, line))
@@ -117,18 +116,18 @@ void	Location::readBlock(std::ifstream &file, int *i) {
 	}
 }
 
-void	Location::setCgi(std::vector<std::string> cgi, int *i) {
-	if (cgi.size()!= 2)
-	{
-		this->_errorLoc = true;
-		std::cout << "Error: at line " << *i << " Directive cgi, wrong args" << std::endl;
-	}
-	else
-	{
-		this->_cgiSet = true;
-		this->_cgi = cgi[1];
-	}
-}
+// void	Location::setCgi(std::vector<std::string> cgi, int *i) {
+// 	if (cgi.size()!= 2)
+// 	{
+// 		this->_errorLoc = true;
+// 		std::cout << "Error: at line " << *i << " Directive cgi, wrong args" << std::endl;
+// 	}
+// 	else
+// 	{
+// 		this->_cgiSet = true;
+// 		this->_cgi = cgi[1];
+// 	}
+// }
 
 void	Location::showHttpMethods(std::ostream &o) {
 	o << "\t\tMethods\t: ";
