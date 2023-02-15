@@ -275,8 +275,10 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 		// std::cout << it->first << " " << it->second << std::endl;
 }
 
-int		Request::parsRequest(int fd) {
-	char						buff[4096];
+int		Request::parsRequest(int fd)
+{
+	size_t						bufflen = 4096;
+	char						buff[bufflen];
 	int							oct;
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
@@ -286,20 +288,27 @@ int		Request::parsRequest(int fd) {
 					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification:",
 					"Content-Length:", "Content-Type:"};
 
-	memset(buff, 0, 4096);
-	oct = recv(fd, buff, 4096, 0);
-	if (!oct)
+	std::string request;
+
+	memset(buff, 0, bufflen);
+	while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
 	{
-		this->_closeConnection = true;
-		return 0;
+		buff[oct] = '\0';
+		request.append(buff);
+		if (oct < (int)bufflen)
+			break ;
 	}
-	buff[oct] = '\0';
+	if (oct < 1)
+	{
+		if (!oct)
+			this->_closeConnection = true;
+		else if (oct == -1)
+			std::cout << "recv call failed" << std::endl;
+		return (1);
+	}
 
-	std::cout << buff << std::endl;
+	vct = ft_split(request.c_str(), "\n");
 
-	vct = ft_split(buff, "\n");
-	for (size_t i = 0; i < vct.size(); i++)
-		vct[i].erase(vct[i].size() - 1, 1);
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");

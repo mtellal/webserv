@@ -58,6 +58,9 @@ void	Configuration::open_and_check_file(std::string path_file) {
 		else if (!only_space_or_empty(line))
 		{
 			this->_errorConf = true;
+			std::cout << "\"" << line.c_str() << "\"" << std::endl;
+			std::cout << line.length() << std::endl;
+			std::cout << line[line.length() - 1] << std::endl;
 			std::cout << "Error: Incorrect information at line " << i << std::endl;
 			file.close();
 			return ;

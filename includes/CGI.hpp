@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <cstdlib>
+#include <string.h>
 
 
 class CGI
@@ -29,12 +30,14 @@ class CGI
 
         CGI();
         CGI(const CGI &);
-        CGI(const Request &req);
+        CGI(const Request &req, char **env);
         ~CGI();
 
         CGI &operator=(const CGI &);
         
         std::string    execute(const std::string &path, char **env);
+        void            initEnv( char **env);
+        void            printEnv();
 
 
     private:
@@ -42,8 +45,8 @@ class CGI
         int                                 _stdin;
         int                                 _stdout;
         std::map<std::string, std::string>  _env;
+        
 
-        void            initEnv(const Request &);
         
 };
 

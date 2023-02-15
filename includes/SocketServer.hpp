@@ -26,7 +26,7 @@ class SocketServer {
 
 	public:
 	SocketServer();
-	SocketServer(Configuration conf);
+	SocketServer(Configuration conf, char **envp);
 	SocketServer(SocketServer const &src);
 	~SocketServer();
 
@@ -47,6 +47,7 @@ class SocketServer {
 	std::map<int, int>			_clientServer;
 	int							_epollFd;
 	bool						_errSocket;
+	char						**_envp;
 
 	void	errorSocket(std::string s);
 	void	initSocket();

@@ -14,6 +14,7 @@ Server::Server(std::ifstream &file, int *i) : Directives(),  _host("0.0.0.0"),
 	this->functPtr[6] = &Directives::setIndex;
 	this->functPtr[7] = &Directives::setHttpRedir;
 	this->functPtr[8] = &Directives::setHttpMethods;
+	this->functPtr[9] = &Directives::setCgi;
 
 	this->readfile(file, i);
 }
@@ -205,8 +206,8 @@ void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 void	Server::readfile(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string words[9] = { "listen", "server_name", "error_page", "client_max_body_size",
-						 "root", "autoindex", "index", "return", "http_methods" };
+	std::string words[10] = { "listen", "server_name", "error_page", "client_max_body_size",
+						 "root", "autoindex", "index", "return", "http_methods", "cgi" };
 
 	*i += 1;
 	while (std::getline(file, line))
@@ -230,7 +231,7 @@ void	Server::readfile(std::ifstream &file, int *i) {
 			}
 			else
 			{
-				while (j < 9)
+				while (j < 10)
 				{
 					if (tmp[0] == words[j])
 					{
@@ -244,7 +245,7 @@ void	Server::readfile(std::ifstream &file, int *i) {
 						break ;
 					}
 					j++;
-					if (j == 9)
+					if (j == 10)
 					{
 						this->_errorServer = true;
 						std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
@@ -297,8 +298,8 @@ void	Server::showLocation(std::ostream & o, int i, Server const &rhs) const {
 		o << "\t\tLocation: " << tmp[i].getPath() << std::endl;
 		if (tmp[i].getHttpMethodsSet())
 			tmp[i].showHttpMethods(o);
-		if (tmp[i].getCgiSet())
-			o << "\t\tCgi\t\t: " << tmp[i].getCgi() << std::endl;
+		// if (tmp[i].getCgiSet())
+			// o << "\t\tCgi\t\t: " << tmp[i].getCgi() << std::endl;
 		// if (tmp[i].getErrorPageSet())
 		// 	rhs.showErrorPageBis(o, i, rhs);
 		if (tmp[i].getClientMaxBodySizeSet())

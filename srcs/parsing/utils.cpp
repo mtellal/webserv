@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <sys/stat.h>
+#include <iostream>
 
 int	ft_stoi(const std::string str, bool *err)
 {
@@ -32,13 +33,16 @@ int	ft_stoi(const std::string str, bool *err)
 
 bool	only_space_or_empty(std::string line)
 {
-	int i = 0;
+	size_t i = 0;
 
+	if (!line.length())
+		return (true);
 	while (line[i] == ' ' or line[i] == '\t')
 		i++;
-	if (line[i] == '\0')
-		return true;
-	return false;
+	if (i == line.length() - 1)
+		return (true);
+	std::cout << i << " " << line.length() << std::endl;
+	return (false);
 }
 
 int	ft_testchar(const char *str, const char *charset)
@@ -77,7 +81,7 @@ int	ft_nbrword(const char *str, const char *charset)
 	return (word);
 }
 
-std::vector<std::string>	ft_split(const char *str, const char *charset)
+/* std::vector<std::string>	ft_split(const char *str, const char *charset)
 {
 	std::vector<std::string>	res;
 	int							i;
@@ -96,7 +100,25 @@ std::vector<std::string>	ft_split(const char *str, const char *charset)
 		str += lenword;
 	}
 	return res;
+} */
+
+std::vector<std::string>	ft_split(const std::string &s, const std::string &charset)
+{
+	std::vector<std::string> v;
+	std::string str(s);
+	int			index = 0;
+
+	index = str.find(charset);
+	while (index != -1)
+	{
+		v.push_back(str.substr(0, index));
+		str.assign(str, index + 1, str.length());
+		index = str.find(charset);
+	}
+
+	return (v);
 }
+
 
 std::string	ft_itos(int nbr)
 {

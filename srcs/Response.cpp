@@ -12,13 +12,14 @@
 
 Response::Response() {}
 
-Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer) : _req(req), _vctServ(vctServ),
-					_clientServer(clientServer), _locBlocSelect(false), _isDir(false), _autoindex(false),
-					_closeConnection(false), _isResFormPage(false) {
+Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp) :
+					_req(req), _vctServ(vctServ), _clientServer(clientServer), _locBlocSelect(false),
+					_isDir(false), _autoindex(false), _closeConnection(false), _isResFormPage(false),
+					_envp(envp){
 
-		this->_serv = selectServerBlock();
-		this->selectLocationBlock();
-		this->checkError();
+	this->_serv = selectServerBlock();
+	this->selectLocationBlock();
+	this->checkError();
 }
 
 Response::Response(Response const &src) {
@@ -44,6 +45,7 @@ Response	&Response::operator=(Response const &rhs) {
 		this->_autoindex = rhs._autoindex;
 		this->_closeConnection = rhs._closeConnection;
 		this->_isResFormPage = rhs._isResFormPage;
+		this->_envp = rhs._envp;
 	}
 	return *this;
 }
@@ -358,7 +360,6 @@ std::string	Response::createResFormPage() {
 	return "/tmp/tmpFile.html";
 }
 
-
 void	Response::checkError() {
 	std::string	res;
 	std::string	path;
@@ -405,7 +406,11 @@ void	Response::sendHeader(std::string path) {
 
 	res = header.getHeader();
 
-	// std::cout << res << std::endl;
+// 	res = "HTTP/1.1 301 Moved Permanently\n\
+// Location: https://google.com\n\n";
+
+
+	 //std::cout << res << std::endl;
 
 	if (this->_statusCode == 406)
 	{
@@ -414,6 +419,10 @@ void	Response::sendHeader(std::string path) {
 		res = header.getHeader();
 	}
 	write(this->_req.getFd(), res.c_str(), res.size());
+
+
+	// close(this->_req.getFd());
+
 	this->sendPage(path);
 	// std::cout << res << std::endl;
 }

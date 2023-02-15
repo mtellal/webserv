@@ -10,7 +10,10 @@
 	<h1>TEST CGI</h1>
 	
 	<?php 
-		echo "<h1>APPEAR WHEN CGI EXECUTED</h1>";
+		echo "<h1>APPEAR WHEN CGI EXECUTED</h1></br>";
+		echo "<h1> The current user is: ";
+		echo $_ENV["USER"];
+		echo "</h1>" ;
 	?>
 
 </body>

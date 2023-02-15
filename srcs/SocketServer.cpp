@@ -4,7 +4,7 @@
 
 SocketServer::SocketServer() {}
 
-SocketServer::SocketServer(Configuration conf) : _errSocket(false) {
+SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false), _envp(envp) {
 	this->_vctServ = conf.getVctServer();
 
 	this->initSocket();
@@ -25,12 +25,13 @@ SocketServer::~SocketServer() {}
 SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 	if (this != &rhs)
 	{
-		this->_vctServ = rhs.getVctServer();
-		this->_serverFd = rhs.getServerFd();
-		this->_sockAddr = rhs.getSockAddr();
-		this->_clientServer = rhs.getClientServer();
-		this->_epollFd = rhs.getEpollFd();
-		this->_errSocket = rhs.getErrSocket();
+		this->_vctServ = rhs._vctServ;
+		this->_serverFd = rhs._serverFd;
+		this->_sockAddr = rhs._sockAddr;
+		this->_clientServer = rhs._clientServer;
+		this->_epollFd = rhs._epollFd;
+		this->_errSocket = rhs._errSocket;
+		this->_envp = rhs._envp;
 	}
 	return *this;
 }
@@ -108,53 +109,6 @@ void	SocketServer::initSocket()
 	}
 
 }
-
-
-/*  void	SocketServer::initSocket() {
-	int	socket_fd;
-	int	opt = 1;
-
-	for (size_t i = 0; i < this->_vctServ.size(); i++)
-	{
-		if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		{
-			perror("Cannot create socket");
-			this->_errSocket = true;
-			return ;
-		}
-		setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-		this->_serverFd.push_back(socket_fd);
-		this->createSockaddr(i);
-		if (bind(socket_fd, (struct sockaddr *)&this->_sockAddr[i], sizeof(this->_sockAddr[i])) == -1)
-		{
-			perror("Bind failed");
-			this->_errSocket = true;
-			return ;
-		}
-		if (nonBlockFd(socket_fd))
-			return ;
-		if (listen(socket_fd, NB_EVENTS) == -1)
-		{
-			perror("listen error");
-			this->_errSocket = true;
-			return ;
-		}
-	}
-}
-
-void	SocketServer::createSockaddr(int i) {
-	struct sockaddr_in addr;
-
-	addr.sin_family = AF_INET;
-	if (this->_vctServ[i].getHost() == "localhost")
-		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	else
-		addr.sin_addr.s_addr = inet_addr(this->_vctServ[i].getHost().c_str());
-	addr.sin_port = htons(this->_vctServ[i].getPort());
-	// addr.sin_zero ??
-	this->_sockAddr.push_back(addr);
-}
- */
 
 
 void	SocketServer::createFdEpoll() {
@@ -257,7 +211,7 @@ int		SocketServer::epollWait() {
 				this->closeConnection(event[j].data.fd);
 			else
 			{
-				Response	rep(req, this->getVctServer(), this->getClientServer());
+				Response	rep(req, this->getVctServer(), this->getClientServer(), this->_envp);
 				if (rep.getCloseConnection())
 					this->closeConnection(event[j].data.fd);
 			}
