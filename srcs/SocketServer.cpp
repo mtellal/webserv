@@ -245,6 +245,7 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
+		std::cout << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
@@ -259,6 +260,10 @@ int		SocketServer::epollWait() {
 			else
 			{
 				Response	rep(req, this->getVctServer(), this->getClientServer(), this->_envp);
+				rep.selectServerBlock();
+				rep.selectLocationBlock();
+				rep.sendData();
+				// std::cout << "OK" << std::endl;
 				if (rep.getCloseConnection())
 					this->closeConnection(event[j].data.fd);
 			}
