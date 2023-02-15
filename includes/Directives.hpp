@@ -52,25 +52,30 @@ class Directives {
 	void	showIndex(std::ostream & o) const;
 
 	protected:
-	std::map<int, std::string>					_errorPage;
-	int											_clientMaxBodySize;
-	std::string									_root;
-	bool										_autoindex;
-	std::vector<std::string>					_index;
-	std::string									_httpRedir;
-	std::map<std::string, std::string>			_cgi;
-	bool										_errorPageSet;
-	bool										_clientMaxBodySizeSet;
-	bool										_rootSet;
-	bool										_autoindexSet;
-	bool										_indexSet;
-	bool										_httpRedirSet;
-	bool										_errorDirectives;
-	std::vector<std::string>					_httpMethods;
-	bool										_httpMethodsSet;
 
+		std::map<int, std::string>					_errorPage;
+		int											_clientMaxBodySize;
+		std::string									_root;
+		bool										_autoindex;
+		std::vector<std::string>					_index;
+		std::string									_httpRedir;
+		std::map<std::string, std::string>			_cgi;
+		bool										_errorPageSet;
+		bool										_clientMaxBodySizeSet;
+		bool										_rootSet;
+		bool										_autoindexSet;
+		bool										_indexSet;
+		bool										_httpRedirSet;
+		bool										_errorDirectives;
+		std::vector<std::string>					_httpMethods;
+		bool										_httpMethodsSet;
 
-	bool	checkFormatDir(std::vector<std::string> host, int *i);
+		bool	checkFormatDir(std::vector<std::string> host, int *i);
+
+	private:
+
+		void	error_line(const int &n_line, const std::string &err_msg);
+
 };
 
 #endif

@@ -16,6 +16,13 @@
 
 #include <string>
 #include "Request.hpp"
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <errno.h>
+#include <cstdlib>
+#include <string.h>
+
 
 class CGI
 {
@@ -23,10 +30,14 @@ class CGI
 
         CGI();
         CGI(const CGI &);
-        CGI(const Request &req);
+        CGI(const Request &req, char **env);
         ~CGI();
 
         CGI &operator=(const CGI &);
+        
+        std::string    execute(const std::string &path, char **env);
+        void            initEnv( char **env);
+        void            printEnv();
 
 
     private:
@@ -34,27 +45,9 @@ class CGI
         int                                 _stdin;
         int                                 _stdout;
         std::map<std::string, std::string>  _env;
+        
 
-/*      std::string AUTH_TYPE;              // http auth
-        std::string CONTENT_LENGTH;
-        std::string CONTENT_TYPE;
-        std::string GATEWAY_INTERFACE;      // CGI/1.1 gateway review number 
-        std::string PATH_INFO;              // path between ressource and query string
-        std::string PATH_TRANSLATED;        // path translated from filesystem (/usr/login/Documents/.../file.html)
-        std::string QUERY_STRING;
-        std::string REMOTE_ADDR;
-        std::string REMOTE_HOST;
-        std::string REMOTE_IDENT;           // use for identification
-        std::string REMOTE_USER;
-        std::string REMOTE_MTEHOD;
-        std::string SCRIPT_NAME;            // contains th ecurrent script's path;
-        std::string SERVER_NAME;
-        std::string SERVER_PORT;
-        std::string SRVER_PROTOCOL;
-        std::string SERVER_SOFTWARE;        // server auth, in http header
-*/
-        void    initEnv(const Request &);
-
+        
 };
 
 #endif 

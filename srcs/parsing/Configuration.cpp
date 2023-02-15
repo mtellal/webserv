@@ -2,11 +2,13 @@
 
 Configuration::Configuration() {}
 
-Configuration::Configuration(std::string path_file) : _errorConf(false) {
+Configuration::Configuration(std::string path_file) :_errorConf(false)
+{
 	open_and_check_file(path_file);
 }
 
-Configuration::Configuration(Configuration const &src) {
+Configuration::Configuration(Configuration const &src)
+{
 	*this = src;
 }
 
@@ -21,35 +23,49 @@ Configuration &Configuration::operator=(Configuration const &rhs) {
 	return *this;
 }
 
-std::vector<Server>	Configuration::getVctServer() const {
+std::vector<Server>	Configuration::getVctServer() const
+{
 	return this->_vctServ;
 }
 
-bool	Configuration::get_errorConf() {
+bool	Configuration::get_errorConf()
+{
 	return this->_errorConf;
+}
+
+void	Configuration::error_msg(const std::string &msg = "", const int &n_line = -1)
+{
+	if (msg.length())
+	{
+		std::cerr << msg;
+		if (n_line != -1)
+			std::cerr << n_line;
+		std::cerr << std::endl;
+	}
+	this->_errorConf = true;
 }
 
 void	Configuration::open_and_check_file(std::string path_file) {
 	std::ifstream file(path_file.c_str());
 	std::string line;
 	std::vector<std::string> lineSplit;
-	int i = 1;
+	int n_line = 1;
 
 	if (!file)
-	{
-		this->_errorConf = true;
-		std::cout << "Error: File not found" << std::endl;
-		return ;
-	}
+		return (error_msg("Error: File not found"));
 	while (std::getline(file, line))
 	{
 		lineSplit = ft_split(line.c_str(), " \t");
+
 		if (lineSplit.size() == 2 and lineSplit[0] == "server" and lineSplit[1] == "{")
 		{
-			Server servPars(file, &i);
+			Server servPars;
+
+			servPars.readServBlock(file, &n_line);
+
 			if (servPars.getErrorServer() or servPars.getErrorDirectives())
 			{
-				this->_errorConf = true;
+				error_msg();
 				file.close();
 				return;
 			}
@@ -57,18 +73,14 @@ void	Configuration::open_and_check_file(std::string path_file) {
 		}
 		else if (!only_space_or_empty(line))
 		{
-			this->_errorConf = true;
-			std::cout << "Error: Incorrect information at line " << i << std::endl;
+			error_msg("Error: Incorrect information at line ", n_line);
 			file.close();
 			return ;
 		}
-		i++;
+		n_line++;
 	}
 	if (this->_vctServ.empty())
-	{
-		this->_errorConf = true;
-		std::cout << "Error: File is empty" << std::endl;
-	}
+		error_msg("Error: File is empty");
 	file.close();
 }
 

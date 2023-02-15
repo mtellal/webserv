@@ -111,53 +111,6 @@ void	SocketServer::initSocket()
 }
 
 
-/*  void	SocketServer::initSocket() {
-	int	socket_fd;
-	int	opt = 1;
-
-	for (size_t i = 0; i < this->_vctServ.size(); i++)
-	{
-		if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		{
-			perror("Cannot create socket");
-			this->_errSocket = true;
-			return ;
-		}
-		setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-		this->_serverFd.push_back(socket_fd);
-		this->createSockaddr(i);
-		if (bind(socket_fd, (struct sockaddr *)&this->_sockAddr[i], sizeof(this->_sockAddr[i])) == -1)
-		{
-			perror("Bind failed");
-			this->_errSocket = true;
-			return ;
-		}
-		if (nonBlockFd(socket_fd))
-			return ;
-		if (listen(socket_fd, NB_EVENTS) == -1)
-		{
-			perror("listen error");
-			this->_errSocket = true;
-			return ;
-		}
-	}
-}
-
-void	SocketServer::createSockaddr(int i) {
-	struct sockaddr_in addr;
-
-	addr.sin_family = AF_INET;
-	if (this->_vctServ[i].getHost() == "localhost")
-		addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	else
-		addr.sin_addr.s_addr = inet_addr(this->_vctServ[i].getHost().c_str());
-	addr.sin_port = htons(this->_vctServ[i].getPort());
-	// addr.sin_zero ??
-	this->_sockAddr.push_back(addr);
-}
- */
-
-
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 

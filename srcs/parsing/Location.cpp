@@ -2,7 +2,7 @@
 
 Location::Location() {}
 
-Location::Location(std::ifstream &file, int *i, std::vector<std::string> loc) : _errorLoc(false) {
+Location::Location(int *i, std::vector<std::string> loc) : _errorLoc(false) {
 	this->functPtr[0] = &Directives::setHttpMethods;
 	this->functPtr[1] = &Directives::setErrorPage;
 	this->functPtr[2] = &Directives::setClientMaxBodySize;
@@ -13,7 +13,6 @@ Location::Location(std::ifstream &file, int *i, std::vector<std::string> loc) : 
 	this->functPtr[7] = &Location::setCgi;
 
 	this->setPath(i, loc[1]);
-	this->readBlock(file, i);
 }
 
 Location::Location(Location const &src) : Directives(src) {
@@ -55,17 +54,19 @@ bool	Location::getHttpMethodsSet() {
 // 	return this->_cgiSet;
 // }
 
+void	Location::error_line(const int &n_line, const std::string &err_msg)
+{
+	this->_errorLoc = true;
+	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
+}
+
 void	Location::setPath(int *i, std::string loc) {
 	// chars ok : min maj / * .
 	for (size_t j = 0; j < loc.size(); j++)
 	{
 		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and !charAccepted(loc[j])
 			and (loc[j] < '0' or loc[j] > '9'))
-		{
-			this->_errorLoc = true;
-			std::cout << "Error: at line " << *i << " wrong syntax of location block" << std::endl;
-			return ;
-		}
+		return (error_line(*i, " wrong syntax of location block"));
 	}
 	this->_path = loc;
 }
@@ -76,7 +77,7 @@ bool	Location::charAccepted(char c) {
 	return false;
 }
 
-void	Location::readBlock(std::ifstream &file, int *i) {
+void	Location::readLocationBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
 	std::string key[8] = { "http_methods", "error_page", "client_max_body_size",
@@ -89,6 +90,7 @@ void	Location::readBlock(std::ifstream &file, int *i) {
 		if (!only_space_or_empty(line))
 		{
 			std::vector<std::string> tmp = ft_split(line.c_str(), " \t");
+
 			if (tmp.size() == 1 and tmp[0] == "}")
 				return ;
 			while (j < 8)
@@ -105,12 +107,9 @@ void	Location::readBlock(std::ifstream &file, int *i) {
 					break ;
 				}
 				j++;
-				if (j == 8)
-				{
-					this->_errorLoc = true;
-					std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
-				}
 			}
+			if (j == 8)
+				error_line(*i, " incorrect directive");
 		}
 		*i += 1;
 	}

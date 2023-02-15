@@ -386,6 +386,7 @@ std::string	Response::createResFormPage() {
 	return "/tmp/tmpFile.html";
 }
 
+
 /*	On va appeler les differentes fonctions qui check les differents paths.
 	2 cas sont possibles :
 	- Aucun fichier n'existe, (ne pas s'occuper du "if (this->_isResFormPage)", on va definir le code erreur
@@ -463,8 +464,11 @@ void	Response::sendHeader(std::string path) {
 	res = header.getHeader();
 
 
+// 	res = "HTTP/1.1 301 Moved Permanently\n
+// Location: https://google.com\n\n";
 
-	// std::cout << res << std::endl;
+
+	 //std::cout << res << std::endl;
 
 	if (this->_statusCode == 406)
 	{

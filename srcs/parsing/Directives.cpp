@@ -103,23 +103,22 @@ std::map<std::string, std::string>	Directives::getCgi() const {
 	return this->_cgi;
 }
 
+void	Directives::error_line(const int &n_line, const std::string &err_msg)
+{
+	this->_errorDirectives = true;
+	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
+}
+
 void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
 	// Verifier le path ?
 	bool	err = false;
 	int		nbError;
 
 	if (str.size() != 3)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive error_page, wrong format" << std::endl;
-		return ;
-	}
+		return (error_line(*i, "directive error_page, wrong format"));
 	nbError = ft_stoi(str[1], &err);
 	if (err)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " code error_page is incorrect" << std::endl;
-	}
+		error_line(*i, "code error_page is incorrect");
 	else if ((nbError >= 400 and nbError <= 418) or (nbError >= 421 and nbError <= 426)
 		or (nbError >= 428 and nbError <= 429) or nbError == 431 or (nbError >= 449 and nbError <= 451)
 		or nbError == 456)
@@ -130,10 +129,7 @@ void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
 		// this->_errorPage.push_back(std::make_pair(nbError, str[2]));
 	}
 	else
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " code error_page don't exist" << std::endl;
-	}
+		error_line(*i, "code error_page don't exist");
 }
 
 void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int *i) {
@@ -141,17 +137,10 @@ void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int *i
 	int		nbMaxClient;
 
 	if (maxClient.size() != 2)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive client_max_body_size, wrong format" << std::endl;
-		return ;
-	}
+		return (error_line(*i, "directive client_max_body_size, wrong format"));
 	nbMaxClient= ft_stoi(maxClient[1], &err);
 	if (err)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " client_max_body_size must be contains only numeric values" << std::endl;
-	}
+		error_line(*i, "client_max_body_size must be contains only numeric values");
 	if (nbMaxClient >= 0)
 	{
 		if (!this->_clientMaxBodySizeSet)
@@ -160,25 +149,16 @@ void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int *i
 			this->_clientMaxBodySize = nbMaxClient;
 		}
 		else
-		{
-			this->_errorDirectives = true;
-			std::cout << "Error: at line " << *i << " client_max_body_size is already set" << std::endl;
-		}
+			error_line(*i, "client_max_body_size is already set");
 	}
 	else
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " client_max_body_size must be positive" << std::endl;
-	}
+		error_line(*i, "client_max_body_size must be positive");
 }
 
 void	Directives::setRoot(std::vector<std::string> root, int *i) {
 	// Verifier que le path est bon ?
 	if (root.size() != 2)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive root, wrong format" << std::endl;
-	}
+		error_line(*i, "directive root, wrong format");
 	else if (!this->_rootSet)
 	{
 		this->_rootSet = true;
@@ -186,18 +166,12 @@ void	Directives::setRoot(std::vector<std::string> root, int *i) {
 		// std::cout << "OKKKKK = " << root[1] << std::endl;
 	}
 	else
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " root is already set" << std::endl;
-	}
+		error_line(*i, "root is already set");
 }
 
 void	Directives::setAutoindex(std::vector<std::string> autoindex, int *i) {
 	if (autoindex.size() != 2)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive autoindex, wrong format" << std::endl;
-	}
+		error_line(*i, "directive autoindex, wrong format");
 	else if (!this->_autoindexSet and (autoindex[1] == "on" or autoindex[1] == "off"))
 	{
 			this->_autoindexSet = true;
@@ -207,23 +181,14 @@ void	Directives::setAutoindex(std::vector<std::string> autoindex, int *i) {
 			this->_autoindex = false;
 	}
 	else if (!this->_autoindexSet)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive autoindex, value must be on or off" << std::endl;
-	}
+		error_line(*i, "directive autoindex, value must be on or off");
 	else
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " autoindex is already set" << std::endl;
-	}
+		error_line(*i, "autoindex is already set");
 }
 
 void	Directives::setIndex(std::vector<std::string> index, int *i) {
 	if (index.size() < 2)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive index wrong format" << std::endl;
-	}
+		error_line(*i, "directive index wrong format");
 	else if (!this->_indexSet)
 	{
 		this->_index.clear();
@@ -241,28 +206,19 @@ void	Directives::setIndex(std::vector<std::string> index, int *i) {
 void	Directives::setHttpRedir(std::vector<std::string> redir, int *i) {
 	// A voir si dans nginx on peut mettre plusieurs return dans un block sans erreur
 	if (redir.size() != 2)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " directive return wrong format" << std::endl;
-	}
+		error_line(*i, "directive index wrong format");
 	else if (!this->_httpRedirSet)
 	{
 		this->_httpRedirSet = true;
 		this->_httpRedir = redir[1];
 	}
 	else
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " return is already set" << std::endl;
-	}
+		error_line(*i, "return is already set");
 }
 
 void	Directives::setHttpMethods(std::vector<std::string> methods, int *i) {
 	if (methods.size() < 2)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
-	}
+		error_line(*i, "incorrect directive");
 	else
 	{
 		for (size_t j = 1; j < methods.size(); j++)
@@ -285,20 +241,14 @@ void	Directives::setHttpMethods(std::vector<std::string> methods, int *i) {
 					this->_httpMethods.push_back(methods[j]);
 			}
 			else
-			{
-				this->_errorDirectives = true;
-				std::cout << "Error: at line " << *i << " incorrect HTTP methods" << std::endl;
-			}
+				error_line(*i, "incorrect HTTP methods");
 		}
 	}
 }
 
 void	Directives::setCgi(std::vector<std::string> cgi, int *i) {
 	if (cgi.size()!= 3)
-	{
-		this->_errorDirectives = true;
-		std::cout << "Error: at line " << *i << " Directive cgi, wrong args" << std::endl;
-	}
+		error_line(*i, "Directive cgi, wrong args");
 	else
 		this->_cgi.insert(std::make_pair(cgi[1], cgi[2]));
 }
