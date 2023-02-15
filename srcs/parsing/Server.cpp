@@ -216,7 +216,8 @@ void	Server::readfile(std::ifstream &file, int *i) {
 		if (!only_space_or_empty(line))
 		{
 			std::vector<std::string> tmp = ft_split(line.c_str(), " \t");
-			if (tmp.size() == 1 and tmp[0] == "}")
+
+			if (tmp.size() == 1 && tmp[0] == "}")
 				return ;
 			else if (this->isLocationBlock(tmp))
 			{

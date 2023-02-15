@@ -406,7 +406,7 @@ void	Response::sendHeader(std::string path) {
 
 	res = header.getHeader();
 
-// 	res = "HTTP/1.1 301 Moved Permanently\n\
+// 	res = "HTTP/1.1 301 Moved Permanently\n
 // Location: https://google.com\n\n";
 
 

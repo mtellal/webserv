@@ -44,6 +44,10 @@ void	Configuration::open_and_check_file(std::string path_file) {
 	while (std::getline(file, line))
 	{
 		lineSplit = ft_split(line.c_str(), " \t");
+
+		/* for(int i = 0; i < (int)lineSplit.size(); i++)
+			std::cout << "[" << i << "] = " << lineSplit[i] << std::endl; */
+
 		if (lineSplit.size() == 2 and lineSplit[0] == "server" and lineSplit[1] == "{")
 		{
 			Server servPars(file, &i);
@@ -58,9 +62,6 @@ void	Configuration::open_and_check_file(std::string path_file) {
 		else if (!only_space_or_empty(line))
 		{
 			this->_errorConf = true;
-			std::cout << "\"" << line.c_str() << "\"" << std::endl;
-			std::cout << line.length() << std::endl;
-			std::cout << line[line.length() - 1] << std::endl;
 			std::cout << "Error: Incorrect information at line " << i << std::endl;
 			file.close();
 			return ;

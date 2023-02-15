@@ -35,14 +35,12 @@ bool	only_space_or_empty(std::string line)
 {
 	size_t i = 0;
 
-	if (!line.length())
-		return (true);
-	while (line[i] == ' ' or line[i] == '\t')
-		i++;
-	if (i == line.length() - 1)
-		return (true);
-	std::cout << i << " " << line.length() << std::endl;
-	return (false);
+	while (i < line.length())
+	{
+		if (line[i] != ' ' || line[i] != '\t')
+			return (false);
+	}
+	return (true);
 }
 
 int	ft_testchar(const char *str, const char *charset)
@@ -102,23 +100,61 @@ int	ft_nbrword(const char *str, const char *charset)
 	return res;
 } */
 
+size_t	ft_belong_s(const std::string &s, const std::string &charset)
+{
+	size_t	i = 0;
+	size_t	j = 0;
+
+	while (i < s.length())
+	{
+		j = 0;
+		while (j < charset.length())
+		{
+			if (charset[j] == s[i])
+				return (charset[j]);
+			j++;
+		}
+		i++;
+	}
+	return (0);
+}
+
+size_t	ft_belong_c(const char &c, const std::string &charset)
+{
+	size_t	i = 0;
+
+	while (i < charset.length())
+	{
+		if (charset[i] == c)
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
 std::vector<std::string>	ft_split(const std::string &s, const std::string &charset)
 {
 	std::vector<std::string> v;
 	std::string str(s);
+	std::string	tmp;
 	int			index = 0;
+	char		c;
 
-	index = str.find(charset);
-	while (index != -1)
+	while ((c = ft_belong_s(str, charset)))
 	{
-		v.push_back(str.substr(0, index));
-		str.assign(str, index + 1, str.length());
-		index = str.find(charset);
+		index = str.find(c);
+		tmp = str.substr(0, index);
+		if (index)
+			v.push_back(str.substr(0, index));
+		while (ft_belong_c(str[index], charset))
+			index++;
+		str.assign(str, index, str.length());
 	}
+	if (str.length())
+		v.push_back(str);
 
 	return (v);
 }
-
 
 std::string	ft_itos(int nbr)
 {

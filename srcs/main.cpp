@@ -7,6 +7,7 @@ int main(int argc, char **argv, char **envp)
 	std::string	file;
  
 	(void)argv;
+	(void)envp;
 
 	if (argc > 2)
 	{
