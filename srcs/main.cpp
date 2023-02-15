@@ -7,6 +7,7 @@ int main(int argc, char **argv, char **env)
 	std::string	file;
  
 	(void)argv;
+	(void)env;
 
 	if (argc > 2)
 	{
@@ -26,6 +27,8 @@ int main(int argc, char **argv, char **env)
 		return 1; */
 
 	CGI cgi;
+	cgi.initEnv(env);
+	cgi.printEnv();
 	std::string s = cgi.execute("./cgi-bin/php-cgi", env);
 	std::cout << s << std::endl;
 	return 0;

@@ -47,6 +47,7 @@ class SocketServer {
 	std::map<int, int>			_clientServer;
 	int							_epollFd;
 	bool						_errSocket;
+	
 
 	void	errorSocket(std::string s);
 	void	initSocket();
