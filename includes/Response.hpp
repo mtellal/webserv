@@ -20,6 +20,10 @@ class Response {
 	Location	getLocBloc() const;
 	bool		getCloseConnection() const;
 
+	void		selectServerBlock();
+	void		selectLocationBlock();
+	void		sendData();
+
 	private:
 	Server						_serv;
 	Request						_req;
@@ -40,20 +44,17 @@ class Response {
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();
-	void						rightPathLocation(bool &res);
-	void						rightPathServer(bool &res);
+	void						rightPathLocation(bool *err);
+	void						rightPathServer(bool *err);
 	std::string					rightPathErr(bool &pageFind);
 	void						fileAndDir(std::ofstream &file, bool getDir, std::string path);
 
 
-	std::string	testAllPaths(bool &err);
+	std::string	testAllPaths(bool *err);
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage();
 	std::string	createResFormPage();
 	std::string	argsToStr();
-	void		checkError();
-	Server		selectServerBlock();
-	void		selectLocationBlock();
 	bool		rightPath();
 	void		sendHeader(std::string path);
 	void		sendPage(std::string path);

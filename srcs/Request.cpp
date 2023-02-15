@@ -308,6 +308,7 @@ int		Request::parsRequest(int fd)
 	}
 
 	vct = ft_split(request.c_str(), "\n");
+	std::cout << buff << std::endl;
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{

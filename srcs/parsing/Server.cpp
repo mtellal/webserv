@@ -238,28 +238,16 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 }
 
 bool	Server::isLocationBlock(std::vector<std::string> splitLine) {
-	if (splitLine.size() == 3 and splitLine[0] == "location"
-		and splitLine[2] == "{")
-		return true;
-	return false;
+	if (splitLine.size() != 3 or splitLine[0] != "location"
+		or splitLine[2] != "{")
+		return false;
+	for (size_t i = 0; i < splitLine[1].size(); i++)
+	{
+		if (!isalnum(splitLine[1][i]) and splitLine[1][i] != '/')
+			return false;
+	}
+	return true;
 }
-
-// bool	Server::checkFormatDir(std::vector<std::string> host, int *i) {
-// 	std::string	tmp = host[host.size() - 1];
-// 	int			len = tmp.size();
-
-// 	if (tmp[len - 1] != ';')
-// 	{
-// 		this->_errorServer = true;
-// 		std::cout << "Error: at line " << *i << " directive must be terminated by \';\'" << std::endl;
-// 		return false;
-// 	}
-// 	std::cout << host[host.size() - 1] << std::endl;
-// 	host[host.size() - 1].erase(len - 1, 1);
-// 	std::cout << host[host.size() - 1] << std::endl;
-// 	return true;
-// }
-
 
 void	Server::showServerName(std::ostream & o) const {
 	if (this->_serverNameSet)

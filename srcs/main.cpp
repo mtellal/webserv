@@ -38,6 +38,7 @@ int main(int argc, char **argv, char **envp)
 	Pour get et post, checker le format des args envoyes
 	Voir 4096
 	location / ?
+	Pas les droits sur un fichier
 
 	Arguments POST + Securisation du formulaire :
 	https://www.electro-info.ovh/les-formulaires-en-PHP

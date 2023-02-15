@@ -157,6 +157,8 @@ std::string	Header::getContentLength() const {
 std::string	Header::getCodeDescription() const {
 	if (*this->_statusCode == 200)
 		return "OK";
+	else if (*this->_statusCode == 403)
+		return "Forbidden";
 	else if (*this->_statusCode == 404)
 		return "Not Found";
 	else if (*this->_statusCode == 406)
