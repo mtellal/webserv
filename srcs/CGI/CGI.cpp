@@ -111,10 +111,8 @@ std::string   CGI::execute(const std::string &path, char **env)
         args[0] = strdup("/usr/bin/php-cgi");
         args[1] = strdup("./html/test.php");
 
-        std::cerr << "execve" << std::endl;
         if (execve(path.c_str(), args, env) == -1)
         {
-            std::cerr << "error avec execve" << std::endl;
             perror("execve call failed");
             close(p[1]);
             exit(1);

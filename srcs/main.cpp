@@ -7,14 +7,13 @@ int main(int argc, char **argv, char **envp)
 	std::string	file;
  
 	(void)argv;
-	(void)env;
 
 	if (argc > 2)
 	{
 		std::cout << "Error: 2 args maximum expected" << std::endl;
 		return 1;
 	}
-	/* file = "configuration_file/default.conf";
+	file = "configuration_file/default.conf";
 	if (argc == 2)
 		file = argv[1];
 	Configuration	conf(file);
@@ -24,13 +23,7 @@ int main(int argc, char **argv, char **envp)
 	// std::cout << conf << std::endl;
 	SocketServer	serv(conf, envp);
 	if (serv.getErrSocket())
-		return 1; */
-
-	CGI cgi;
-	cgi.initEnv(env);
-	cgi.printEnv();
-	std::string s = cgi.execute("./cgi-bin/php-cgi", env);
-	std::cout << s << std::endl;
+		return 1;
 	return 0;
 }
 

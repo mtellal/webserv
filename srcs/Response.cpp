@@ -360,7 +360,6 @@ std::string	Response::createResFormPage() {
 	return "/tmp/tmpFile.html";
 }
 
-
 void	Response::checkError() {
 	std::string	res;
 	std::string	path;
@@ -411,7 +410,7 @@ void	Response::sendHeader(std::string path) {
 // Location: https://google.com\n\n";
 
 
-	// std::cout << res << std::endl;
+	 //std::cout << res << std::endl;
 
 	if (this->_statusCode == 406)
 	{
