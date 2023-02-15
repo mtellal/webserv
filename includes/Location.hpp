@@ -6,37 +6,41 @@
 class Location : public Directives {
 
 	public:
-	Location();
-	Location(std::ifstream &file, int *i, std::vector<std::string> loc);
-	Location(Location const &src);
-	virtual ~Location();
 
-	Location	&operator=(Location const &rhs);
+		Location();
+		Location(int *i, std::vector<std::string> loc);
+		Location(Location const &src);
+		virtual ~Location();
 
-	// std::string						getCgi();
-	std::string						getPath();
-	bool							getErrorLoc();
-	bool							getHttpMethodsSet();
-	// bool							getCgiSet();
+		Location	&operator=(Location const &rhs);
 
-	void							showHttpMethods(std::ostream &o);
+		// std::string						getCgi();
+		std::string						getPath();
+		bool							getErrorLoc();
+		bool							getHttpMethodsSet();
+		// bool							getCgiSet();
 
+		void							showHttpMethods(std::ostream &o);
 
-	protected:
-	// std::string					_cgi;
-	std::string					_path;
-	// bool						_cgiSet;
-	bool						_errorLoc;
+		void							readLocationBlock(std::ifstream &file, int *i);
+
+		protected:
+		// std::string					_cgi;
+		std::string					_path;
+		// bool						_cgiSet;
+		bool						_errorLoc;
 
 
 	private:
-	void	(Location::*functPtr[8])(std::vector<std::string>, int *i);
 
-	void	setPath(int *i, std::string loc);
-	bool	charAccepted(char c);
-	void	readBlock(std::ifstream &file, int *i);
+		void	(Location::*functPtr[8])(std::vector<std::string>, int *i);
 
-	// void	setCgi(std::vector<std::string> cgi, int *i);
+		void	setPath(int *i, std::string loc);
+		bool	charAccepted(char c);
+		void	error_line(const int &n_line, const std::string &err_msg);
+
+
+		// void	setCgi(std::vector<std::string> cgi, int *i);
 };
 
 #endif

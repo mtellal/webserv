@@ -1,8 +1,6 @@
 #include "../../includes/Server.hpp"
 
-Server::Server() {}
-
-Server::Server(std::ifstream &file, int *i) : Directives(),  _host("0.0.0.0"),
+Server::Server() : Directives(),  _host("0.0.0.0"),
 									_port(8080), _hostSet(false), _portSet(false), 
 									_serverNameSet(false), _errorServer(false) {
 	this->functPtr[0] = &Server::setHost;
@@ -16,7 +14,6 @@ Server::Server(std::ifstream &file, int *i) : Directives(),  _host("0.0.0.0"),
 	this->functPtr[8] = &Directives::setHttpMethods;
 	this->functPtr[9] = &Directives::setCgi;
 
-	this->readfile(file, i);
 }
 
 Server::Server(Server const &src) : Directives(src) {
@@ -88,6 +85,11 @@ bool	Server::checkFormatHost(std::string host) {
 
 }
 
+void	Server::error_msg(const int &n_line, const std::string &err_msg)
+{
+	this->_errorServer = true;
+	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
+}
 
 void	Server::setHost(std::vector<std::string> host, int *i) {
 	// Comment bien verifier le host ?
@@ -95,16 +97,9 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 	bool						err = false;
 
 	if (host.size() != 2)
-	{
-		this->_errorServer = true;
-		std::cout << "Error: at line " << *i << " directive listen, wrong format" << std::endl;
-		return ;
-	}
+		return (error_msg(*i, "directive listen, wrong format"));
 	if (!this->checkFormatHost(host[1]))
-	{
-		this->_errorServer = true;
-		std::cout << "Error: at line " << *i << " directive listen, host and port must be split by one ':'" << std::endl;
-	}
+		error_msg(*i, "directive listen, host and port must be split by one ':'");
 	else
 	{
 		splitPort = ft_split(host[1].c_str(), ":");
@@ -112,11 +107,8 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 		if (splitPort.size() == 2)
 		{
 			if (!this->checkHost(splitPort[0]))
-			{
-				this->_errorServer = true;
-				std::cout << "Error: at line " << *i << " directive listen, wrong syntaxe" << std::endl;
-				return ;
-			}
+				error_msg(*i, "directive listen, wrong syntaxe");
+
 			this->_hostSet = true;
 			this->_host = splitPort[0];
 			this->setPort(splitPort[1], i);
@@ -133,10 +125,7 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 			{
 				ft_stoi(host[1], &err);
 				if (err)
-				{
-					this->_errorServer = true;
-					std::cout << "Error: at line " << *i << " directive listen, wrong syntaxe" << std::endl;
-				}
+					error_msg(*i, "directive listen, wrong syntaxe");
 				else
 				{
 					this->_hostSet = true;
@@ -175,15 +164,9 @@ void	Server::setPort(std::string strPort, int *i) {
 	int port = ft_stoi(strPort, &err);
 
 	if (err)
-	{
-		this->_errorServer = true;
-		std::cout << "Error: at line " << *i << " directive listen, port must be contains only numeric values" << std::endl;
-	}
+		error_msg(*i, "directive listen, port must be contains only numeric values");
 	else if (this->_portSet)
-	{
-		this->_errorServer = true;
-		std::cout << "Error: at line " << *i << " listen is already set" << std::endl;
-	}
+		error_msg(*i, "listen is already set");
 	else
 	{
 		this->_portSet = true;
@@ -194,16 +177,12 @@ void	Server::setPort(std::string strPort, int *i) {
 void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 	this->_serverNameSet = true;
 	if (serverName.size() < 2)
-	{
-		this->_errorServer = true;
-		std::cout << "Error: at line " << *i << " directive server_name, wrong format" << std::endl;
-
-	}
+		return (error_msg(*i, " directive server_name, wrong format"));
 	for (size_t i = 1; i < serverName.size(); i++)
 		this->_serverName.push_back(serverName[i]);
 }
 
-void	Server::readfile(std::ifstream &file, int *i) {
+void	Server::readServBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
 	std::string words[10] = { "listen", "server_name", "error_page", "client_max_body_size",
@@ -221,7 +200,10 @@ void	Server::readfile(std::ifstream &file, int *i) {
 				return ;
 			else if (this->isLocationBlock(tmp))
 			{
-				Location locPars(file, i, tmp);
+				Location locPars(i, tmp);
+
+				locPars.readLocationBlock(file, i);
+
 				// Verifier aussi que le block n'est pas vide ??
 				if (locPars.getErrorLoc())
 				{
@@ -246,12 +228,9 @@ void	Server::readfile(std::ifstream &file, int *i) {
 						break ;
 					}
 					j++;
-					if (j == 10)
-					{
-						this->_errorServer = true;
-						std::cout << "Error: at line " << *i << " incorrect directive" << std::endl;
-					}
 				}
+				if (j == 10)
+					error_msg(*i, "incorrect directive");
 			}
 		}
 		*i += 1;
