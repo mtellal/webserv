@@ -1,7 +1,7 @@
 #include "../includes/Configuration.hpp"
 #include "../includes/SocketServer.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **envp)
 {
 	std::string	file;
 
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 	if (conf.get_errorConf())
 		return 1;
 	// std::cout << conf << std::endl;
-	SocketServer	serv(conf);
+	SocketServer	serv(conf, envp);
 	if (serv.getErrSocket())
 		return 1;
 	return 0;

@@ -99,6 +99,10 @@ std::vector<std::string>	Directives::getHttpMethods() const {
 	return this->_httpMethods;
 }
 
+std::map<std::string, std::string>	Directives::getCgi() const {
+	return this->_cgi;
+}
+
 void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
 	// Verifier le path ?
 	bool	err = false;
@@ -287,6 +291,16 @@ void	Directives::setHttpMethods(std::vector<std::string> methods, int *i) {
 			}
 		}
 	}
+}
+
+void	Directives::setCgi(std::vector<std::string> cgi, int *i) {
+	if (cgi.size()!= 3)
+	{
+		this->_errorDirectives = true;
+		std::cout << "Error: at line " << *i << " Directive cgi, wrong args" << std::endl;
+	}
+	else
+		this->_cgi.insert(std::make_pair(cgi[1], cgi[2]));
 }
 
 // void	Directives::showErrorPage(std::ostream & o) const {

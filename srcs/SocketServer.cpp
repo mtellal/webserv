@@ -4,7 +4,7 @@
 
 SocketServer::SocketServer() {}
 
-SocketServer::SocketServer(Configuration conf) : _errSocket(false) {
+SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false), _envp(envp) {
 	this->_vctServ = conf.getVctServer();
 
 	this->initSocket();
@@ -25,12 +25,13 @@ SocketServer::~SocketServer() {}
 SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 	if (this != &rhs)
 	{
-		this->_vctServ = rhs.getVctServer();
-		this->_serverFd = rhs.getServerFd();
-		this->_sockAddr = rhs.getSockAddr();
-		this->_clientServer = rhs.getClientServer();
-		this->_epollFd = rhs.getEpollFd();
-		this->_errSocket = rhs.getErrSocket();
+		this->_vctServ = rhs._vctServ;
+		this->_serverFd = rhs._serverFd;
+		this->_sockAddr = rhs._sockAddr;
+		this->_clientServer = rhs._clientServer;
+		this->_epollFd = rhs._epollFd;
+		this->_errSocket = rhs._errSocket;
+		this->_envp = rhs._envp;
 	}
 	return *this;
 }
@@ -257,7 +258,7 @@ int		SocketServer::epollWait() {
 				this->closeConnection(event[j].data.fd);
 			else
 			{
-				Response	rep(req, this->getVctServer(), this->getClientServer());
+				Response	rep(req, this->getVctServer(), this->getClientServer(), this->_envp);
 				if (rep.getCloseConnection())
 					this->closeConnection(event[j].data.fd);
 			}

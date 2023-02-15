@@ -295,7 +295,7 @@ int		Request::parsRequest(int fd) {
 	}
 	buff[oct] = '\0';
 
-	std::cout << buff << std::endl;
+	// std::cout << buff << std::endl;
 
 	vct = ft_split(buff, "\n");
 	for (size_t i = 0; i < vct.size(); i++)
