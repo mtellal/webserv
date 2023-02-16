@@ -403,6 +403,8 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err = false;
 
+	std::cout << path << std::endl;
+
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
 	if (err)
@@ -435,6 +437,7 @@ void	Response::sendData() {
 		else
 			tmp.close();
 	}
+
 	this->sendHeader(path);
 }
 
@@ -507,17 +510,16 @@ void	Response::sendPage(std::string path) {
 void	Response::selectServerBlock() {
 	std::vector<Server>			tmp;
 	std::string					host;
-	std::vector<Server>			conf = this->_vctServ;
 	bool						err = false;
 	int							fd = this->_clientServer[this->_req.getFd()];
 
-	host = conf[fd].getHost();
+	host = this->_vctServ[fd].getHost();
 
-	for (size_t i = 0; i < conf.size(); i++)
+	for (size_t i = 0; i < this->_vctServ.size(); i++)
 	{
-		if (conf[i].getHost() == host and
-				conf[i].getPort() == ft_stoi(this->_req.getPort(), &err))
-			tmp.push_back(conf[i]);
+		if (this->_vctServ[i].getHost() == host and
+				this->_vctServ[i].getPort() == ft_stoi(this->_req.getPort(), &err))
+			tmp.push_back(this->_vctServ[i]);
 	}
 	if (tmp.size() == 1)
 	{

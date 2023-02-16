@@ -36,7 +36,7 @@ class CGI
         CGI &operator=(const CGI &);
         
         std::string    execute(const std::string &path, char **env);
-        void            initEnv( char **env);
+        void            initEnv(const Request &req, char **env);
         void            printEnv();
 
 

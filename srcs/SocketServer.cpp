@@ -197,7 +197,6 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
-		std::cout << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
@@ -205,6 +204,7 @@ int		SocketServer::epollWait() {
 		else
 		{
 			Request		req(event[j].data.fd);
+			std::cout << req.getPath() << std::endl;
 			if (req.getErrRequest())
 				return 1;
 			else if (req.getcloseConnection())
@@ -224,7 +224,9 @@ int		SocketServer::epollWait() {
 	return 0;
 }
 
-void	SocketServer::createConnection(int i) {
+void	SocketServer::createConnection(int i)
+{
+	Client				client;
 	int					fd;
 	struct sockaddr		tmp;
 	socklen_t			tmp_len = sizeof(tmp);
@@ -239,6 +241,16 @@ void	SocketServer::createConnection(int i) {
 	}
 	if (this->nonBlockFd(fd) == 1)
 		return ;
+
+	char	address[50];
+	char	port[5];
+
+	if (getnameinfo(&tmp, tmp_len, address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV) == -1)
+		std::cerr << "getnameinfo call failed" << std::endl;
+
+	client.set(address, port, fd, tmp);
+
+	std::cout << client << std::endl;
 
 	event.events = EPOLLIN;
 	event.data.fd = fd;

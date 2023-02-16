@@ -20,7 +20,8 @@ CGI::CGI(const Request &req, char **env)
 {
     (void)req;
     (void)env;
-    //initEnv(req, env);
+    initEnv(req, env);
+    std::cout << _env["PATH_INFO"] << std::endl;
 }
 
 CGI::~CGI() {}
@@ -42,9 +43,9 @@ void    CGI::printEnv()
         std::cout << it->first << " = " << (it++)->second << std::endl;
 }
 
-void    CGI::initEnv(char **env)
+void    CGI::initEnv(const Request &req, char **env)
 {
-   /*  _env["AUTH_TYPE"]           =   req.getAuthentification();
+    _env["AUTH_TYPE"]           =   req.getAuthentification();
     _env["CONTENT_LENGTH"]      =   req.getContentLength();
     _env["CONTENT_TYPE"]        =   req.getContentType();
     _env["GATEWAY_INTERFACE"]   =   "CGI/1.1";
@@ -60,7 +61,7 @@ void    CGI::initEnv(char **env)
     _env["SERVER_NAME"]         =   "";
     _env["SERVER_PORT"]         =   req.getPort();
     _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
-    _env["SERVER_SOFTWARE"]     =   req.getServerName(); */
+    _env["SERVER_SOFTWARE"]     =   req.getServerName();
 
     size_t len = tab_len(env);
 

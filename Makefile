@@ -17,7 +17,8 @@ SRCS	=	main.cpp \
 			Request.cpp \
 			Response.cpp \
 			Header.cpp \
-			CGI/CGI.cpp
+			CGI/CGI.cpp \
+			Client.cpp
 
 SRCDIR		= srcs
 

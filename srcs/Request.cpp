@@ -158,23 +158,23 @@ void	Request::parsArgs(std::string arg) {
 	// 	std::cout << it->first << " " << it->second << std::endl;
 }
 
-void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
+void	Request::setMethodVersionPath(std::vector<std::string> field_args) {
 	std::vector<std::string>	splitBis;
 
-	this->_method = strSplit[0];
-	this->_httpVersion = strSplit[2];
-	strSplit = ft_split(strSplit[1].c_str(), "?");
-	if (strSplit.size() == 2)
-		this->parsArgs(strSplit[1]);
-	// if (!this->parsArgs(strSplit[1]))
+	this->_method = field_args[0];
+	this->_httpVersion = field_args[2];
+	field_args = ft_split(field_args[1].c_str(), "?");
+	if (field_args.size() == 2)
+		this->parsArgs(field_args[1]);
+	// if (!this->parsArgs(field_args[1]))
 		// return 1;
-	this->_path = strSplit[0];
+	this->_path = field_args[0];
 	// if (this->_parsArgsGet)
 	// {
-	// 	strSplit = ft_split(strSplit[1].c_str(), "&");
-	// 	for (size_t j = 0; j < strSplit.size(); j++)
+	// 	field_args = ft_split(field_args[1].c_str(), "&");
+	// 	for (size_t j = 0; j < field_args.size(); j++)
 	// 	{
-	// 		splitBis = ft_split(strSplit[j].c_str(), "=");
+	// 		splitBis = ft_split(field_args[j].c_str(), "=");
 	// 		this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
 	// 	}
 	// }
@@ -274,6 +274,14 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 		// std::cout << it->first << " " << it->second << std::endl;
 }
 
+
+/*
+			!!!!!!!!	Potentiel douille  !!!!!!
+	- Verifier que les champs necessaire (GET, content-type ...) soient bien recus avant d'envoyer une reponse + envoyer une reponse des que les champs necessaire sont recus
+
+
+*/
+
 int		Request::parsRequest(int fd)
 {
 	size_t						bufflen = 4096;
@@ -314,9 +322,9 @@ int		Request::parsRequest(int fd)
 	vct = ft_split(request, "\n\r");
 
 	/* for (int i = 0; i < (int)vct.size(); i++)
-		std::cout << vct[i] << std::endl;
+		std::cout << vct[i] << std::endl; */
 
-	std::cout << buff << std::endl; */
+	//std::cout << buff << std::endl;
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{

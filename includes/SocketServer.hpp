@@ -20,6 +20,8 @@
 # include <map>
 # include <utility>
 
+# include "Client.hpp"
+
 # define NB_EVENTS 5
 
 class SocketServer {

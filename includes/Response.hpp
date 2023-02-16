@@ -25,6 +25,7 @@ class Response {
 	void		sendData();
 
 	private:
+
 	Server						_serv;
 	Request						_req;
 	std::vector<Server>			_vctServ;
@@ -41,6 +42,8 @@ class Response {
 	bool						_closeConnection;
 	bool						_isResFormPage;
 	char						**_envp;
+	std::string					cgi_script;
+
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();
