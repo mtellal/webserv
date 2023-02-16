@@ -20,7 +20,6 @@ Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), 
 	this->functPtr[9] = &Request::setContentLength;
 	this->functPtr[10] = &Request::setContentType;
 
-
 	if (parsRequest(fd))
 		this->_errRequest = true;
 }
@@ -290,25 +289,34 @@ int		Request::parsRequest(int fd)
 
 	std::string request;
 
-	memset(buff, 0, bufflen);
 	while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
 	{
 		buff[oct] = '\0';
 		request.append(buff);
-		if (oct < (int)bufflen)
+		if (oct < (int)bufflen - 1)
 			break ;
 	}
+
 	if (oct < 1)
 	{
 		if (!oct)
+		{
 			this->_closeConnection = true;
+			return (0);
+		}
 		else if (oct == -1)
+		{
 			std::cout << "recv call failed" << std::endl;
-		return (1);
+			return (1);
+		}
 	}
 
-	vct = ft_split(request.c_str(), "\n");
-	std::cout << buff << std::endl;
+	vct = ft_split(request, "\n\r");
+
+	/* for (int i = 0; i < (int)vct.size(); i++)
+		std::cout << vct[i] << std::endl;
+
+	std::cout << buff << std::endl; */
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{

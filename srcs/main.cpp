@@ -22,9 +22,9 @@ int main(int argc, char **argv, char **envp)
 	if (conf.get_errorConf())
 		return 1;
 	// std::cout << conf << std::endl;
-	/* SocketServer	serv(conf, envp);
+	SocketServer	serv(conf, envp);
 	if (serv.getErrSocket())
-		return 1; */
+		return 1;
 	return 0;
 }
 

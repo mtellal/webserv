@@ -110,7 +110,6 @@ void	SocketServer::initSocket()
 
 }
 
-
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 
