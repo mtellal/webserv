@@ -453,23 +453,13 @@ void	Response::sendHeader(std::string path) {
 			res += this->_serv.getHttpRedir();
 		res += "\n\n";
 		std::cout << res << std::endl;
+		// std::cout << "Redir" << std::endl;
 		write(this->_req.getFd(), res.c_str(), res.size());
-		// close(this->_req.getFd());
 		this->_closeConnection = true;
 		return ;
 	}
-
-	// std::cout << "ERRRRRR" << std::endl;
-
 	res = header.getHeader();
-
-
-// 	res = "HTTP/1.1 301 Moved Permanently\n
-// Location: https://google.com\n\n";
-
-
-	 //std::cout << res << std::endl;
-
+	// std::cout << res << std::endl;
 	if (this->_statusCode == 406)
 	{
 		path = this->createDefaultErrorPage();
@@ -477,12 +467,7 @@ void	Response::sendHeader(std::string path) {
 		res = header.getHeader();
 	}
 	write(this->_req.getFd(), res.c_str(), res.size());
-
-
-	// close(this->_req.getFd());
-
 	this->sendPage(path);
-	// std::cout << res << std::endl;
 }
 
 void	Response::sendPage(std::string path) {
@@ -497,6 +482,7 @@ void	Response::sendPage(std::string path) {
 		str = ss.str();
 	}
 	res += str;
+	// std::cout << res << std::endl;
 	write(this->_req.getFd(), res.c_str(), res.size());
 	file.close();
 

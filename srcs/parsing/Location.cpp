@@ -110,23 +110,15 @@ void	Location::readLocationBlock(std::ifstream &file, int *i) {
 			}
 			if (j == 8)
 				error_line(*i, " incorrect directive");
+			if (this->_errorLoc or this->_errorDirectives)
+			{
+				this->_errorLoc = true;
+				return ;
+			}
 		}
 		*i += 1;
 	}
 }
-
-// void	Location::setCgi(std::vector<std::string> cgi, int *i) {
-// 	if (cgi.size()!= 2)
-// 	{
-// 		this->_errorLoc = true;
-// 		std::cout << "Error: at line " << *i << " Directive cgi, wrong args" << std::endl;
-// 	}
-// 	else
-// 	{
-// 		this->_cgiSet = true;
-// 		this->_cgi = cgi[1];
-// 	}
-// }
 
 void	Location::showHttpMethods(std::ostream &o) {
 	o << "\t\tMethods\t: ";

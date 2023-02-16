@@ -231,8 +231,8 @@ void	Request::setContentType(std::vector<std::string> strSplit) {
 			this->_contentType += " ";
 		this->_contentType += strSplit[i];
 	}
-	for (size_t i = 1; i < strSplit.size(); i++)
-		std::cout << i << " " << strSplit[i] << std::endl;
+	// for (size_t i = 1; i < strSplit.size(); i++)
+	// 	std::cout << i << " " << strSplit[i] << std::endl;
 	if (strSplit.size() == 3 and strSplit[1] == "multipart/form-data;" and
 		strSplit[2].find("boundary=") != std::string::npos)
 	{
@@ -313,10 +313,6 @@ int		Request::parsRequest(int fd)
 
 	vct = ft_split(request, "\n\r");
 
-	/* for (int i = 0; i < (int)vct.size(); i++)
-		std::cout << vct[i] << std::endl;
-
-	std::cout << buff << std::endl; */
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{

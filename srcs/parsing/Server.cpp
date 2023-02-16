@@ -231,6 +231,8 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 				}
 				if (j == 10)
 					error_msg(*i, "incorrect directive");
+				if (this->_errorServer or this->_errorDirectives)
+					return ;
 			}
 		}
 		*i += 1;

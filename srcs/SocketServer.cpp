@@ -92,7 +92,6 @@ void	SocketServer::initSocket()
 			return (errorSocket("socket call failed"));
 
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
 		_serverFd.push_back(serv_socket);
 
 		if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
@@ -105,9 +104,8 @@ void	SocketServer::initSocket()
 			return ;
 		if (listen(serv_socket, NB_EVENTS) == -1)
 			return (errorSocket("Listen call failed"));
-
 	}
-
+	std::cout << std::endl;
 }
 
 void	SocketServer::createFdEpoll() {
@@ -197,7 +195,7 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
-		std::cout << event[j].data.fd << std::endl;
+		// std::cout << "event = " << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
