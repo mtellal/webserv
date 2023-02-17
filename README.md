@@ -120,3 +120,8 @@ xhtml) </br>
 - http://www.mnuwer.dbasedeveloper.co.uk/dlearn/web/session01.htm
 - https://www.quora.com/unanswered/What-is-CGI-BIN-How-do-you-use-CGI-BIN
 - https://www.fini.net/pub/PerlClass/SkudContent/perlcgi.pdf
+
+
+
+### RDF W3
+- https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
