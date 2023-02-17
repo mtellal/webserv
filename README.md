@@ -49,6 +49,11 @@ Methods a implementer : https://www.rfc-editor.org/rfc/rfc7231#section-4
 
 Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b4c8cb4f98109d5fc1f
 
+### RFC W3
+
+- https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+
+
 -----------------------------------------------------------------------------------------------------
 
 ## FUNCTIONS
