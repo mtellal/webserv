@@ -27,8 +27,8 @@ Client	&Client::operator=(const Client &c)
 	if (this != &c)
 	{
 		ip_address = c.ip_address;
-		port = c.port;
 		fd = c.fd;
+		addr = c.addr;
 	}
 	return (*this);
 }
@@ -37,23 +37,18 @@ Client::~Client() {}
 
 std::string         Client::getIpAddress() const { return (ip_address); }
 
-std::string         Client::getPort() const { return (port); }
-
 int                 Client::getFD() const { return (fd); }
 
 struct sockaddr     Client::getAddr() const { return (addr); }
 
-void				Client::set(std::string ip, std::string p, int f, struct sockaddr &addr) 
+void				Client::set(std::string ip, int f, struct sockaddr &addr) 
 {
 	setIpAddress(ip);
-	setPort(p);
 	setFD(f);
 	setAddr(addr);
 }
 
 void                Client::setIpAddress(std::string s) { ip_address = s; }
-
-void                Client::setPort(std::string s) { port = s; }
 
 void                Client::setFD(int i) { fd = i; }
 
@@ -63,7 +58,6 @@ std::ostream &operator<<(std::ostream &out, const Client &c)
 {
 	out << "Client [" << c.getFD() << "] 's informations: \n";
 	out << "ip: " << c.getIpAddress() << "\n";
-	out << "port: " << c.getPort() << "\n";
 	out << "fd: " << c.getFD() << "\n";
 	return (out);
 }

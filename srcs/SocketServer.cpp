@@ -2,10 +2,11 @@
 #include "Response.hpp"
 #include <string.h>
 
+
 SocketServer::SocketServer() {}
 
 SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false), _envp(envp) {
-	this->_vctServ = conf.getVctServer();
+	this->_servers = conf.getVctServer();
 
 	this->initSocket();
 	if (this->getErrSocket())
@@ -25,8 +26,8 @@ SocketServer::~SocketServer() {}
 SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 	if (this != &rhs)
 	{
-		this->_vctServ = rhs._vctServ;
-		this->_serverFd = rhs._serverFd;
+		this->_servers = rhs._servers;
+		this->_servers_fd = rhs._servers_fd;
 		this->_sockAddr = rhs._sockAddr;
 		this->_clientServer = rhs._clientServer;
 		this->_epollFd = rhs._epollFd;
@@ -37,11 +38,11 @@ SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 }
 
 std::vector<Server>			SocketServer::getVctServer() const {
-	return this->_vctServ;
+	return this->_servers;
 }
 
-std::vector<int>			SocketServer::getServerFd() const {
-	return this->_serverFd;
+std::vector<size_t>			SocketServer::getServerFd() const {
+	return this->_servers_fd;
 }
 
 std::vector<sockaddr_in>	SocketServer::getSockAddr() const {
@@ -68,6 +69,26 @@ void	SocketServer::errorSocket(std::string s)
 	return ;
 }
 
+std::string		getDomainInfo(const struct sockaddr addr)
+{
+	char	domain[50];
+
+	if (getnameinfo(&addr, sizeof(addr), domain, sizeof(domain), 0, 0, 0) == -1)
+		std::cerr << "getnameinfo() call failed" << std::endl;
+	//std::cout << "domain: " << domain << std::endl;
+	return (domain);
+}
+
+std::string		getAddressInfo(const struct sockaddr addr)
+{
+	char	address[50];
+
+	if (getnameinfo(&addr, sizeof(addr), address, sizeof(address), 0, 0, NI_NUMERICHOST) == -1)
+		std::cerr << "getnameinfo() call failed" << std::endl;
+	//std::cout << "address: " << address << std::endl;
+	return (address);
+}
+
 void	SocketServer::initSocket()
 {
 	int				opt;
@@ -80,9 +101,9 @@ void	SocketServer::initSocket()
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	for (size_t i = 0; i < _vctServ.size(); i++)
+	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (getaddrinfo(_vctServ[i].getHost().c_str(), ft_itos(_vctServ[i].getPort()).c_str(), &hints, &res) != 0)
+		if (getaddrinfo(_servers[i].getHost().c_str(), ft_itos(_servers[i].getPort()).c_str(), &hints, &res) != 0)
 			return (errorSocket("getaddrinfo call failed"));
 
 		// sockaddr == sockaddr_in
@@ -93,7 +114,13 @@ void	SocketServer::initSocket()
 
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-		_serverFd.push_back(serv_socket);
+		this->_servers[i].setSocket(serv_socket);
+		this->_servers[i].setDomain(getDomainInfo(*res->ai_addr));
+		this->_servers[i].setAddress(getAddressInfo(*res->ai_addr));
+
+		//std::cout << "domain: " <<  _servers[i].getDomain() << "\naddress: " << _servers[i].getAddress() << std::endl;
+
+		this->_servers_fd.push_back(serv_socket);
 
 		if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
 			return (errorSocket("bind call failed"));
@@ -119,11 +146,11 @@ void	SocketServer::createFdEpoll() {
 		this->_errSocket = true;
 		perror("err epoll_create");
 	}
-	for (size_t i = 0; i < this->_vctServ.size(); i++)
+	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
 		event.events = EPOLLIN;
-		event.data.fd = this->_serverFd[i];
-		if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, this->_serverFd[i], &event) == -1)
+		event.data.fd = this->_servers_fd[i];
+		if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, this->_servers_fd[i], &event) == -1)
 		{
 			this->_errSocket = true;
 			perror("err epoll_ctl");
@@ -145,15 +172,14 @@ void	SocketServer::closeSockets() {
 		close(it->first);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, it->first, NULL);
 	}
-	for (size_t i = 0; i < this->_vctServ.size(); i++)
+	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		close(this->_serverFd[i]);
-		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, this->_serverFd[i], NULL);
+		close(this->_servers_fd[i]);
+		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, this->_servers_fd[i], NULL);
 	}
 	epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, 0, NULL);
 	close(this->_epollFd);
 }
-
 
 // fcntl seulement pour macos ou ok pour linux ?
 int		SocketServer::nonBlockFd(int socketFd) {
@@ -175,9 +201,9 @@ int		SocketServer::nonBlockFd(int socketFd) {
 }
 
 int		SocketServer::isServerFd(int fd) const {
-	for (size_t i = 0; i < this->_serverFd.size(); i++)
+	for (size_t i = 0; i < this->_servers_fd.size(); i++)
 	{
-		if (this->_serverFd[i] == fd)
+		if (this->_servers_fd[i] == (size_t)fd)
 			return i;
 	}
 	return -1;
@@ -204,6 +230,11 @@ int		SocketServer::epollWait() {
 		else
 		{
 			Request		req(event[j].data.fd);
+
+			std::string current_serv = req.getHost();
+
+			std::cout << current_serv << std::endl;
+
 			std::cout << req.getPath() << std::endl;
 			if (req.getErrRequest())
 				return 1;
@@ -232,29 +263,26 @@ void	SocketServer::createConnection(int i)
 	socklen_t			tmp_len = sizeof(tmp);
 	struct epoll_event	event;
 
-	if ((fd = accept(this->_serverFd[i], (struct sockaddr *)&tmp,
+	if ((fd = accept(this->_servers_fd[i], (struct sockaddr *)&tmp,
 			&tmp_len)) == -1)
 	{
-		perror("err accept");
+		perror("accept() call failed");
 		this->_errSocket = true;
 		return ;
 	}
 	if (this->nonBlockFd(fd) == 1)
 		return ;
 
-	char	address[50];
-	char	port[5];
-
-	if (getnameinfo(&tmp, tmp_len, address, sizeof(address), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV) == -1)
-		std::cerr << "getnameinfo call failed" << std::endl;
-
-	client.set(address, port, fd, tmp);
+	client.set(getAddressInfo(tmp), fd, tmp);
 
 	std::cout << client << std::endl;
 
+	this->_servers[i].addClient(client);
+
 	event.events = EPOLLIN;
 	event.data.fd = fd;
-	this->_clientServer.insert(std::make_pair(fd, i));
+	
+	//this->_clientServer.insert(std::make_pair(fd, i));
 	if (epoll_ctl(this->_epollFd, EPOLLIN, fd, &event) == -1)
 	{
 		perror("err epoll_ctl");
@@ -264,6 +292,8 @@ void	SocketServer::createConnection(int i)
 }
 
 void	SocketServer::closeConnection(int fd) {
+
+	//_servers.eraseClient(fd);
 	this->_clientServer.erase(fd);
 	close(fd);
 	epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, fd, NULL);

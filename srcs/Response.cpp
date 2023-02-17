@@ -13,7 +13,7 @@
 Response::Response() {}
 
 Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp) :
-					_req(req), _vctServ(vctServ), _clientServer(clientServer), _locBlocSelect(false),
+					_req(req), _servers(vctServ), _clientServer(clientServer), _locBlocSelect(false),
 					_isDir(false), _autoindex(false), _closeConnection(false), _isResFormPage(false),
 					_envp(envp){
 }
@@ -29,7 +29,7 @@ Response	&Response::operator=(Response const &rhs) {
 	{
 		this->_serv = rhs._serv;
 		this->_req = rhs._req;
-		this->_vctServ = rhs._vctServ;
+		this->_servers = rhs._servers;
 		this->_clientServer = rhs._clientServer;
 		this->_path = rhs._path;
 		this->_errPath = rhs._errPath;
@@ -513,13 +513,13 @@ void	Response::selectServerBlock() {
 	bool						err = false;
 	int							fd = this->_clientServer[this->_req.getFd()];
 
-	host = this->_vctServ[fd].getHost();
+	host = this->_servers[fd].getHost();
 
-	for (size_t i = 0; i < this->_vctServ.size(); i++)
+	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		if (this->_vctServ[i].getHost() == host and
-				this->_vctServ[i].getPort() == ft_stoi(this->_req.getPort(), &err))
-			tmp.push_back(this->_vctServ[i]);
+		if (this->_servers[i].getHost() == host and
+				this->_servers[i].getPort() == ft_stoi(this->_req.getPort(), &err))
+			tmp.push_back(this->_servers[i]);
 	}
 	if (tmp.size() == 1)
 	{

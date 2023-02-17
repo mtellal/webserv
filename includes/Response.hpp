@@ -28,7 +28,7 @@ class Response {
 
 	Server						_serv;
 	Request						_req;
-	std::vector<Server>			_vctServ;
+	std::vector<Server>			_servers;
 	std::map<int, int>			_clientServer;
 	std::vector<std::string>	_path;
 	std::vector<std::string>	_errPath;

@@ -35,7 +35,7 @@ class SocketServer {
 	SocketServer	&operator=(SocketServer const &rhs);
 
 	std::vector<Server>			getVctServer() const;
-	std::vector<int>			getServerFd() const;
+	std::vector<size_t>			getServerFd() const;
 	std::vector<sockaddr_in>	getSockAddr() const;
 	std::map<int, int>			getClientServer() const;
 	int							getEpollFd() const;
@@ -43,24 +43,25 @@ class SocketServer {
 
 
 	private:
-	std::vector<Server>			_vctServ;
-	std::vector<int>			_serverFd;
-	std::vector<sockaddr_in>	_sockAddr;
-	std::map<int, int>			_clientServer;
-	int							_epollFd;
-	bool						_errSocket;
-	char						**_envp;
 
-	void	errorSocket(std::string s);
-	void	initSocket();
-	void	createSockaddr(int i);
-	void	createFdEpoll();
-	void	closeSockets();
-	int		nonBlockFd(int sockeFd);
-	int		isServerFd(int fd) const;
-	int		epollWait();
-	void	createConnection(int i);
-	void	closeConnection(int fd);
+		std::vector<Server>			_servers;
+		std::vector<size_t>			_servers_fd;
+		std::vector<sockaddr_in>	_sockAddr;
+		std::map<int, int>			_clientServer;
+		int							_epollFd;
+		bool						_errSocket;
+		char						**_envp;
+
+		void	errorSocket(std::string s);
+		void	initSocket();
+		void	createSockaddr(int i);
+		void	createFdEpoll();
+		void	closeSockets();
+		int		nonBlockFd(int sockeFd);
+		int		isServerFd(int fd) const;
+		int		epollWait();
+		void	createConnection(int i);
+		void	closeConnection(int fd);
 
 };
 

@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+#include "Client.hpp"
 #include "Directives.hpp"
 #include "Location.hpp"
 #include <fstream>
@@ -23,6 +24,13 @@ class Server : public Directives {
 		bool						getServerNameSet() const;
 		bool						getHostSet() const;
 		bool						getPortSet() const;
+		std::string					getAddress() const;
+		std::string					getDomain() const;
+
+
+		void						setSocket(size_t fd);
+		void						setAddress(std::string address);
+		void						setDomain(std::string address);
 
 		void						showServerName(std::ostream & o) const;
 		void						showLocation(std::ostream & o, int i, Server const &rhs) const;
@@ -30,11 +38,18 @@ class Server : public Directives {
 		void						showIndexBis(std::ostream & o, int i, std::vector<Location> tmp) const;
 		void						readServBlock(std::ifstream &file, int *i);
 
+		void						addClient(const Client &c);
+		void						eraseClient(int fd);
 
 	private:
 
-		std::vector<Location>		_vctLoation;
+		size_t						_server_fd;
+		std::vector<size_t>			_clients_fd;
+		std::vector<Client>			_clients;
+		std::vector<Location>		_vctLocation;
 		std::string					_host;
+		std::string					_domain;
+		std::string					_address;	// ipv4
 		int							_port;
 		std::vector<std::string>	_serverName;
 		bool						_hostSet;
