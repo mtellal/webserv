@@ -1,5 +1,5 @@
-#include "../includes/Header.hpp"
-#include "../includes/utils.hpp"
+#include "Header.hpp"
+#include "utils.hpp"
 #include <sstream>
 #include <sys/stat.h>
 #include <iostream>

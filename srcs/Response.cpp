@@ -1,26 +1,15 @@
-#include "../includes/Response.hpp"
-#include <sstream>
-#include <string.h>
-#include <unistd.h>
+#include "Response.hpp"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <features.h>
-#include <dirent.h>
+Response::Response() :
+_locBlocSelect(false), _isDir(false), _autoindex(false),
+_closeConnection(false), _isResFormPage(false)	{}
 
+Response::Response(const Request &req, const Server &s, char **envp) :
+_serv(s), _req(req), _locBlocSelect(false),
+_isDir(false), _autoindex(false), _closeConnection(false),
+_isResFormPage(false), _envp(envp), _defaultPage(_req, _serv)	{}
 
-Response::Response() {}
-
-Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp) :
-					_req(req), _servers(vctServ), _clientServer(clientServer), _locBlocSelect(false),
-					_isDir(false), _autoindex(false), _closeConnection(false), _isResFormPage(false),
-					_envp(envp){
-}
-
-Response::Response(Response const &src) {
-	*this = src;
-}
+Response::Response(Response const &src) { *this = src; }
 
 Response::~Response() {}
 
@@ -29,8 +18,6 @@ Response	&Response::operator=(Response const &rhs) {
 	{
 		this->_serv = rhs._serv;
 		this->_req = rhs._req;
-		this->_servers = rhs._servers;
-		this->_clientServer = rhs._clientServer;
 		this->_path = rhs._path;
 		this->_errPath = rhs._errPath;
 		this->_httpRep = rhs._httpRep;
@@ -42,10 +29,12 @@ Response	&Response::operator=(Response const &rhs) {
 		this->_closeConnection = rhs._closeConnection;
 		this->_isResFormPage = rhs._isResFormPage;
 		this->_envp = rhs._envp;
+		this->_defaultPage = rhs._defaultPage;
 	}
 	return *this;
 }
 
+//	GETTER
 Server		Response::getServ() const {
 	return this->_serv;
 }
@@ -164,7 +153,10 @@ bool	Response::rightPath() {
 	bool	err = false;
 
 	if (this->_locBlocSelect)
+	{
+		std::cout << "locBlockSelect: true" << std::endl;
 		this->rightPathLocation(&err);
+	}
 	else
 		this->rightPathServer(&err);
 
@@ -208,7 +200,6 @@ std::string	Response::testAllPaths(bool *err) {
 	}
 	return rightPath;
 }
-
 
 /*	On regarde par rapport au code erreur si une page a ete set pour ce code erreur
 	dans notre fichier de configuration en reconstituant le path */
@@ -255,138 +246,6 @@ std::string	Response::rightPathErr(bool &pageFind) {
 	return rightPath;
 }
 
-std::string	Response::createDefaultErrorPage() {
-	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
-
-	file << "<!DOCTYPE html>" << std::endl;
-	file << "<html lang=\"en\">" << std::endl;
-	file << "<head>" << std::endl;
-	file << "	<meta charset=\"UTF-8\">" << std::endl;
-	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
-	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>TMP Webserv " + ft_itos(this->_statusCode) + "</title>" << std::endl;
-	file << "</head>" << std::endl;
-	file << "<body>" << std::endl;
-	file << "	<h1>Default page Error " + ft_itos(this->_statusCode) + " :(</h1>" << std::endl;
-	file << "</body>" << std::endl;
-	file << "</html>" << std::endl;
-	file.close();
-
-	return "/tmp/tmpFile.html";
-}
-
-
-/*	Cree un lien pour chaque dossier / fichier*/
-void	Response::fileAndDir(std::ofstream &file, bool getDir, std::string path) {
-	DIR				*dir;
-	struct dirent	*entry;
-
-	if ((dir = opendir(path.c_str())) != NULL)
-	{
-		while ((entry = readdir(dir)) != NULL)
-		{
-			if ((getDir and entry->d_type == DT_DIR) or (!getDir and entry->d_type != DT_DIR))
-			{
-				if (strlen(entry->d_name) != 1 or entry->d_name[0] != '.')
-				{
-					file << "<a href=\"http://" + this->_serv.getHost() + ":" + ft_itos(this->_serv.getPort()) +
-					this->_req.getPath();
-					if (this->_req.getPath()[this->_req.getPath().size() - 1] != '/')
-						file << "/";
-					file << entry->d_name << "\">" << entry->d_name;
-					if (entry->d_type == DT_DIR)
-						file << "/";
-					file << "</a><br>" << std::endl;
-				}
-			}
-		}
-		closedir(dir);
-	} 
-	else
-		perror("Impossible d'ouvrir le répertoire");
-}
-
-/*	Affiche l'autoindex, deja les dossiers puis les ficheirs (comme nginx) */
-std::string	Response::createAutoindexPage() {
-	std::string		path = this->_path[0];
-	size_t			pos = path.find_last_of('/');
-	std::ofstream	file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
-
-	path.erase(pos, path.size() - pos);
-	path += "/";
-
-	file << "<!DOCTYPE html>" << std::endl;
-	file << "<html lang=\"en\">" << std::endl;
-	file << "<head>" << std::endl;
-	file << "	<meta charset=\"UTF-8\">" << std::endl;
-	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
-	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>Webserv Autoindex</title>" << std::endl;
-	file << "</head>" << std::endl;
-	file << "<body>" << std::endl;
-	file << "	<h1>Index of " + this->_req.getPath() + "</h1>" << std::endl;
-
-	this->fileAndDir(file, true, path);
-	this->fileAndDir(file, false, path);
-
-	file << "</body>" << std::endl;
-	file << "</html>" << std::endl;
-	file.close();
-
-	return "/tmp/tmpFile.html";
-}
-
-
-/* Fct tmp qui me sert juste pour des tests, va etre suprimee */
-std::string	Response::argsToStr() {
-	std::map<std::string, std::string>	args;
-	std::string							res;
-
-	args = this->_req.getQueryString();
-
-	res += args["titre"];
-	res += " ";
-	res += args["nom"];
-	res += " ";
-	res += args["prenom"];
-	res += " a ";
-	res += args["age"];
-	res += " ans, ";
-	if (args["titre"] == "M.")
-		res += "il ";
-	else
-		res += "elle ";
-	if (args["bDebutant"] == "on")
-		res += "debute en php";
-	else
-		res += "est pro en php";
-
-	return res;
-}
-
-
-
-std::string	Response::createResFormPage() {
-	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
-
-	file << "<!DOCTYPE html>" << std::endl;
-	file << "<html lang=\"en\">" << std::endl;
-	file << "<head>" << std::endl;
-	file << "	<meta charset=\"UTF-8\">" << std::endl;
-	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
-	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>Form</title>" << std::endl;
-	file << "</head>" << std::endl;
-	file << "<body>" << std::endl;
-	file << "	<p>" + this->argsToStr() + "</p>"<< std::endl;
-	file << "</body>" << std::endl;
-	file << "</html>" << std::endl;
-	file.close();
-
-	return "/tmp/tmpFile.html";
-}
-
-
 /*	On va appeler les differentes fonctions qui check les differents paths.
 	2 cas sont possibles :
 	- Aucun fichier n'existe, (ne pas s'occuper du "if (this->_isResFormPage)", on va definir le code erreur
@@ -401,9 +260,7 @@ std::string	Response::createResFormPage() {
 void	Response::sendData() {
 	std::string	res;
 	std::string	path;
-	bool		err = false;
-
-	std::cout << path << std::endl;
+	bool		err;
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
@@ -414,7 +271,7 @@ void	Response::sendData() {
 		// ce if est temporaire
 		if (this->_isResFormPage)
 		{
-			path = this->createResFormPage();
+			path = this->_defaultPage.createResFormPage();
 			this->_statusCode = 200;
 			pageFind = true;
 		}
@@ -431,9 +288,9 @@ void	Response::sendData() {
 		std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
 		if (this->_autoindex)
-			path = this->createAutoindexPage();
+			path = this->_defaultPage.createAutoindexPage(this->_path);
 		else if (!tmp or !pageFind)
-			path = this->createDefaultErrorPage();
+			path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
 		else
 			tmp.close();
 	}
@@ -441,10 +298,10 @@ void	Response::sendData() {
 	this->sendHeader(path);
 }
 
-void	Response::sendHeader(std::string path) {
-	Header		header(this->_req, path, &this->_statusCode, this->_serv, this);
-	std::string	res;
-
+void	Response::sendHeader(std::string path)
+{
+	Header			header(this->_req, path, &this->_statusCode, this->_serv, this);
+	std::string		res;
 
 	if ((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
 		this->_serv.getHttpRedirSet())
@@ -475,7 +332,7 @@ void	Response::sendHeader(std::string path) {
 
 	if (this->_statusCode == 406)
 	{
-		path = this->createDefaultErrorPage();
+		path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
 		Header	headerBis(this->_req, path, &this->_statusCode, this->_serv, this);
 		res = header.getHeader();
 	}
@@ -507,59 +364,26 @@ void	Response::sendPage(std::string path) {
 		this->_closeConnection = true;
 }
 
-void	Response::selectServerBlock() {
-	std::vector<Server>			tmp;
-	std::string					host;
-	bool						err = false;
-	int							fd = this->_clientServer[this->_req.getFd()];
-
-	host = this->_servers[fd].getHost();
-
-	for (size_t i = 0; i < this->_servers.size(); i++)
-	{
-		if (this->_servers[i].getHost() == host and
-				this->_servers[i].getPort() == ft_stoi(this->_req.getPort(), &err))
-			tmp.push_back(this->_servers[i]);
-	}
-	if (tmp.size() == 1)
-	{
-		this->_serv = tmp[0];
-		return ;
-	}
-	else if (tmp.size() > 1)
-		std::cout << "Fct selectServerBlock err, plusieurs blocs preselectionnes" << std::endl;
-
-	// Il faut egalement departager si besoin avec server_name
-
-	// Si ce msg apparait, plusieurs blocs ont etes pre-selectionnes
-	// mais pas departages, il faut les departages avec server name.
-	std::cout << "Fct selectServerBlock err" << std::endl;
-	return ;
-}
-
 void	Response::selectLocationBlock() {
-	std::vector<Location>	vctLoc = this->_serv.getVctLocation();
+	std::vector<Location>	locations = this->_serv.getVctLocation();
 	std::string 			strBlocLoc;
 	Location				tmp;
 	// int						res;
 	std::string				req = this->_req.getPath();
 	size_t j;
 
-	for (size_t i = 0; i < vctLoc.size(); i++)
+	for (size_t i = 0; i < locations.size(); i++)
 	{
-		strBlocLoc = vctLoc[i].getPath();
+		strBlocLoc = locations[i].getPath();
 		j = 0;
-		while (strBlocLoc[j])
+		if (!strncmp(strBlocLoc.c_str(), this->_req.getPath().c_str(), strBlocLoc.length()))
 		{
-			if (req[j] != strBlocLoc[j])
-				break ;
-			j++;
-		}
-		if ((j > 2 and (!strBlocLoc[j] or (strBlocLoc[j] == '/' and !strBlocLoc[j + 1]))
-			and (req[j] == '/' or !req[j]) and strBlocLoc.size() > tmp.getPath().size()))
-		{
-			this->_locBlocSelect = true;
-			tmp = vctLoc[i];
+			j += strBlocLoc.length();
+			if (j && strBlocLoc.size() > tmp.getPath().size())
+			{
+				this->_locBlocSelect = true;
+				tmp = locations[i];
+			}
 		}
 	}
 	if (this->_locBlocSelect)

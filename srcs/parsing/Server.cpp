@@ -1,7 +1,7 @@
-#include "../../includes/Server.hpp"
+#include "Server.hpp"
 
 Server::Server() : Directives(),  _host("0.0.0.0"),
-									_port(8080), _hostSet(false), _portSet(false), 
+									_port("8080"), _hostSet(false), _portSet(false), 
 									_serverNameSet(false), _errorServer(false) {
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
@@ -43,7 +43,7 @@ Server	&Server::operator=(Server const &rhs) {
 
 std::string					Server::getHost() const { return this->_host; }
 
-int							Server::getPort() const { return this->_port; }
+std::string					Server::getPort() const { return this->_port; }
 
 std::vector<std::string>	Server::getServerName() const { return this->_serverName; }
 
@@ -173,8 +173,21 @@ bool	Server::checkHost(std::string host) {
 	return true;
 }
 
+void	Server::setPort(std::string port, int *line)
+{
+	if (this->_portSet)
+		error_msg(*line, "listen is already set");
 
-void	Server::setPort(std::string strPort, int *i) {
+	for (size_t i = 0; i < port.length(); i++)
+	{
+		if (port[i] < '0' || port[i] > '9')
+			error_msg(*line, "directive listen, port must be contains only numeric values");
+	}
+	this->_portSet = true;
+	this->_port = port;
+}
+
+/* void	Server::setPort(std::string strPort, int *i) {
 	// Verifier le port ?
 	bool err = false;
 	int port = ft_stoi(strPort, &err);
@@ -188,7 +201,7 @@ void	Server::setPort(std::string strPort, int *i) {
 		this->_portSet = true;
 		this->_port = port;
 	}
-}
+} */
 
 void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 	this->_serverNameSet = true;

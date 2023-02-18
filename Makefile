@@ -2,8 +2,7 @@ NAME		= webserv
 
 CC			= c++
 
-INC			= -I includes/ 
-
+INC			= -I includes/ -I includes/Parsing/
 
 CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
 
@@ -18,7 +17,8 @@ SRCS	=	main.cpp \
 			Response.cpp \
 			Header.cpp \
 			CGI/CGI.cpp \
-			Client.cpp
+			Client.cpp \
+			DefaultPage.cpp
 
 SRCDIR		= srcs
 

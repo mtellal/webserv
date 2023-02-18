@@ -21,25 +21,27 @@
 # include <utility>
 
 # include "Client.hpp"
+#include "Request.hpp"
 
 # define NB_EVENTS 5
 
 class SocketServer {
 
 	public:
-	SocketServer();
-	SocketServer(Configuration conf, char **envp);
-	SocketServer(SocketServer const &src);
-	~SocketServer();
 
-	SocketServer	&operator=(SocketServer const &rhs);
+		SocketServer();
+		SocketServer(Configuration conf, char **envp);
+		SocketServer(SocketServer const &src);
+		~SocketServer();
 
-	std::vector<Server>			getVctServer() const;
-	std::vector<size_t>			getServerFd() const;
-	std::vector<sockaddr_in>	getSockAddr() const;
-	std::map<int, int>			getClientServer() const;
-	int							getEpollFd() const;
-	bool						getErrSocket() const;
+		SocketServer	&operator=(SocketServer const &rhs);
+
+		std::vector<Server>			getVctServer() const;
+		std::vector<size_t>			getServerFd() const;
+		std::vector<sockaddr_in>	getSockAddr() const;
+		std::map<int, int>			getClientServer() const;
+		int							getEpollFd() const;
+		bool						getErrSocket() const;
 
 
 	private:
@@ -52,16 +54,18 @@ class SocketServer {
 		bool						_errSocket;
 		char						**_envp;
 
-		void	errorSocket(std::string s);
-		void	initSocket();
-		void	createSockaddr(int i);
-		void	createFdEpoll();
-		void	closeSockets();
-		int		nonBlockFd(int sockeFd);
-		int		isServerFd(int fd) const;
-		int		epollWait();
-		void	createConnection(int i);
-		void	closeConnection(int fd);
+		void						errorSocket(std::string s);
+		void						initSocket();
+		void						createSockaddr(int i);
+		void						createFdEpoll();
+		void						closeSockets();
+		int							nonBlockFd(int sockeFd);
+		int							isServerFd(int fd) const;
+		int							epollWait();
+		void						createConnection(int i);
+		void						closeConnection(int fd);
+
+		int							pickServBlock(const Request &req);
 
 };
 

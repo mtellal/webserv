@@ -1,4 +1,4 @@
-#include "../../includes/Configuration.hpp"
+#include "Configuration.hpp"
 
 Configuration::Configuration() {}
 

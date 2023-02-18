@@ -1,5 +1,5 @@
-#include "../includes/Request.hpp"
-#include "../includes/utils.hpp"
+#include "Request.hpp"
+#include "utils.hpp"
 #include <string.h>
 #include <sys/epoll.h>
 
@@ -324,7 +324,7 @@ int		Request::parsRequest(int fd)
 	/* for (int i = 0; i < (int)vct.size(); i++)
 		std::cout << vct[i] << std::endl; */
 
-	// std::cout << request << std::endl;
+	std::cout << request << std::endl;
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{

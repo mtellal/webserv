@@ -17,7 +17,7 @@ class Server : public Directives {
 		Server						&operator=(Server const &rhs);
 
 		std::string					getHost() const;
-		int							getPort() const;
+		std::string					getPort() const;
 		std::vector<std::string>	getServerName() const;
 		std::vector<Location>		getVctLocation() const;
 		bool						getErrorServer() const;
@@ -50,7 +50,7 @@ class Server : public Directives {
 		std::string					_host;
 		std::string					_domain;
 		std::string					_address;	// ipv4
-		int							_port;
+		std::string					_port;
 		std::vector<std::string>	_serverName;
 		bool						_hostSet;
 		bool						_portSet;
