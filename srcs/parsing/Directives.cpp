@@ -39,10 +39,6 @@ Directives	&Directives::operator=(Directives const &rhs) {
 	return *this;
 }
 
-// std::vector<std::pair<int, std::string> >	Directives::getErrorPage() const {
-// 	return this->_errorPage;
-// }
-
 std::map<int, std::string>	Directives::getErrorPage() const {
 	return this->_errorPage;
 }
@@ -110,7 +106,6 @@ void	Directives::error_line(const int &n_line, const std::string &err_msg)
 }
 
 void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
-	// Verifier le path ?
 	bool	err = false;
 	int		nbError;
 
@@ -126,7 +121,6 @@ void	Directives::setErrorPage(std::vector<std::string> str, int *i) {
 		if (!this->_errorPageSet)
 			this->_errorPageSet = true;
 		this->_errorPage[nbError] = str[2];
-		// this->_errorPage.push_back(std::make_pair(nbError, str[2]));
 	}
 	else
 		error_line(*i, "code error_page don't exist");
@@ -156,14 +150,12 @@ void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int *i
 }
 
 void	Directives::setRoot(std::vector<std::string> root, int *i) {
-	// Verifier que le path est bon ?
 	if (root.size() != 2)
 		error_line(*i, "directive root, wrong format");
 	else if (!this->_rootSet)
 	{
 		this->_rootSet = true;
 		this->_root = root[1];
-		// std::cout << "OKKKKK = " << root[1] << std::endl;
 	}
 	else
 		error_line(*i, "root is already set");
@@ -204,7 +196,6 @@ void	Directives::setIndex(std::vector<std::string> index, int *i) {
 }
 
 void	Directives::setHttpRedir(std::vector<std::string> redir, int *i) {
-	// A voir si dans nginx on peut mettre plusieurs return dans un block sans erreur
 	if (redir.size() != 2)
 		error_line(*i, "directive return wrong format");
 	else if (!this->_httpRedirSet)

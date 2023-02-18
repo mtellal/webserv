@@ -26,17 +26,11 @@ Location	&Location::operator=(Location const &rhs) {
 
 	if (this != &rhs)
 	{
-		// this->_cgi = rhs._cgi;
 		this->_path = rhs._path;
-		// this->_cgiSet = rhs._cgiSet;
 		this->_errorLoc = rhs._errorLoc;
 	}
 	return *this;
 }
-
-// std::string						Location::getCgi() {
-// 	return this->_cgi;
-// }
 
 std::string	Location::getPath() {
 	return this->_path;
@@ -50,10 +44,6 @@ bool	Location::getHttpMethodsSet() {
 	return this->_httpMethodsSet;
 }
 
-// bool	Location::getCgiSet() {
-// 	return this->_cgiSet;
-// }
-
 void	Location::error_line(const int &n_line, const std::string &err_msg)
 {
 	this->_errorLoc = true;
@@ -61,7 +51,6 @@ void	Location::error_line(const int &n_line, const std::string &err_msg)
 }
 
 void	Location::setPath(int *i, std::string loc) {
-	// chars ok : min maj / * .
 	for (size_t j = 0; j < loc.size(); j++)
 	{
 		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and loc[j] != '/'
@@ -70,8 +59,6 @@ void	Location::setPath(int *i, std::string loc) {
 	}
 	this->_path = loc;
 }
-
-
 
 void	Location::readLocationBlock(std::ifstream &file, int *i) {
 	int j;

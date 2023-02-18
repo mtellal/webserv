@@ -2,13 +2,11 @@
 
 Configuration::Configuration() {}
 
-Configuration::Configuration(std::string path_file) :_errorConf(false)
-{
+Configuration::Configuration(std::string path_file) :_errorConf(false) {
 	open_and_check_file(path_file);
 }
 
-Configuration::Configuration(Configuration const &src)
-{
+Configuration::Configuration(Configuration const &src) {
 	*this = src;
 }
 
@@ -28,7 +26,7 @@ std::vector<Server>	Configuration::getVctServer() const
 	return this->_vctServ;
 }
 
-bool	Configuration::get_errorConf()
+bool	Configuration::getErrorConf()
 {
 	return this->_errorConf;
 }

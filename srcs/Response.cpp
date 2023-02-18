@@ -14,8 +14,7 @@ Response::Response() {}
 
 Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp) :
 					_req(req), _vctServ(vctServ), _clientServer(clientServer), _locBlocSelect(false),
-					_isDir(false), _autoindex(false), _closeConnection(false), _isResFormPage(false),
-					_envp(envp){
+					_isDir(false), _autoindex(false), _closeConnection(false), _envp(envp){
 }
 
 Response::Response(Response const &src) {
@@ -40,7 +39,6 @@ Response	&Response::operator=(Response const &rhs) {
 		this->_isDir = rhs._isDir;
 		this->_autoindex = rhs._autoindex;
 		this->_closeConnection = rhs._closeConnection;
-		this->_isResFormPage = rhs._isResFormPage;
 		this->_envp = rhs._envp;
 	}
 	return *this;
@@ -134,15 +132,7 @@ bool	Response::rightPathServer() {
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
-	// std::cout << "newPath = " << newPath << std::endl;
-	if (newPath == "/resForm.html")
-	{
-		// std::cout << "OK" << newPath << std::endl;
-		this->_isResFormPage = true;
-		return true;
-	}
 	root += newPath;
-	// std::cout << "ROOT = " << root << std::endl;
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
 		this->_path.push_back(root);
@@ -267,7 +257,7 @@ std::string	Response::createDefaultErrorPage() {
 	file << "	<meta charset=\"UTF-8\">" << std::endl;
 	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
 	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>TMP Webserv " + ft_itos(this->_statusCode) + "</title>" << std::endl;
+	file << "	<title>Webserv " + ft_itos(this->_statusCode) + "</title>" << std::endl;
 	file << "</head>" << std::endl;
 	file << "<body>" << std::endl;
 	file << "	<h1>Default page Error " + ft_itos(this->_statusCode) + " :(</h1>" << std::endl;
@@ -339,60 +329,9 @@ std::string	Response::createAutoindexPage() {
 	return "/tmp/tmpFile.html";
 }
 
-
-/* Fct tmp qui me sert juste pour des tests, va etre suprimee */
-std::string	Response::argsToStr() {
-	std::map<std::string, std::string>	args;
-	std::string							res;
-
-	args = this->_req.getQueryString();
-
-	res += args["titre"];
-	res += " ";
-	res += args["nom"];
-	res += " ";
-	res += args["prenom"];
-	res += " a ";
-	res += args["age"];
-	res += " ans, ";
-	if (args["titre"] == "M.")
-		res += "il ";
-	else
-		res += "elle ";
-	if (args["bDebutant"] == "on")
-		res += "debute en php";
-	else
-		res += "est pro en php";
-
-	return res;
-}
-
-
-
-std::string	Response::createResFormPage() {
-	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
-
-	file << "<!DOCTYPE html>" << std::endl;
-	file << "<html lang=\"en\">" << std::endl;
-	file << "<head>" << std::endl;
-	file << "	<meta charset=\"UTF-8\">" << std::endl;
-	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
-	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>Form</title>" << std::endl;
-	file << "</head>" << std::endl;
-	file << "<body>" << std::endl;
-	file << "	<p>" + this->argsToStr() + "</p>"<< std::endl;
-	file << "</body>" << std::endl;
-	file << "</html>" << std::endl;
-	file.close();
-
-	return "/tmp/tmpFile.html";
-}
-
-
 /*	On va appeler les differentes fonctions qui check les differents paths.
 	2 cas sont possibles :
-	- Aucun fichier n'existe, (ne pas s'occuper du "if (this->_isResFormPage)", on va definir le code erreur
+	- Aucun fichier n'existe, on va definir le code erreur
 	et appeler une fct qui va regarder si une page d'erreur a ete set dans le fichier de conf par rapport a
 	ce code erreur.
 	- Le ficheir existe et la pas de soucis :)
@@ -412,22 +351,12 @@ void	Response::sendData() {
 	{
 		bool	pageFind = false;
 
-		// ce if est temporaire
-		if (this->_isResFormPage)
-		{
-			path = this->createResFormPage();
-			this->_statusCode = 200;
-			pageFind = true;
-		}
+		if (this->_isDir)
+			this->_statusCode = 403;
 		else
-		{
-			if (this->_isDir)
-				this->_statusCode = 403;
-			else
-				this->_statusCode = 404;
+			this->_statusCode = 404;
 
-			path = this->rightPathErr(pageFind);
-		}
+		path = this->rightPathErr(pageFind);
 
 		std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
@@ -455,8 +384,6 @@ void	Response::sendHeader(std::string path) {
 		else
 			res += this->_serv.getHttpRedir();
 		res += "\n\n";
-		std::cout << res << std::endl;
-		// std::cout << "Redir" << std::endl;
 		write(this->_req.getFd(), res.c_str(), res.size());
 		this->_closeConnection = true;
 		return ;
@@ -483,8 +410,6 @@ void	Response::sendPage(std::string path) {
 		ss << file.rdbuf();
 		page = ss.str();
 	}
-	// res += str;
-	// std::cout << res << std::endl;
 	write(this->_req.getFd(), page.c_str(), page.size());
 	file.close();
 
@@ -514,8 +439,6 @@ void	Response::selectServerBlock() {
 	}
 	else if (tmp.size() > 1)
 		std::cout << "Fct selectServerBlock err, plusieurs blocs preselectionnes" << std::endl;
-
-	// Il faut egalement departager si besoin avec server_name
 
 	// Si ce msg apparait, plusieurs blocs ont etes pre-selectionnes
 	// mais pas departages, il faut les departages avec server name.

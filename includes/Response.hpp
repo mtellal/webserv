@@ -39,7 +39,6 @@ class Response {
 	bool						_isDir;
 	bool						_autoindex;
 	bool						_closeConnection;
-	bool						_isResFormPage;
 	char						**_envp;
 
 	std::string					rightRoot();
@@ -53,7 +52,6 @@ class Response {
 	std::string	testAllPaths(bool *err);
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage();
-	std::string	createResFormPage();
 	std::string	argsToStr();
 	bool		rightPath();
 	void		sendHeader(std::string path);

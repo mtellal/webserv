@@ -1,8 +1,7 @@
 #include "../../includes/Server.hpp"
 
-Server::Server() : Directives(),  _host("0.0.0.0"),
-									_port(8080), _hostSet(false), _portSet(false),
-									_serverNameSet(false), _errorServer(false), _blockClose(false){
+Server::Server() : Directives(), _host("0.0.0.0"), _port(8080), _hostSet(false), _portSet(false),
+								_serverNameSet(false), _errorServer(false), _blockClose(false){
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
 	this->functPtr[2] = &Directives::setErrorPage;
@@ -87,7 +86,6 @@ bool	Server::checkFormatHost(std::string host) {
 	if (i > 1)
 		return false;
 	return true;
-
 }
 
 void	Server::error_msg(const int &n_line, const std::string &err_msg)
@@ -97,7 +95,6 @@ void	Server::error_msg(const int &n_line, const std::string &err_msg)
 }
 
 void	Server::setHost(std::vector<std::string> host, int *i) {
-	// Comment bien verifier le host ?
 	std::vector<std::string>	splitPort;
 	bool						err = false;
 
@@ -124,7 +121,6 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 			{
 				this->_hostSet = true;
 				this->_host = host[1];
-				// this->setPort(this->_port, i);
 			}
 			else
 			{
@@ -164,7 +160,6 @@ bool	Server::checkHost(std::string host) {
 
 
 void	Server::setPort(std::string strPort, int *i) {
-	// Verifier le port ?
 	bool err = false;
 	int port = ft_stoi(strPort, &err);
 

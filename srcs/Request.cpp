@@ -154,8 +154,6 @@ void	Request::parsArgs(std::string arg) {
 		else
 			this->_queryString.insert(std::make_pair(keyValue[0], keyValue[1]));
 	}
-	// for (std::map<std::string, std::string>::iterator it = this->_args.begin(); it != this->_args.end(); it++)
-	// 	std::cout << it->first << " " << it->second << std::endl;
 }
 
 void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
@@ -166,18 +164,7 @@ void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	strSplit = ft_split(strSplit[1].c_str(), "?");
 	if (strSplit.size() == 2)
 		this->parsArgs(strSplit[1]);
-	// if (!this->parsArgs(strSplit[1]))
-		// return 1;
 	this->_path = strSplit[0];
-	// if (this->_parsArgsGet)
-	// {
-	// 	strSplit = ft_split(strSplit[1].c_str(), "&");
-	// 	for (size_t j = 0; j < strSplit.size(); j++)
-	// 	{
-	// 		splitBis = ft_split(strSplit[j].c_str(), "=");
-	// 		this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
-	// 	}
-	// }
 }
 
 void	Request::setHostPort(std::vector<std::string> strSplit) {
@@ -231,8 +218,6 @@ void	Request::setContentType(std::vector<std::string> strSplit) {
 			this->_contentType += " ";
 		this->_contentType += strSplit[i];
 	}
-	// for (size_t i = 1; i < strSplit.size(); i++)
-	// 	std::cout << i << " " << strSplit[i] << std::endl;
 	if (strSplit.size() == 3 and strSplit[1] == "multipart/form-data;" and
 		strSplit[2].find("boundary=") != std::string::npos)
 	{
@@ -240,7 +225,6 @@ void	Request::setContentType(std::vector<std::string> strSplit) {
 		this->_boundarySet = true;
 		this->_boundary = "--";
 		this->_boundary += strSplit[1];
-		// std::cout << "Boundary = " << this->_boundary << std::endl;
 	}
 }
 
@@ -270,8 +254,6 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 		}
 		*i += 1;
 	}
-	// for (std::map<std::string, std::string>::iterator it = this->_queryString.begin(); it != this->_queryString.end(); it++)
-		// std::cout << it->first << " " << it->second << std::endl;
 }
 
 int		Request::parsRequest(int fd)
@@ -312,8 +294,6 @@ int		Request::parsRequest(int fd)
 	}
 
 	vct = ft_split(request, "\n\r");
-
-
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");
