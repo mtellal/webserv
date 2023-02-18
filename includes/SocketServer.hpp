@@ -20,7 +20,7 @@
 # include <map>
 # include <utility>
 
-# define NB_EVENTS 5
+# define NB_EVENTS 255
 
 class SocketServer {
 

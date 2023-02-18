@@ -11,14 +11,15 @@ Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), 
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
-	this->functPtr[3] = &Request::setHostPort;
-	this->functPtr[4] = &Request::setConnection;
-	this->functPtr[5] = &Request::setAccept;
-	this->functPtr[6] = &Request::setReferer;
-	this->functPtr[7] = &Request::setAgent;
-	this->functPtr[8] = &Request::setAuthentification;
-	this->functPtr[9] = &Request::setContentLength;
-	this->functPtr[10] = &Request::setContentType;
+	this->functPtr[3] = &Request::setMethodVersionPath;
+	this->functPtr[4] = &Request::setHostPort;
+	this->functPtr[5] = &Request::setConnection;
+	this->functPtr[6] = &Request::setAccept;
+	this->functPtr[7] = &Request::setReferer;
+	this->functPtr[8] = &Request::setAgent;
+	this->functPtr[9] = &Request::setAuthentification;
+	this->functPtr[10] = &Request::setContentLength;
+	this->functPtr[11] = &Request::setContentType;
 
 	if (parsRequest(fd))
 		this->_errRequest = true;
@@ -265,7 +266,7 @@ int		Request::parsRequest(int fd)
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	strSplitBoundary;
 	std::vector<std::string>	tmpBis;
-	std::string					key[11] = { "GET", "POST", "DELETE", "Host:",
+	std::string					key[12] = { "GET", "HEAD", "POST", "DELETE", "Host:",
 					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification:",
 					"Content-Length:", "Content-Type:"};
 
@@ -295,13 +296,17 @@ int		Request::parsRequest(int fd)
 
 	vct = ft_split(request, "\n\r");
 	for (size_t i = 0; i < vct.size(); i++)
+	// 	std::cout << vct[i] << std::endl;
+	// std::cout << std::endl;
+
+	for (size_t i = 0; i < vct.size(); i++)
 	{
 		strSplit = ft_split(vct[i].c_str(), " ");
 		if (this->_boundarySet and strSplit[0] == this->_boundary)
 			this->setGetParams(vct, &i);
 		else
 		{
-			for (size_t j = 0; j < 11; j++)
+			for (size_t j = 0; j < 12; j++)
 			{
 				if (strSplit[0] == key[j])
 				{

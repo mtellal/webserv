@@ -214,7 +214,8 @@ void	Directives::setHttpMethods(std::vector<std::string> methods, int *i) {
 	{
 		for (size_t j = 1; j < methods.size(); j++)
 		{
-			if (methods[j] == "GET" or methods[j] == "POST" or methods[j] == "DELETE")
+			if (methods[j] == "GET" or methods[j] == "HEAD" or methods[j] == "POST" or
+				methods[j] == "DELETE")
 			{
 				bool	alreadySet = false;
 

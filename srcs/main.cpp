@@ -35,6 +35,7 @@ int main(int argc, char **argv, char **envp)
 	Voir 4096
 	location / ?
 	HTTP 1.1
+	Faire HEAD
 
 	Arguments POST + Securisation du formulaire :
 	https://www.electro-info.ovh/les-formulaires-en-PHP
