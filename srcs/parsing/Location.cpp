@@ -38,7 +38,7 @@ Location	&Location::operator=(Location const &rhs) {
 // 	return this->_cgi;
 // }
 
-std::string						Location::getPath() {
+std::string	Location::getPath() {
 	return this->_path;
 }
 
@@ -64,18 +64,14 @@ void	Location::setPath(int *i, std::string loc) {
 	// chars ok : min maj / * .
 	for (size_t j = 0; j < loc.size(); j++)
 	{
-		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and !charAccepted(loc[j])
+		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and loc[j] != '/'
 			and (loc[j] < '0' or loc[j] > '9'))
 		return (error_line(*i, " wrong syntax of location block"));
 	}
 	this->_path = loc;
 }
 
-bool	Location::charAccepted(char c) {
-	if (c == '/' or c == '*' or c == '.')
-		return true;
-	return false;
-}
+
 
 void	Location::readLocationBlock(std::ifstream &file, int *i) {
 	int j;

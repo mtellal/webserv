@@ -1,8 +1,8 @@
 #include "../../includes/Server.hpp"
 
 Server::Server() : Directives(),  _host("0.0.0.0"),
-									_port(8080), _hostSet(false), _portSet(false), 
-									_serverNameSet(false), _errorServer(false) {
+									_port(8080), _hostSet(false), _portSet(false),
+									_serverNameSet(false), _errorServer(false), _blockClose(false){
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
 	this->functPtr[2] = &Directives::setErrorPage;
@@ -35,6 +35,7 @@ Server	&Server::operator=(Server const &rhs) {
 		this->_portSet = rhs._portSet;
 		this->_serverNameSet = rhs._serverNameSet;
 		this->_errorServer = rhs._errorServer;
+		this->_blockClose = rhs._blockClose;
 	}
 	return *this;
 }
@@ -57,6 +58,10 @@ std::vector<Location>		Server::getVctLocation() const {
 
 bool	Server::getErrorServer() const {
 	return this->_errorServer;
+}
+
+bool	Server::getBlockClose() const {
+	return this->_blockClose;
 }
 
 bool	Server::getServerNameSet() const {
@@ -197,14 +202,16 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 			std::vector<std::string> tmp = ft_split(line.c_str(), " \t");
 
 			if (tmp.size() == 1 && tmp[0] == "}")
+			{
+				this->_blockClose = true;
 				return ;
+			}
 			else if (this->isLocationBlock(tmp))
 			{
 				Location locPars(i, tmp);
 
 				locPars.readLocationBlock(file, i);
 
-				// Verifier aussi que le block n'est pas vide ??
 				if (locPars.getErrorLoc())
 				{
 					this->_errorServer = true;

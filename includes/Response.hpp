@@ -44,8 +44,8 @@ class Response {
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();
-	void						rightPathLocation(bool *err);
-	void						rightPathServer(bool *err);
+	bool						rightPathLocation();
+	bool						rightPathServer();
 	std::string					rightPathErr(bool &pageFind);
 	void						fileAndDir(std::ofstream &file, bool getDir, std::string path);
 

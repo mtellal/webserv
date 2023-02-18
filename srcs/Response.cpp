@@ -92,12 +92,13 @@ std::vector<std::string>	Response::rightIndex() {
 	et on regardera plus tard si ces fichiers existent ou pas. On regarde aussi si l'
 	autoindex est "on" pour pouvoir l'afficher en cas de besoin.
 	- Sinon, on met notre bool a true (donc erreur) */
-void	Response::rightPathLocation(bool *err) {
+bool	Response::rightPathLocation() {
 	struct stat					fileOrDir;
 	std::string					root = this->rightRoot();
 	std::string					newPath;
 	std::vector<std::string>	index = this->rightIndex();
 
+	memset(&fileOrDir, 0, sizeof(fileOrDir));
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
@@ -118,16 +119,18 @@ void	Response::rightPathLocation(bool *err) {
 			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
-		*err = true;
+		return true;
+	return false;
 }
 
 /*	Pareil que au dessus mais si un aucun bloc de Location est selectionne */
-void	Response::rightPathServer(bool *err) {
+bool	Response::rightPathServer() {
 	struct stat					fileOrDir;
 	std::string					root = this->rightRoot();
 	std::string					newPath;
 	std::vector<std::string>	index;
 
+	memset(&fileOrDir, 0, sizeof(fileOrDir));
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
@@ -135,9 +138,8 @@ void	Response::rightPathServer(bool *err) {
 	if (newPath == "/resForm.html")
 	{
 		// std::cout << "OK" << newPath << std::endl;
-		*err = true;
 		this->_isResFormPage = true;
-		return ;
+		return true;
 	}
 	root += newPath;
 	// std::cout << "ROOT = " << root << std::endl;
@@ -156,17 +158,18 @@ void	Response::rightPathServer(bool *err) {
 			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
-		*err = true;
+		return true;
+	return false;
 }
 
 
 bool	Response::rightPath() {
-	bool	err = false;
+	bool	err;
 
 	if (this->_locBlocSelect)
-		this->rightPathLocation(&err);
+		err = this->rightPathLocation();
 	else
-		this->rightPathServer(&err);
+		err = this->rightPathServer();
 
 	return err;
 }
@@ -472,18 +475,17 @@ void	Response::sendHeader(std::string path) {
 
 void	Response::sendPage(std::string path) {
 	std::ifstream	file(path.c_str(), std::ios::in | std::ios::binary);
-	std::string		str;
-	std::string		res;
+	std::string		page;
 
 	if (file)
 	{
 		std::ostringstream ss;
 		ss << file.rdbuf();
-		str = ss.str();
+		page = ss.str();
 	}
-	res += str;
+	// res += str;
 	// std::cout << res << std::endl;
-	write(this->_req.getFd(), res.c_str(), res.size());
+	write(this->_req.getFd(), page.c_str(), page.size());
 	file.close();
 
 	if (this->_req.getConnection() == "close")
@@ -525,7 +527,6 @@ void	Response::selectLocationBlock() {
 	std::vector<Location>	vctLoc = this->_serv.getVctLocation();
 	std::string 			strBlocLoc;
 	Location				tmp;
-	// int						res;
 	std::string				req = this->_req.getPath();
 	size_t j;
 
@@ -544,6 +545,18 @@ void	Response::selectLocationBlock() {
 		{
 			this->_locBlocSelect = true;
 			tmp = vctLoc[i];
+		}
+	}
+	if (!this->_locBlocSelect)
+	{
+		for (size_t i = 0; i < vctLoc.size(); i++)
+		{
+			if (vctLoc[i].getPath() == "/")
+			{
+				this->_locBlocSelect = true;
+				tmp = vctLoc[i];
+				break ;
+			}
 		}
 	}
 	if (this->_locBlocSelect)

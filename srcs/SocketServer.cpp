@@ -70,7 +70,7 @@ void	SocketServer::errorSocket(std::string s)
 
 void	SocketServer::initSocket()
 {
-	int				opt;
+	int				opt = 1;
 	int				serv_socket;
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;
@@ -105,7 +105,6 @@ void	SocketServer::initSocket()
 		if (listen(serv_socket, NB_EVENTS) == -1)
 			return (errorSocket("Listen call failed"));
 	}
-	std::cout << std::endl;
 }
 
 void	SocketServer::createFdEpoll() {
@@ -139,7 +138,6 @@ void	SocketServer::createFdEpoll() {
 void	SocketServer::closeSockets() {
 	for (std::map<int, int>::iterator it = this->_clientServer.begin() ; it != this->_clientServer.end(); it++)
 	{
-		this->_clientServer.erase(it->first);
 		close(it->first);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, it->first, NULL);
 	}
@@ -195,7 +193,6 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
-		// std::cout << "event = " << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((i = isServerFd(event[j].data.fd)) >= 0)
@@ -213,7 +210,6 @@ int		SocketServer::epollWait() {
 				rep.selectServerBlock();
 				rep.selectLocationBlock();
 				rep.sendData();
-				// std::cout << "OK" << std::endl;
 				if (rep.getCloseConnection())
 					this->closeConnection(event[j].data.fd);
 			}

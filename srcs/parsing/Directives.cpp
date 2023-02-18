@@ -206,7 +206,7 @@ void	Directives::setIndex(std::vector<std::string> index, int *i) {
 void	Directives::setHttpRedir(std::vector<std::string> redir, int *i) {
 	// A voir si dans nginx on peut mettre plusieurs return dans un block sans erreur
 	if (redir.size() != 2)
-		error_line(*i, "directive index wrong format");
+		error_line(*i, "directive return wrong format");
 	else if (!this->_httpRedirSet)
 	{
 		this->_httpRedirSet = true;
