@@ -113,7 +113,8 @@ void	Response::rightPathLocation(bool *err) {
 /*	Pareil que au dessus mais si un aucun bloc de Location est selectionne */
 void	Response::rightPathServer(bool *err) {
 	struct stat					fileOrDir;
-	std::string					root = this->rightRoot();
+	//std::string					root = this->rightRoot();
+	std::string					root = this->_serv.getRoot();
 	std::string					newPath;
 	std::vector<std::string>	index;
 
@@ -388,4 +389,12 @@ void	Response::selectLocationBlock() {
 	}
 	if (this->_locBlocSelect)
 		this->_locBloc = tmp;
+}
+
+std::ostream	&operator<<(std::ostream &out, const Response &res)
+{
+	(void)res;
+	out << "///////////////		REPONSE		////////////////\n";
+	
+	return (out);
 }

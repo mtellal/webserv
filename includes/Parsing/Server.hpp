@@ -39,7 +39,7 @@ class Server : public Directives {
 		void						readServBlock(std::ifstream &file, int *i);
 
 		void						addClient(const Client &c);
-		void						eraseClient(int fd);
+		int							eraseClient(int fd);
 
 	private:
 

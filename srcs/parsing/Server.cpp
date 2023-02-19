@@ -89,7 +89,7 @@ void	Server::addClient(const Client &client)
 	this->_clients.push_back(client);
 }
 
-void	Server::eraseClient(int fd)
+int		Server::eraseClient(int fd)
 {
 	for (size_t i = 0; i < this->_clients_fd.size(); i++)
 	{
@@ -97,8 +97,10 @@ void	Server::eraseClient(int fd)
 		{
 			this->_clients_fd.erase(this->_clients_fd.begin() + i);
 			this->_clients.erase(this->_clients.begin() + i);
+			return (0);
 		}
 	}
+	return (-1);
 }
 
 void	Server::error_msg(const int &n_line, const std::string &err_msg)

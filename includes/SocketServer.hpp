@@ -38,7 +38,6 @@ class SocketServer {
 
 		std::vector<Server>			getVctServer() const;
 		std::vector<size_t>			getServerFd() const;
-		std::vector<sockaddr_in>	getSockAddr() const;
 		std::map<int, int>			getClientServer() const;
 		int							getEpollFd() const;
 		bool						getErrSocket() const;
@@ -48,8 +47,7 @@ class SocketServer {
 
 		std::vector<Server>			_servers;
 		std::vector<size_t>			_servers_fd;
-		std::vector<sockaddr_in>	_sockAddr;
-		std::map<int, int>			_clientServer;
+		std::map<int, int>			_clientServerFds;
 		int							_epollFd;
 		bool						_errSocket;
 		char						**_envp;

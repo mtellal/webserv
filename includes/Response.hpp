@@ -74,4 +74,7 @@ class Response {
 	void		sendPage(std::string path);
 };
 
+
+std::ostream	&operator<<(std::ostream &out, const Response &res);
+
 #endif
