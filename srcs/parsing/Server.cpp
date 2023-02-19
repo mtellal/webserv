@@ -1,13 +1,10 @@
 #include "Server.hpp"
 
-<<<<<<< HEAD
-Server::Server() : Directives(),  _host("0.0.0.0"),
-									_port("8080"), _hostSet(false), _portSet(false), 
-									_serverNameSet(false), _errorServer(false) {
-=======
-Server::Server() : Directives(), _host("0.0.0.0"), _port(8080), _hostSet(false), _portSet(false),
-								_serverNameSet(false), _errorServer(false), _blockClose(false){
->>>>>>> main
+Server::Server() :
+Directives(),  _host("0.0.0.0"),
+_port("8080"), _hostSet(false), _portSet(false), 
+_serverNameSet(false), _errorServer(false), _blockClose(false)
+{
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
 	this->functPtr[2] = &Directives::setErrorPage;
@@ -55,17 +52,9 @@ std::vector<std::string>	Server::getServerName() const { return this->_serverNam
 
 std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
 
-<<<<<<< HEAD
 bool						Server::getErrorServer() const { return this->_errorServer; }
-=======
-bool	Server::getBlockClose() const {
-	return this->_blockClose;
-}
 
-bool	Server::getServerNameSet() const {
-	return this->_serverNameSet;
-}
->>>>>>> main
+bool						Server::getBlockClose() const { return this->_blockClose; }
 
 bool						Server::getServerNameSet() const { return this->_serverNameSet; }
 
@@ -193,7 +182,6 @@ void	Server::setPort(std::string port, int *line)
 	if (this->_portSet)
 		error_msg(*line, "listen is already set");
 
-<<<<<<< HEAD
 	for (size_t i = 0; i < port.length(); i++)
 	{
 		if (port[i] < '0' || port[i] > '9')
@@ -205,9 +193,6 @@ void	Server::setPort(std::string port, int *line)
 
 /* void	Server::setPort(std::string strPort, int *i) {
 	// Verifier le port ?
-=======
-void	Server::setPort(std::string strPort, int *i) {
->>>>>>> main
 	bool err = false;
 	int port = ft_stoi(strPort, &err);
 

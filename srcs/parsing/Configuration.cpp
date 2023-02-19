@@ -67,17 +67,13 @@ void	Configuration::open_and_check_file(std::string path_file) {
 				file.close();
 				return;
 			}
-<<<<<<< HEAD
-			_servers.push_back(servPars);
-=======
 			else if (!servPars.getBlockClose())
 			{
 				error_msg("Block must be terminalet by \"}\"");
 				file.close();
 				return;
 			}
-			_vctServ.push_back(servPars);
->>>>>>> main
+			_servers.push_back(servPars);
 		}
 		else if (!only_space_or_empty(line))
 		{

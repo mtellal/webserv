@@ -95,7 +95,6 @@ void	SocketServer::initSocket()
 			return (errorSocket("socket call failed"));
 
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-<<<<<<< HEAD
 
 		this->_servers[i].setSocket(serv_socket);
 		this->_servers[i].setDomain(getDomainInfo(*res->ai_addr));
@@ -104,9 +103,6 @@ void	SocketServer::initSocket()
 		//std::cout << "domain: " <<  _servers[i].getDomain() << "\naddress: " << _servers[i].getAddress() << std::endl;
 
 		this->_servers_fd.push_back(serv_socket);
-=======
-		_serverFd.push_back(serv_socket);
->>>>>>> main
 
 		if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
 			return (errorSocket("bind call failed"));
@@ -152,10 +148,7 @@ void	SocketServer::createFdEpoll() {
 void	SocketServer::closeSockets() {
 	for (std::map<int, int>::iterator it = this->_clientServerFds.begin() ; it != this->_clientServerFds.end(); it++)
 	{
-<<<<<<< HEAD
 		this->_clientServerFds.erase(it->first);
-=======
->>>>>>> main
 		close(it->first);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, it->first, NULL);
 	}

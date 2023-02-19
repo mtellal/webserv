@@ -157,35 +157,15 @@ void	Request::parsArgs(std::string arg) {
 	}
 }
 
-void	Request::setMethodVersionPath(std::vector<std::string> field_args) {
+void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	std::vector<std::string>	splitBis;
 
-<<<<<<< HEAD
-	this->_method = field_args[0];
-	this->_httpVersion = field_args[2];
-	field_args = ft_split(field_args[1].c_str(), "?");
-	if (field_args.size() == 2)
-		this->parsArgs(field_args[1]);
-	// if (!this->parsArgs(field_args[1]))
-		// return 1;
-	this->_path = field_args[0];
-	// if (this->_parsArgsGet)
-	// {
-	// 	field_args = ft_split(field_args[1].c_str(), "&");
-	// 	for (size_t j = 0; j < field_args.size(); j++)
-	// 	{
-	// 		splitBis = ft_split(field_args[j].c_str(), "=");
-	// 		this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
-	// 	}
-	// }
-=======
 	this->_method = strSplit[0];
 	this->_httpVersion = strSplit[2];
 	strSplit = ft_split(strSplit[1].c_str(), "?");
 	if (strSplit.size() == 2)
 		this->parsArgs(strSplit[1]);
 	this->_path = strSplit[0];
->>>>>>> main
 }
 
 void	Request::setHostPort(std::vector<std::string> strSplit) {
@@ -323,17 +303,11 @@ int		Request::parsRequest(int fd)
 	}
 
 	vct = ft_split(request, "\n\r");
-<<<<<<< HEAD
 
 	/* for (int i = 0; i < (int)vct.size(); i++)
 		std::cout << vct[i] << std::endl; */
 
 	std::cout << request << std::endl;
-=======
-	for (size_t i = 0; i < vct.size(); i++)
-	// 	std::cout << vct[i] << std::endl;
-	// std::cout << std::endl;
->>>>>>> main
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{
