@@ -52,10 +52,11 @@ class Response {
 	std::string	testAllPaths(bool *err);
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage();
-	std::string	argsToStr();
 	bool		rightPath();
 	void		sendHeader(std::string path);
 	void		sendPage(std::string path);
+	bool		methodNotAllowed() const;
+	void		httpRedir();
 };
 
 #endif

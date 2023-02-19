@@ -106,3 +106,16 @@ std::string	ft_itos(int nbr)
 	s = out.str();
 	return s;
 }
+
+std::string	getHttpStatusCodeMessage(int statusCode) {
+	int			httpCode[5] = {200, 403, 404, 405, 406};
+	std::string	message[5] = {"OK", "Forbidden", "Not Found",
+							"Method Not Allowed", "Not Acceptable"};
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		if (httpCode[i] == statusCode)
+			return message[i];
+	}
+	return "";
+}

@@ -34,7 +34,6 @@ class Header {
 	std::string	getContentType() const;
 	std::string	getDate() const;
 	std::string	getContentLength() const;
-	std::string	getCodeDescription() const;
 	std::string	getLastModified() const;
 	std::string	getAllow() const;
 

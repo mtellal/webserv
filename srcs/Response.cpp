@@ -260,7 +260,7 @@ std::string	Response::createDefaultErrorPage() {
 	file << "	<title>Webserv " + ft_itos(this->_statusCode) + "</title>" << std::endl;
 	file << "</head>" << std::endl;
 	file << "<body>" << std::endl;
-	file << "	<h1>Default page Error " + ft_itos(this->_statusCode) + " :(</h1>" << std::endl;
+	file << "	<h1>Error " + ft_itos(this->_statusCode) + ", " + getHttpStatusCodeMessage(this->_statusCode) + " :(</h1>" << std::endl;
 	file << "</body>" << std::endl;
 	file << "</html>" << std::endl;
 	file.close();
@@ -329,6 +329,22 @@ std::string	Response::createAutoindexPage() {
 	return "/tmp/tmpFile.html";
 }
 
+bool	Response::methodNotAllowed() const {
+	std::vector<std::string>	vctMethods;
+
+	if (this->_locBlocSelect and this->_locBloc.getHttpMethodsSet())
+		vctMethods = this->_locBloc.getHttpMethods();
+	else
+		vctMethods = this->_serv.getHttpMethods();
+
+	for (size_t i = 0; i < vctMethods.size(); i++)
+	{
+		if (vctMethods[i] == this->_req.getMethod())
+			return false;
+	}
+	return true;
+}
+
 /*	On va appeler les differentes fonctions qui check les differents paths.
 	2 cas sont possibles :
 	- Aucun fichier n'existe, on va definir le code erreur
@@ -347,11 +363,13 @@ void	Response::sendData() {
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
-	if (err)
+	if (err or this->methodNotAllowed())
 	{
 		bool	pageFind = false;
 
-		if (this->_isDir)
+		if (this->methodNotAllowed())
+			this->_statusCode = 405;
+		else if (this->_isDir)
 			this->_statusCode = 403;
 		else
 			this->_statusCode = 404;
@@ -360,7 +378,7 @@ void	Response::sendData() {
 
 		std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
-		if (this->_autoindex)
+		if (this->_autoindex and !this->methodNotAllowed())
 			path = this->createAutoindexPage();
 		else if (!tmp or !pageFind)
 			path = this->createDefaultErrorPage();
@@ -370,26 +388,31 @@ void	Response::sendData() {
 	this->sendHeader(path);
 }
 
+void	Response::httpRedir() {
+	std::string	res;
+
+	res = "HTTP/1.1 301 Moved Permanently\nLocation: ";
+	if (this->_locBlocSelect and this->_locBloc.getHttpRedirSet())
+		res += this->_locBloc.getHttpRedir();
+	else
+		res += this->_serv.getHttpRedir();
+	res += "\n\n";
+	write(this->_req.getFd(), res.c_str(), res.size());
+	this->_closeConnection = true;
+	return ;
+}
+
 void	Response::sendHeader(std::string path) {
 	Header		header(this->_req, path, &this->_statusCode, this->_serv, this);
 	std::string	res;
 
 
-	if ((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
-		this->_serv.getHttpRedirSet())
-	{
-		res = "HTTP/1.1 301 Moved Permanently\nLocation: ";
-		if (this->_locBlocSelect and this->_locBloc.getHttpRedirSet())
-			res += this->_locBloc.getHttpRedir();
-		else
-			res += this->_serv.getHttpRedir();
-		res += "\n\n";
-		write(this->_req.getFd(), res.c_str(), res.size());
-		this->_closeConnection = true;
-		return ;
-	}
+	if (((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
+		this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
+		return this->httpRedir();
+
 	res = header.getHeader();
-	// std::cout << res << std::endl;
+	// std::cout << res;
 	if (this->_statusCode == 406)
 	{
 		path = this->createDefaultErrorPage();
@@ -410,6 +433,7 @@ void	Response::sendPage(std::string path) {
 		ss << file.rdbuf();
 		page = ss.str();
 	}
+	// std::cout << page << std::endl;
 	write(this->_req.getFd(), page.c_str(), page.size());
 	file.close();
 

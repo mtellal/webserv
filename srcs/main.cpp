@@ -30,12 +30,11 @@ int main(int argc, char **argv, char **envp)
 }
 
 /*
-	Prendre en compte les methods (405 Method Not Allowed)
 	Pour get et post, checker le format des args envoyes
 	Voir 4096
 	location / ?
 	HTTP 1.1
-	Faire HEAD
+	Method HEAD
 
 	Arguments POST + Securisation du formulaire :
 	https://www.electro-info.ovh/les-formulaires-en-PHP

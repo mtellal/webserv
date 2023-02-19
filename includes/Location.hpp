@@ -16,7 +16,7 @@ class Location : public Directives {
 
 		std::string						getPath();
 		bool							getErrorLoc();
-		bool							getHttpMethodsSet();
+		bool							getHttpMethodsSet() const;
 
 		void							showHttpMethods(std::ostream &o);
 

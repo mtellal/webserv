@@ -38,7 +38,7 @@ std::string	Header::getHeader() const {
 	if (contentType == "406")
 		*this->_statusCode = 406;
 
-	res = this->_req.getHttpVersion() + " " + ft_itos(*this->_statusCode) + " " + this->getCodeDescription() + "\n";
+	res = this->_req.getHttpVersion() + " " + ft_itos(*this->_statusCode) + " " + getHttpStatusCodeMessage(*this->_statusCode) + "\n";
 	res += "Content-Type: " + this->getContentType() + "\n";
 	res += "Server: " + this->_req.getServerName() + "\n";
 	res += "Date: " + this->getDate() + "\n";
@@ -151,19 +151,6 @@ std::string	Header::getContentLength() const {
 	stat(this->_file.c_str(), &stats);
 	return ft_itos(stats.st_size);
 }
-
-std::string	Header::getCodeDescription() const {
-	if (*this->_statusCode == 200)
-		return "OK";
-	else if (*this->_statusCode == 403)
-		return "Forbidden";
-	else if (*this->_statusCode == 404)
-		return "Not Found";
-	else if (*this->_statusCode == 406)
-		return "Not Acceptable";
-	return "";
-}
-
 
 std::string	Header::getLastModified() const {
 	struct stat s;

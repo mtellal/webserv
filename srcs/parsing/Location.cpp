@@ -40,7 +40,7 @@ bool	Location::getErrorLoc() {
 	return this->_errorLoc;
 }
 
-bool	Location::getHttpMethodsSet() {
+bool	Location::getHttpMethodsSet() const {
 	return this->_httpMethodsSet;
 }
 

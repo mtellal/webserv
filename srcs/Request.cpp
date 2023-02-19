@@ -190,12 +190,16 @@ void	Request::setReferer(std::vector<std::string> strSplit) {
 }
 
 void	Request::setAgent(std::vector<std::string> strSplit) {
+	// for (size_t i = 1; i < strSplit.size(); i++)
+		// std::cout << strSplit[i] << std::endl;
+	// std::cout << std::endl;
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
 			this->_agent += " ";
 		this->_agent += strSplit[i];
 	}
+	// std::cout << this->_agent << std::endl;
 	this->_agentSet = true;
 }
 
@@ -295,7 +299,7 @@ int		Request::parsRequest(int fd)
 	}
 
 	vct = ft_split(request, "\n\r");
-	for (size_t i = 0; i < vct.size(); i++)
+	// for (size_t i = 0; i < vct.size(); i++)
 	// 	std::cout << vct[i] << std::endl;
 	// std::cout << std::endl;
 
