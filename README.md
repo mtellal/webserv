@@ -49,6 +49,11 @@ Methods a implementer : https://www.rfc-editor.org/rfc/rfc7231#section-4
 
 Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b4c8cb4f98109d5fc1f
 
+### RFC W3
+
+- https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+
+
 -----------------------------------------------------------------------------------------------------
 
 ## FUNCTIONS
@@ -76,3 +81,5 @@ Doc par rapport au projet : https://webserv42.notion.site/Webserv-cbb6ab4136ba4b
 
 ## BOOKS
 - Hands-On Network Programming with C - Lewis Van Winkle (https://github.com/mtellal/docs/blob/main/hands-on-network-programming-with-c-learn-socket-programming-in-c-and-write-secure-and-optimized-network-code-true-pdf-1nbsped-9781789349863_compress.pdf)
+
+curl --resolve hola42:8081:127.0.45.45 http://hola42:8081/

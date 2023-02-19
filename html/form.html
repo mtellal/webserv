@@ -5,25 +5,29 @@
   <title>upload</title>
 </head>
 <body>
-<!-- <form action="http://localhost:8080" method="get" enctype="multipart/form-data">
-	<p><input type="text" name="text1" value="text default">
-	<p><input type="text" name="text2" value="text defaul">
-	<p><input type="file" name="file1">
-	<p><input type="file" name="file2">
+<!-- <form action="http://localhost:8080" method="POST" enctype="multipart/form-data">
 	<p><input type="file" name="file3">
 	<p><button type="submit">Submit</button>
 </form> -->
 
+<form method="post" enctype="multipart/form-data">
+	<div>
+		<label for="profile_pic">Sélectionnez le fichier à utiliser</label>
+		<input type="file" id="profile_pic" name="profile_pic"
+			accept=".jpg, .jpeg, .png">
+	</div>
+	<div>
+		<button>Envoyer</button>
+	</div>
+	</form>
 
-<form action="resForm.html" method="GET" enctype="multipart/form-data">	<!-- Début du formulaire -->
-	<!-- Liste déroulante -->
+
+<!-- <form action="resForm.html" method="GET" enctype="multipart/form-data">
 	<select name="titre">
 	<option>Mlle</option><option selected>Mme</option><option>M.</option>
 	</select>
-	<!-- Zones de texte -->
 	<label for="nom"> Nom : </label><input type="text" name="nom" id="nom" placeholder="Entrez votre nom" /><br/><br/>
 	<label for="prenom">Prénom : </label><input type="text" name="prenom" id="prenom" placeholder="Entrez votre prenom" /><br/><br/>
-	<!-- Slider -->
 	<label for="age">Age : 1 </label>
 	<input id="pi_input" type="range" name="age" id="age" min="1" max="99" step="1" value="18" /> 99
 	<p>Value: <output id="value"></output></p>
@@ -35,11 +39,8 @@
 		value.textContent = event.target.value
 	})
 	</script>
-	<!-- <br/><br/> -->
-	<!-- Case à cocher -->
 	<input type="checkbox" name="bDebutant" checked="checked" /> Je débute en PHP<br/><br/>
-	<!-- Bouton -->
 	<input type="submit" name="btOK" value="OK">
-</form> <!-- Fin du formulaire -->
+</form>  -->
 </body>
 </html>

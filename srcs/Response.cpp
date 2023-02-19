@@ -9,7 +9,20 @@ _serv(s), _req(req), _locBlocSelect(false),
 _isDir(false), _autoindex(false), _closeConnection(false),
 _isResFormPage(false), _envp(envp), _defaultPage(_req, _serv)	{}
 
+<<<<<<< HEAD
 Response::Response(Response const &src) { *this = src; }
+=======
+Response::Response() {}
+
+Response::Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp) :
+					_req(req), _vctServ(vctServ), _clientServer(clientServer), _locBlocSelect(false),
+					_isDir(false), _autoindex(false), _closeConnection(false), _envp(envp){
+}
+
+Response::Response(Response const &src) {
+	*this = src;
+}
+>>>>>>> main
 
 Response::~Response() {}
 
@@ -27,7 +40,6 @@ Response	&Response::operator=(Response const &rhs) {
 		this->_isDir = rhs._isDir;
 		this->_autoindex = rhs._autoindex;
 		this->_closeConnection = rhs._closeConnection;
-		this->_isResFormPage = rhs._isResFormPage;
 		this->_envp = rhs._envp;
 		this->_defaultPage = rhs._defaultPage;
 	}
@@ -81,12 +93,13 @@ std::vector<std::string>	Response::rightIndex() {
 	et on regardera plus tard si ces fichiers existent ou pas. On regarde aussi si l'
 	autoindex est "on" pour pouvoir l'afficher en cas de besoin.
 	- Sinon, on met notre bool a true (donc erreur) */
-void	Response::rightPathLocation(bool *err) {
+bool	Response::rightPathLocation() {
 	struct stat					fileOrDir;
 	std::string					root = this->rightRoot();
 	std::string					newPath;
 	std::vector<std::string>	index = this->rightIndex();
 
+	memset(&fileOrDir, 0, sizeof(fileOrDir));
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
@@ -107,30 +120,23 @@ void	Response::rightPathLocation(bool *err) {
 			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
-		*err = true;
+		return true;
+	return false;
 }
 
 /*	Pareil que au dessus mais si un aucun bloc de Location est selectionne */
-void	Response::rightPathServer(bool *err) {
+bool	Response::rightPathServer() {
 	struct stat					fileOrDir;
 	//std::string					root = this->rightRoot();
 	std::string					root = this->_serv.getRoot();
 	std::string					newPath;
 	std::vector<std::string>	index;
 
+	memset(&fileOrDir, 0, sizeof(fileOrDir));
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
-	// std::cout << "newPath = " << newPath << std::endl;
-	if (newPath == "/resForm.html")
-	{
-		// std::cout << "OK" << newPath << std::endl;
-		*err = true;
-		this->_isResFormPage = true;
-		return ;
-	}
 	root += newPath;
-	// std::cout << "ROOT = " << root << std::endl;
 	stat(root.c_str(), &fileOrDir);
 	if (S_ISREG(fileOrDir.st_mode))
 		this->_path.push_back(root);
@@ -146,20 +152,25 @@ void	Response::rightPathServer(bool *err) {
 			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
-		*err = true;
+		return true;
+	return false;
 }
 
 
 bool	Response::rightPath() {
-	bool	err = false;
+	bool	err;
 
 	if (this->_locBlocSelect)
+<<<<<<< HEAD
 	{
 		std::cout << "locBlockSelect: true" << std::endl;
 		this->rightPathLocation(&err);
 	}
+=======
+		err = this->rightPathLocation();
+>>>>>>> main
 	else
-		this->rightPathServer(&err);
+		err = this->rightPathServer();
 
 	return err;
 }
@@ -247,9 +258,93 @@ std::string	Response::rightPathErr(bool &pageFind) {
 	return rightPath;
 }
 
+<<<<<<< HEAD
+=======
+std::string	Response::createDefaultErrorPage() {
+	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
+
+	file << "<!DOCTYPE html>" << std::endl;
+	file << "<html lang=\"en\">" << std::endl;
+	file << "<head>" << std::endl;
+	file << "	<meta charset=\"UTF-8\">" << std::endl;
+	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
+	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
+	file << "	<title>Webserv " + ft_itos(this->_statusCode) + "</title>" << std::endl;
+	file << "</head>" << std::endl;
+	file << "<body>" << std::endl;
+	file << "	<h1>Default page Error " + ft_itos(this->_statusCode) + " :(</h1>" << std::endl;
+	file << "</body>" << std::endl;
+	file << "</html>" << std::endl;
+	file.close();
+
+	return "/tmp/tmpFile.html";
+}
+
+
+/*	Cree un lien pour chaque dossier / fichier*/
+void	Response::fileAndDir(std::ofstream &file, bool getDir, std::string path) {
+	DIR				*dir;
+	struct dirent	*entry;
+
+	if ((dir = opendir(path.c_str())) != NULL)
+	{
+		while ((entry = readdir(dir)) != NULL)
+		{
+			if ((getDir and entry->d_type == DT_DIR) or (!getDir and entry->d_type != DT_DIR))
+			{
+				if (strlen(entry->d_name) != 1 or entry->d_name[0] != '.')
+				{
+					file << "<a href=\"http://" + this->_serv.getHost() + ":" + ft_itos(this->_serv.getPort()) +
+					this->_req.getPath();
+					if (this->_req.getPath()[this->_req.getPath().size() - 1] != '/')
+						file << "/";
+					file << entry->d_name << "\">" << entry->d_name;
+					if (entry->d_type == DT_DIR)
+						file << "/";
+					file << "</a><br>" << std::endl;
+				}
+			}
+		}
+		closedir(dir);
+	} 
+	else
+		perror("Impossible d'ouvrir le répertoire");
+}
+
+/*	Affiche l'autoindex, deja les dossiers puis les ficheirs (comme nginx) */
+std::string	Response::createAutoindexPage() {
+	std::string		path = this->_path[0];
+	size_t			pos = path.find_last_of('/');
+	std::ofstream	file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
+
+	path.erase(pos, path.size() - pos);
+	path += "/";
+
+	file << "<!DOCTYPE html>" << std::endl;
+	file << "<html lang=\"en\">" << std::endl;
+	file << "<head>" << std::endl;
+	file << "	<meta charset=\"UTF-8\">" << std::endl;
+	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
+	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
+	file << "	<title>Webserv Autoindex</title>" << std::endl;
+	file << "</head>" << std::endl;
+	file << "<body>" << std::endl;
+	file << "	<h1>Index of " + this->_req.getPath() + "</h1>" << std::endl;
+
+	this->fileAndDir(file, true, path);
+	this->fileAndDir(file, false, path);
+
+	file << "</body>" << std::endl;
+	file << "</html>" << std::endl;
+	file.close();
+
+	return "/tmp/tmpFile.html";
+}
+
+>>>>>>> main
 /*	On va appeler les differentes fonctions qui check les differents paths.
 	2 cas sont possibles :
-	- Aucun fichier n'existe, (ne pas s'occuper du "if (this->_isResFormPage)", on va definir le code erreur
+	- Aucun fichier n'existe, on va definir le code erreur
 	et appeler une fct qui va regarder si une page d'erreur a ete set dans le fichier de conf par rapport a
 	ce code erreur.
 	- Le ficheir existe et la pas de soucis :)
@@ -269,6 +364,7 @@ void	Response::sendData() {
 	{
 		bool	pageFind = false;
 
+<<<<<<< HEAD
 		// ce if est temporaire
 		if (this->_isResFormPage)
 		{
@@ -276,15 +372,14 @@ void	Response::sendData() {
 			this->_statusCode = 200;
 			pageFind = true;
 		}
+=======
+		if (this->_isDir)
+			this->_statusCode = 403;
+>>>>>>> main
 		else
-		{
-			if (this->_isDir)
-				this->_statusCode = 403;
-			else
-				this->_statusCode = 404;
+			this->_statusCode = 404;
 
-			path = this->rightPathErr(pageFind);
-		}
+		path = this->rightPathErr(pageFind);
 
 		std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
@@ -313,24 +408,12 @@ void	Response::sendHeader(std::string path)
 		else
 			res += this->_serv.getHttpRedir();
 		res += "\n\n";
-		std::cout << res << std::endl;
 		write(this->_req.getFd(), res.c_str(), res.size());
-		// close(this->_req.getFd());
 		this->_closeConnection = true;
 		return ;
 	}
-
-	// std::cout << "ERRRRRR" << std::endl;
-
 	res = header.getHeader();
-
-
-// 	res = "HTTP/1.1 301 Moved Permanently\n
-// Location: https://google.com\n\n";
-
-
-	 //std::cout << res << std::endl;
-
+	// std::cout << res << std::endl;
 	if (this->_statusCode == 406)
 	{
 		path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
@@ -338,38 +421,62 @@ void	Response::sendHeader(std::string path)
 		res = header.getHeader();
 	}
 	write(this->_req.getFd(), res.c_str(), res.size());
-
-
-	// close(this->_req.getFd());
-
 	this->sendPage(path);
-	// std::cout << res << std::endl;
 }
 
 void	Response::sendPage(std::string path) {
 	std::ifstream	file(path.c_str(), std::ios::in | std::ios::binary);
-	std::string		str;
-	std::string		res;
+	std::string		page;
 
 	if (file)
 	{
 		std::ostringstream ss;
 		ss << file.rdbuf();
-		str = ss.str();
+		page = ss.str();
 	}
-	res += str;
-	write(this->_req.getFd(), res.c_str(), res.size());
+	write(this->_req.getFd(), page.c_str(), page.size());
 	file.close();
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
 }
 
+<<<<<<< HEAD
+=======
+void	Response::selectServerBlock() {
+	std::vector<Server>			tmp;
+	std::string					host;
+	std::vector<Server>			conf = this->_vctServ;
+	bool						err = false;
+	int							fd = this->_clientServer[this->_req.getFd()];
+
+	host = conf[fd].getHost();
+
+	for (size_t i = 0; i < conf.size(); i++)
+	{
+		if (conf[i].getHost() == host and
+				conf[i].getPort() == ft_stoi(this->_req.getPort(), &err))
+			tmp.push_back(conf[i]);
+	}
+	if (tmp.size() == 1)
+	{
+		this->_serv = tmp[0];
+		return ;
+	}
+	else if (tmp.size() > 1)
+		std::cout << "Fct selectServerBlock err, plusieurs blocs preselectionnes" << std::endl;
+
+	// Si ce msg apparait, plusieurs blocs ont etes pre-selectionnes
+	// mais pas departages, il faut les departages avec server name.
+	std::cout << "Fct selectServerBlock err" << std::endl;
+	return ;
+}
+
+>>>>>>> main
 void	Response::selectLocationBlock() {
 	std::vector<Location>	locations = this->_serv.getVctLocation();
 	std::string 			strBlocLoc;
 	Location				tmp;
-	// int						res;
 	std::string				req = this->_req.getPath();
 	size_t j;
 
@@ -384,6 +491,18 @@ void	Response::selectLocationBlock() {
 			{
 				this->_locBlocSelect = true;
 				tmp = locations[i];
+			}
+		}
+	}
+	if (!this->_locBlocSelect)
+	{
+		for (size_t i = 0; i < vctLoc.size(); i++)
+		{
+			if (vctLoc[i].getPath() == "/")
+			{
+				this->_locBlocSelect = true;
+				tmp = vctLoc[i];
+				break ;
 			}
 		}
 	}

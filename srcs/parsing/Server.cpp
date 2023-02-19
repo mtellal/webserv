@@ -1,8 +1,13 @@
 #include "Server.hpp"
 
+<<<<<<< HEAD
 Server::Server() : Directives(),  _host("0.0.0.0"),
 									_port("8080"), _hostSet(false), _portSet(false), 
 									_serverNameSet(false), _errorServer(false) {
+=======
+Server::Server() : Directives(), _host("0.0.0.0"), _port(8080), _hostSet(false), _portSet(false),
+								_serverNameSet(false), _errorServer(false), _blockClose(false){
+>>>>>>> main
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
 	this->functPtr[2] = &Directives::setErrorPage;
@@ -35,6 +40,7 @@ Server	&Server::operator=(Server const &rhs) {
 		this->_portSet = rhs._portSet;
 		this->_serverNameSet = rhs._serverNameSet;
 		this->_errorServer = rhs._errorServer;
+		this->_blockClose = rhs._blockClose;
 	}
 	return *this;
 }
@@ -49,7 +55,17 @@ std::vector<std::string>	Server::getServerName() const { return this->_serverNam
 
 std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
 
+<<<<<<< HEAD
 bool						Server::getErrorServer() const { return this->_errorServer; }
+=======
+bool	Server::getBlockClose() const {
+	return this->_blockClose;
+}
+
+bool	Server::getServerNameSet() const {
+	return this->_serverNameSet;
+}
+>>>>>>> main
 
 bool						Server::getServerNameSet() const { return this->_serverNameSet; }
 
@@ -80,7 +96,6 @@ bool	Server::checkFormatHost(std::string host) {
 	if (i > 1)
 		return false;
 	return true;
-
 }
 
 void	Server::addClient(const Client &client)
@@ -110,7 +125,6 @@ void	Server::error_msg(const int &n_line, const std::string &err_msg)
 }
 
 void	Server::setHost(std::vector<std::string> host, int *i) {
-	// Comment bien verifier le host ?
 	std::vector<std::string>	splitPort;
 	bool						err = false;
 
@@ -137,7 +151,6 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 			{
 				this->_hostSet = true;
 				this->_host = host[1];
-				// this->setPort(this->_port, i);
 			}
 			else
 			{
@@ -180,6 +193,7 @@ void	Server::setPort(std::string port, int *line)
 	if (this->_portSet)
 		error_msg(*line, "listen is already set");
 
+<<<<<<< HEAD
 	for (size_t i = 0; i < port.length(); i++)
 	{
 		if (port[i] < '0' || port[i] > '9')
@@ -191,6 +205,9 @@ void	Server::setPort(std::string port, int *line)
 
 /* void	Server::setPort(std::string strPort, int *i) {
 	// Verifier le port ?
+=======
+void	Server::setPort(std::string strPort, int *i) {
+>>>>>>> main
 	bool err = false;
 	int port = ft_stoi(strPort, &err);
 
@@ -228,14 +245,16 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 			std::vector<std::string> tmp = ft_split(line.c_str(), " \t");
 
 			if (tmp.size() == 1 && tmp[0] == "}")
+			{
+				this->_blockClose = true;
 				return ;
+			}
 			else if (this->isLocationBlock(tmp))
 			{
 				Location locPars(i, tmp);
 
 				locPars.readLocationBlock(file, i);
 
-				// Verifier aussi que le block n'est pas vide ??
 				if (locPars.getErrorLoc())
 				{
 					this->_errorServer = true;
@@ -262,6 +281,8 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 				}
 				if (j == 10)
 					error_msg(*i, "incorrect directive");
+				if (this->_errorServer or this->_errorDirectives)
+					return ;
 			}
 		}
 		*i += 1;

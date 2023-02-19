@@ -11,14 +11,15 @@ Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), 
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
-	this->functPtr[3] = &Request::setHostPort;
-	this->functPtr[4] = &Request::setConnection;
-	this->functPtr[5] = &Request::setAccept;
-	this->functPtr[6] = &Request::setReferer;
-	this->functPtr[7] = &Request::setAgent;
-	this->functPtr[8] = &Request::setAuthentification;
-	this->functPtr[9] = &Request::setContentLength;
-	this->functPtr[10] = &Request::setContentType;
+	this->functPtr[3] = &Request::setMethodVersionPath;
+	this->functPtr[4] = &Request::setHostPort;
+	this->functPtr[5] = &Request::setConnection;
+	this->functPtr[6] = &Request::setAccept;
+	this->functPtr[7] = &Request::setReferer;
+	this->functPtr[8] = &Request::setAgent;
+	this->functPtr[9] = &Request::setAuthentification;
+	this->functPtr[10] = &Request::setContentLength;
+	this->functPtr[11] = &Request::setContentType;
 
 	if (parsRequest(fd))
 		this->_errRequest = true;
@@ -154,13 +155,12 @@ void	Request::parsArgs(std::string arg) {
 		else
 			this->_queryString.insert(std::make_pair(keyValue[0], keyValue[1]));
 	}
-	// for (std::map<std::string, std::string>::iterator it = this->_args.begin(); it != this->_args.end(); it++)
-	// 	std::cout << it->first << " " << it->second << std::endl;
 }
 
 void	Request::setMethodVersionPath(std::vector<std::string> field_args) {
 	std::vector<std::string>	splitBis;
 
+<<<<<<< HEAD
 	this->_method = field_args[0];
 	this->_httpVersion = field_args[2];
 	field_args = ft_split(field_args[1].c_str(), "?");
@@ -178,6 +178,14 @@ void	Request::setMethodVersionPath(std::vector<std::string> field_args) {
 	// 		this->_argsGet.insert(std::pair<std::string, std::string>(splitBis[0], splitBis[1]));
 	// 	}
 	// }
+=======
+	this->_method = strSplit[0];
+	this->_httpVersion = strSplit[2];
+	strSplit = ft_split(strSplit[1].c_str(), "?");
+	if (strSplit.size() == 2)
+		this->parsArgs(strSplit[1]);
+	this->_path = strSplit[0];
+>>>>>>> main
 }
 
 void	Request::setHostPort(std::vector<std::string> strSplit) {
@@ -231,8 +239,6 @@ void	Request::setContentType(std::vector<std::string> strSplit) {
 			this->_contentType += " ";
 		this->_contentType += strSplit[i];
 	}
-	for (size_t i = 1; i < strSplit.size(); i++)
-		std::cout << i << " " << strSplit[i] << std::endl;
 	if (strSplit.size() == 3 and strSplit[1] == "multipart/form-data;" and
 		strSplit[2].find("boundary=") != std::string::npos)
 	{
@@ -240,7 +246,6 @@ void	Request::setContentType(std::vector<std::string> strSplit) {
 		this->_boundarySet = true;
 		this->_boundary = "--";
 		this->_boundary += strSplit[1];
-		// std::cout << "Boundary = " << this->_boundary << std::endl;
 	}
 }
 
@@ -270,8 +275,6 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 		}
 		*i += 1;
 	}
-	// for (std::map<std::string, std::string>::iterator it = this->_queryString.begin(); it != this->_queryString.end(); it++)
-		// std::cout << it->first << " " << it->second << std::endl;
 }
 
 
@@ -291,7 +294,7 @@ int		Request::parsRequest(int fd)
 	std::vector<std::string>	strSplit;
 	std::vector<std::string>	strSplitBoundary;
 	std::vector<std::string>	tmpBis;
-	std::string					key[11] = { "GET", "POST", "DELETE", "Host:",
+	std::string					key[12] = { "GET", "HEAD", "POST", "DELETE", "Host:",
 					"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification:",
 					"Content-Length:", "Content-Type:"};
 
@@ -320,11 +323,17 @@ int		Request::parsRequest(int fd)
 	}
 
 	vct = ft_split(request, "\n\r");
+<<<<<<< HEAD
 
 	/* for (int i = 0; i < (int)vct.size(); i++)
 		std::cout << vct[i] << std::endl; */
 
 	std::cout << request << std::endl;
+=======
+	for (size_t i = 0; i < vct.size(); i++)
+	// 	std::cout << vct[i] << std::endl;
+	// std::cout << std::endl;
+>>>>>>> main
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{
@@ -333,7 +342,7 @@ int		Request::parsRequest(int fd)
 			this->setGetParams(vct, &i);
 		else
 		{
-			for (size_t j = 0; j < 11; j++)
+			for (size_t j = 0; j < 12; j++)
 			{
 				if (strSplit[0] == key[j])
 				{

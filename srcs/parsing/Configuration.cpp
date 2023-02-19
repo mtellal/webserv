@@ -2,13 +2,11 @@
 
 Configuration::Configuration() {}
 
-Configuration::Configuration(std::string path_file) :_errorConf(false)
-{
+Configuration::Configuration(std::string path_file) :_errorConf(false) {
 	open_and_check_file(path_file);
 }
 
-Configuration::Configuration(Configuration const &src)
-{
+Configuration::Configuration(Configuration const &src) {
 	*this = src;
 }
 
@@ -28,7 +26,7 @@ std::vector<Server>	Configuration::getVctServer() const
 	return this->_servers;
 }
 
-bool	Configuration::get_errorConf()
+bool	Configuration::getErrorConf()
 {
 	return this->_errorConf;
 }
@@ -69,7 +67,17 @@ void	Configuration::open_and_check_file(std::string path_file) {
 				file.close();
 				return;
 			}
+<<<<<<< HEAD
 			_servers.push_back(servPars);
+=======
+			else if (!servPars.getBlockClose())
+			{
+				error_msg("Block must be terminalet by \"}\"");
+				file.close();
+				return;
+			}
+			_vctServ.push_back(servPars);
+>>>>>>> main
 		}
 		else if (!only_space_or_empty(line))
 		{

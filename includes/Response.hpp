@@ -49,7 +49,6 @@ class Response {
 	bool						_isDir;
 	bool						_autoindex;
 	bool						_closeConnection;
-	bool						_isResFormPage;
 	char						**_envp;
 	std::string					cgi_script;
 
@@ -58,8 +57,8 @@ class Response {
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();
-	void						rightPathLocation(bool *err);
-	void						rightPathServer(bool *err);
+	bool						rightPathLocation();
+	bool						rightPathServer();
 	std::string					rightPathErr(bool &pageFind);
 	void						fileAndDir(std::ofstream &file, bool getDir, std::string path);
 
@@ -67,7 +66,6 @@ class Response {
 	std::string	testAllPaths(bool *err);
 	std::string	createDefaultErrorPage();
 	std::string	createAutoindexPage();
-	std::string	createResFormPage();
 	std::string	argsToStr();
 	bool		rightPath();
 	void		sendHeader(std::string path);

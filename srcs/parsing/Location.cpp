@@ -26,19 +26,13 @@ Location	&Location::operator=(Location const &rhs) {
 
 	if (this != &rhs)
 	{
-		// this->_cgi = rhs._cgi;
 		this->_path = rhs._path;
-		// this->_cgiSet = rhs._cgiSet;
 		this->_errorLoc = rhs._errorLoc;
 	}
 	return *this;
 }
 
-// std::string						Location::getCgi() {
-// 	return this->_cgi;
-// }
-
-std::string						Location::getPath() {
+std::string	Location::getPath() {
 	return this->_path;
 }
 
@@ -50,10 +44,6 @@ bool	Location::getHttpMethodsSet() {
 	return this->_httpMethodsSet;
 }
 
-// bool	Location::getCgiSet() {
-// 	return this->_cgiSet;
-// }
-
 void	Location::error_line(const int &n_line, const std::string &err_msg)
 {
 	this->_errorLoc = true;
@@ -61,20 +51,13 @@ void	Location::error_line(const int &n_line, const std::string &err_msg)
 }
 
 void	Location::setPath(int *i, std::string loc) {
-	// chars ok : min maj / * .
 	for (size_t j = 0; j < loc.size(); j++)
 	{
-		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and !charAccepted(loc[j])
+		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and loc[j] != '/'
 			and (loc[j] < '0' or loc[j] > '9'))
 		return (error_line(*i, " wrong syntax of location block"));
 	}
 	this->_path = loc;
-}
-
-bool	Location::charAccepted(char c) {
-	if (c == '/' or c == '*' or c == '.')
-		return true;
-	return false;
 }
 
 void	Location::readLocationBlock(std::ifstream &file, int *i) {
@@ -110,23 +93,15 @@ void	Location::readLocationBlock(std::ifstream &file, int *i) {
 			}
 			if (j == 8)
 				error_line(*i, " incorrect directive");
+			if (this->_errorLoc or this->_errorDirectives)
+			{
+				this->_errorLoc = true;
+				return ;
+			}
 		}
 		*i += 1;
 	}
 }
-
-// void	Location::setCgi(std::vector<std::string> cgi, int *i) {
-// 	if (cgi.size()!= 2)
-// 	{
-// 		this->_errorLoc = true;
-// 		std::cout << "Error: at line " << *i << " Directive cgi, wrong args" << std::endl;
-// 	}
-// 	else
-// 	{
-// 		this->_cgiSet = true;
-// 		this->_cgi = cgi[1];
-// 	}
-// }
 
 void	Location::showHttpMethods(std::ostream &o) {
 	o << "\t\tMethods\t: ";

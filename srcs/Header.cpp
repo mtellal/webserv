@@ -85,8 +85,6 @@ std::string	Header::getContentType() const {
 			splitAccept[i] == "text/plain")
 			return "text/plain";
 	}
-	// Si rien ne correspond, renvoyer le code 406 (Not Acceptable)
-
 	return "406";
 }
 
@@ -171,7 +169,6 @@ std::string	Header::getLastModified() const {
 	struct stat s;
 
 	stat(this->_file.c_str(), &s);
-
 	return ctime(&s.st_mtime);
 }
 

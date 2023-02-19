@@ -69,7 +69,7 @@ class Request {
 	std::string							_contentLength;
 	std::string							_contentType;
 
-	void	(Request::*functPtr[11])(std::vector<std::string>);
+	void	(Request::*functPtr[12])(std::vector<std::string>);
 
 	int		parsRequest(int fd);
 	void	parsArgs(std::string tmp);

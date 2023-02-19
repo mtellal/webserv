@@ -20,10 +20,14 @@
 # include <map>
 # include <utility>
 
+<<<<<<< HEAD
 # include "Client.hpp"
 #include "Request.hpp"
 
 # define NB_EVENTS 5
+=======
+# define NB_EVENTS 255
+>>>>>>> main
 
 class SocketServer {
 

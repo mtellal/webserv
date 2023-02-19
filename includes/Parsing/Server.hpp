@@ -21,6 +21,7 @@ class Server : public Directives {
 		std::vector<std::string>	getServerName() const;
 		std::vector<Location>		getVctLocation() const;
 		bool						getErrorServer() const;
+		bool						getBlockClose() const;
 		bool						getServerNameSet() const;
 		bool						getHostSet() const;
 		bool						getPortSet() const;
@@ -56,6 +57,7 @@ class Server : public Directives {
 		bool						_portSet;
 		bool						_serverNameSet;
 		bool						_errorServer;
+		bool						_blockClose;
 		void						(Server::*functPtr[10])(std::vector<std::string>, int *i);
 
 		void						setHost(std::vector<std::string> host, int *i);
