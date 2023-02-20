@@ -301,7 +301,7 @@ void	Response::sendData() {
 	if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
 	{
 		std::cout << ".php file found " << std::endl;
-		std::cout << cgi.execute("cgi-bin/php-cgi", path) << std::endl;
+		std::cout << cgi.execute("./cgi-bin/php-cgi", path) << std::endl;
 	}
 	this->sendHeader(path);
 }

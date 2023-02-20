@@ -42,21 +42,22 @@ void    Cgi::printEnv()
 
 void    Cgi::addEnvInMap(char **env)
 {
+    size_t i = 0;
     size_t len = tab_len(env);
 
-    while (len > 0)
+    while (i < len)
     {
         std::string var_env;
         size_t      index;
         std::string key;
         std::string value;
 
-        var_env = env[len - 1];
+        var_env = env[i];
         index = var_env.find("=");
         key = var_env.substr(0, index);
         value = var_env.substr(index + 1, var_env.length());
         _env[key] = value;
-        len--;
+        i++;
     }
 }
 
@@ -94,11 +95,11 @@ char    **Cgi::mapToTab()
     it = this->_env.begin();
     try
     {
-        e = new char*[this->_env.size()];
+        e = new char*[this->_env.size() + 1];
     }
     catch (const std::exception &err)
     {
-        std::cerr << "creation of env general failed: " << err.what() << std::endl;
+        std::cerr << "(mapToTab) creation of env general failed: " << err.what() << std::endl;
     }
 
     while (it != this->_env.end())
@@ -113,26 +114,30 @@ char    **Cgi::mapToTab()
         }
         catch (const std::exception &err)
         {
-            std::cerr << "creation of var [" << i << "] " << err.what() << std::endl;
+            std::cerr << "(mapToTab) creation of var [" << i << "] failed: " << err.what() << std::endl;
         }
+
         strcpy(e[i], tmp.c_str());
         e[i][tmp.length()] = '\0';
         i++;
         it++;
     }
+    e[i] = NULL;
     return (e);
 }
 
 char    **exec_args(const std::string &path_cgi, const std::string &path_file)
 {
-    char **args;
+    char        **args;
+    std::string tmp;
 
     try
     {
         args = new char*[3];
 
         args[0] = strdup(path_cgi.c_str());
-        args[1] = strdup(path_file.c_str());
+        tmp = "./" + path_file;
+        args[1] = strdup(tmp.c_str());
         args[2] = NULL;
     }
     catch (const std::exception &err)
@@ -150,8 +155,11 @@ std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_
     char    **args;
     char    **env;
 
+    (void)args;
+
     env = mapToTab();
     args = exec_args(path_cgi, path_file);
+
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
@@ -177,7 +185,6 @@ std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_
             close(p[1]);
             exit(1);
         }
-
     }
     else
     {
