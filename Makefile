@@ -4,7 +4,8 @@ CC			= c++
 
 INC			= -I includes/ -I includes/Parsing/
 
-CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
+# CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
+CPPFLAGS	= -std=c++98 -g -Wall -Wextra -Werror
 
 SRCS	=	main.cpp \
 			parsing/Configuration.cpp \

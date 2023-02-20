@@ -31,51 +31,51 @@ DefaultPage    &DefaultPage::operator=(const DefaultPage &page)
 }
 
 /* Fct tmp qui me sert juste pour des tests, va etre suprimee */
-std::string		DefaultPage::argsToStr() {
-	std::map<std::string, std::string>	args;
-	std::string							res;
+// std::string		DefaultPage::argsToStr() {
+// 	std::map<std::string, std::string>	args;
+// 	std::string							res;
 
-	args = this->_req.getQueryString();
+// 	args = this->_req.getQueryString();
 
-	res += args["titre"];
-	res += " ";
-	res += args["nom"];
-	res += " ";
-	res += args["prenom"];
-	res += " a ";
-	res += args["age"];
-	res += " ans, ";
-	if (args["titre"] == "M.")
-		res += "il ";
-	else
-		res += "elle ";
-	if (args["bDebutant"] == "on")
-		res += "debute en php";
-	else
-		res += "est pro en php";
+// 	res += args["titre"];
+// 	res += " ";
+// 	res += args["nom"];
+// 	res += " ";
+// 	res += args["prenom"];
+// 	res += " a ";
+// 	res += args["age"];
+// 	res += " ans, ";
+// 	if (args["titre"] == "M.")
+// 		res += "il ";
+// 	else
+// 		res += "elle ";
+// 	if (args["bDebutant"] == "on")
+// 		res += "debute en php";
+// 	else
+// 		res += "est pro en php";
 
-	return res;
-}
+// 	return res;
+// }
 
-std::string     DefaultPage::createResFormPage() {
-	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
+// std::string     DefaultPage::createResFormPage() {
+// 	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
 
-	file << "<!DOCTYPE html>" << std::endl;
-	file << "<html lang=\"en\">" << std::endl;
-	file << "<head>" << std::endl;
-	file << "	<meta charset=\"UTF-8\">" << std::endl;
-	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
-	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>Form</title>" << std::endl;
-	file << "</head>" << std::endl;
-	file << "<body>" << std::endl;
-	file << "	<p>" + this->argsToStr() + "</p>"<< std::endl;
-	file << "</body>" << std::endl;
-	file << "</html>" << std::endl;
-	file.close();
+// 	file << "<!DOCTYPE html>" << std::endl;
+// 	file << "<html lang=\"en\">" << std::endl;
+// 	file << "<head>" << std::endl;
+// 	file << "	<meta charset=\"UTF-8\">" << std::endl;
+// 	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
+// 	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
+// 	file << "	<title>Form</title>" << std::endl;
+// 	file << "</head>" << std::endl;
+// 	file << "<body>" << std::endl;
+// 	file << "	<p>" + this->argsToStr() + "</p>"<< std::endl;
+// 	file << "</body>" << std::endl;
+// 	file << "</html>" << std::endl;
+// 	file.close();
 
-	return "/tmp/tmpFile.html";
-}
+// 	return "/tmp/tmpFile.html";
+// }
 
 std::string     DefaultPage::createDefaultErrorPage(int statusCode) {
 	std::ofstream file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
@@ -89,7 +89,7 @@ std::string     DefaultPage::createDefaultErrorPage(int statusCode) {
 	file << "	<title>TMP Webserv " + ft_itos(statusCode) + "</title>" << std::endl;
 	file << "</head>" << std::endl;
 	file << "<body>" << std::endl;
-	file << "	<h1>Default page Error " + ft_itos(statusCode) + " :(</h1>" << std::endl;
+	file << "	<h1>Error " + ft_itos(statusCode) + ", " + getHttpStatusCodeMessage(statusCode) + " :(</h1>" << std::endl;
 	file << "</body>" << std::endl;
 	file << "</html>" << std::endl;
 	file.close();

@@ -27,6 +27,7 @@ class Response {
 	Response	&operator=(Response const &rhs);
 
 	Server		getServ() const;
+	Request		getRequest() const;
 	bool		getlocBlocSelect() const;
 	Location	getLocBloc() const;
 	bool		getCloseConnection() const;
@@ -51,7 +52,6 @@ class Response {
 	bool						_closeConnection;
 	char						**_envp;
 	std::string					cgi_script;
-
 	DefaultPage					_defaultPage;
 
 
@@ -60,7 +60,6 @@ class Response {
 	bool						rightPathLocation();
 	bool						rightPathServer();
 	std::string					rightPathErr(bool &pageFind);
-	void						fileAndDir(std::ofstream &file, bool getDir, std::string path);
 
 
 	std::string	testAllPaths(bool *err);
@@ -69,6 +68,9 @@ class Response {
 	void		sendPage(std::string path);
 	bool		methodNotAllowed() const;
 	void		httpRedir();
+	void		findRightCodeError();
+	std::string	findRightError();
+	void		sendContentTypeError();
 };
 
 
