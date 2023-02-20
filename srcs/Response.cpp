@@ -38,6 +38,11 @@ Server		Response::getServ() const {
 	return this->_serv;
 }
 
+Request		Response::getRequest() const {
+	return this->_req;
+}
+
+
 bool		Response::getlocBlocSelect() const {
 	return this->_locBlocSelect;
 }
@@ -162,6 +167,7 @@ std::string	Response::testAllPaths(bool *err) {
 	std::string	rightPath;
 	struct stat	file;
 
+	memset(&file, 0, sizeof(file));
 	while (i < this->_path.size())
 	{
 		stat(this->_path[i].c_str(), &file);
@@ -255,48 +261,32 @@ bool	Response::methodNotAllowed() const {
 	return true;
 }
 
-/*	On va appeler les differentes fonctions qui check les differents paths.
-	2 cas sont possibles :
-	- Aucun fichier n'existe, on va definir le code erreur
-	et appeler une fct qui va regarder si une page d'erreur a ete set dans le fichier de conf par rapport a
-	ce code erreur.
-	- Le ficheir existe et la pas de soucis :)
+void	Response::findRightCodeError() {
+	if (this->methodNotAllowed())
+		this->_statusCode = 405;
+	else if (this->_isDir)
+		this->_statusCode = 403;
+	else
+		this->_statusCode = 404;
+}
 
-	Ensuite, si le path indique est un dossier, on cree la page autoindex.
-	sinon, si la page demandee n'existe pas && que la page n'a pas ete set dans le fichier de conf,
-	on la cree
-	*/
-void	Response::sendData() {
-	std::string	res;
+
+std::string	Response::findRightError() {
+	bool		pageFind = false;
 	std::string	path;
-	bool		err;
 
-	if (!(err = this->rightPath()))
-		path = this->testAllPaths(&err);
-	if (err or this->methodNotAllowed())
-	{
-		bool	pageFind = false;
+	this->findRightCodeError();
+	path = this->rightPathErr(pageFind);
 
-		if (this->methodNotAllowed())
-			this->_statusCode = 405;
-		else if (this->_isDir)
-			this->_statusCode = 403;
-		else
-			this->_statusCode = 404;
+	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
-		path = this->rightPathErr(pageFind);
-
-		std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
-
-		if (this->_autoindex and !this->methodNotAllowed())
-			path = this->_defaultPage.createAutoindexPage(this->_path);
-		else if (!tmp or !pageFind)
-			path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
-		else
-			tmp.close();
-	}
-
-	this->sendHeader(path);
+	if (this->_autoindex and !this->methodNotAllowed())
+		path = this->_defaultPage.createAutoindexPage(this->_path);
+	else if (!tmp or !pageFind)
+		path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
+	if (tmp)
+		tmp.close();
+	return path;
 }
 
 void	Response::httpRedir() {
@@ -313,24 +303,45 @@ void	Response::httpRedir() {
 	return ;
 }
 
-void	Response::sendHeader(std::string path) {
-	Header		header(this->_req, path, &this->_statusCode, this->_serv, this);
-	std::string	res;
+void	Response::sendData() {
+	std::string	path;
+	bool		err;
 
+	if (!(err = this->rightPath()))
+		path = this->testAllPaths(&err);
+	if (err or this->methodNotAllowed())
+		path = findRightError();
 
 	if (((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
-		this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
+			this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
 
+	this->sendHeader(path);
+}
+
+void	Response::sendContentTypeError() {
+	std::string	res;
+	std::string	path;
+
+	path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
+
+	Header	header(path, &this->_statusCode, this);
+
 	res = header.getHeader();
-	// std::cout << res;
-	if (this->_statusCode == 406)
-	{
-		path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
-		Header	headerBis(this->_req, path, &this->_statusCode, this->_serv, this);
-		res = header.getHeader();
-	}
 	write(this->_req.getFd(), res.c_str(), res.size());
+}
+
+void	Response::sendHeader(std::string path) {
+	Header		header(path, &this->_statusCode, this);
+	std::string	res;
+
+	if (header.getContentType() == "406")
+		sendContentTypeError();
+	else
+	{
+		res = header.getHeader();
+		write(this->_req.getFd(), res.c_str(), res.size());
+	}
 	this->sendPage(path);
 }
 

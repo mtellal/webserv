@@ -9,8 +9,10 @@
 
 Header::Header() {}
 
-Header::Header(Request req, std::string file, int *statusCode, Server serv, Response *rep) : _req(req), _statusCode(statusCode),
-				_file(file), _serv(serv), _rep(rep){
+Header::Header(std::string file, int *statusCode, Response *rep) : _statusCode(statusCode),
+				_file(file), _rep(rep){
+	this->_req = this->_rep->getRequest();
+	this->_serv = this->_rep->getServ();
 }
 
 Header::Header(Header const &src) {
@@ -26,6 +28,7 @@ Header	&Header::operator=(Header const &rhs) {
 		this->_statusCode = rhs._statusCode;
 		this->_file = rhs._file;
 		this->_serv = rhs._serv;
+		this->_rep = rhs._rep;
 	}
 	return *this;
 }

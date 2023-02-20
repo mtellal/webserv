@@ -35,6 +35,9 @@ int main(int argc, char **argv, char **envp)
 	location / ?
 	HTTP 1.1
 	Method HEAD
+	Avec valgrind, arreter le chargement de la page = leaks de write
+	Ajouter des codes erreur
+	Fichier Response.cpp a clarifier
 
 	Arguments POST + Securisation du formulaire :
 	https://www.electro-info.ovh/les-formulaires-en-PHP

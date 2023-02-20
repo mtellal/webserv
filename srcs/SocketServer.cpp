@@ -148,7 +148,6 @@ void	SocketServer::createFdEpoll() {
 void	SocketServer::closeSockets() {
 	for (std::map<int, int>::iterator it = this->_clientServerFds.begin() ; it != this->_clientServerFds.end(); it++)
 	{
-		this->_clientServerFds.erase(it->first);
 		close(it->first);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, it->first, NULL);
 	}
@@ -220,6 +219,7 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
+		// std::cout << "fd = " << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
@@ -229,13 +229,13 @@ int		SocketServer::epollWait() {
 			std::cout << "////////////////// REQUEST	///////////////////" << std::endl;
 			Request		req(event[j].data.fd);
 
-			if ((srv_i = pickServBlock(req)) == -1)
-				std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
 
 			if (req.getErrRequest())
 				return 1;
 			else if (req.getcloseConnection())
 				this->closeConnection(event[j].data.fd);
+			else if ((srv_i = pickServBlock(req)) == -1)
+				std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
 			else
 			{
 				std::cout << "////////////////// RESPONSE	///////////////////" << std::endl;
@@ -303,8 +303,6 @@ void	SocketServer::closeConnection(int fd)
 
 
 	this->_servers[index_serv].eraseClient(fd);
-
-	this->_servers_fd.erase(this->_servers_fd.begin() + index_serv);
 
 	this->_clientServerFds.erase(fd);
 
