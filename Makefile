@@ -16,7 +16,7 @@ SRCS	=	main.cpp \
 			Request.cpp \
 			Response.cpp \
 			Header.cpp \
-			CGI/CGI.cpp \
+			Cgi.cpp \
 			Client.cpp \
 			DefaultPage.cpp
 

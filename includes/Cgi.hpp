@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   CGI.hpp                                            :+:      :+:    :+:   */
+/*   Cgi.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mtellal <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -11,8 +11,8 @@
 /* ************************************************************************** */
 
 
-#ifndef CGI_HPP
-#define CGI_HPP
+#ifndef Cgi_HPP
+#define Cgi_HPP
 
 #include <string>
 #include "Request.hpp"
@@ -24,19 +24,19 @@
 #include <string.h>
 
 
-class CGI
+class Cgi
 {
     public:
 
-        CGI();
-        CGI(const CGI &);
-        CGI(const Request &req, char **env);
-        ~CGI();
+        Cgi();
+        Cgi(const Cgi &);
+        Cgi(const Request &req, char **env);
+        ~Cgi();
 
-        CGI &operator=(const CGI &);
+        Cgi &operator=(const Cgi &);
         
-        std::string    execute(const std::string &path, char **env);
         void            initEnv(const Request &req, char **env);
+        std::string     execute(const std::string &path_cgi, const std::string &path_file);
         void            printEnv();
 
 
@@ -45,6 +45,10 @@ class CGI
         int                                 _stdin;
         int                                 _stdout;
         std::map<std::string, std::string>  _env;
+
+        void            addEnvInMap(char **env);
+        char            **mapToTab();
+
         
 
         

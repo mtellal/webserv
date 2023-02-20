@@ -1,6 +1,5 @@
 #include "Configuration.hpp"
 #include "SocketServer.hpp"
-#include "CGI.hpp"
 
 int main(int argc, char **argv, char **envp)
 {

@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   CGI.cpp                                            :+:      :+:    :+:   */
+/*   Cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mtellal <marvin@42.fr>                     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,21 +10,18 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "CGI.hpp"
+#include "Cgi.hpp"
 
-CGI::CGI() : _stdin(0), _stdout(1) {}
+Cgi::Cgi() : _stdin(0), _stdout(1) {}
 
-CGI::CGI(const CGI &src) : _stdin(src._stdin), _stdout(src._stdout) {}
+Cgi::Cgi(const Cgi &src) : _stdin(src._stdin), _stdout(src._stdout) {}
 
-CGI::CGI(const Request &req, char **env)
+Cgi::Cgi(const Request &req, char **env)
 {
-    (void)req;
-    (void)env;
     initEnv(req, env);
-    std::cout << _env["PATH_INFO"] << std::endl;
 }
 
-CGI::~CGI() {}
+Cgi::~Cgi() {}
 
 size_t    tab_len(char **env)
 {
@@ -35,7 +32,7 @@ size_t    tab_len(char **env)
     return (i);
 }
 
-void    CGI::printEnv()
+void    Cgi::printEnv()
 {
     std::map<std::string, std::string>::iterator it = _env.begin();
 
@@ -43,26 +40,8 @@ void    CGI::printEnv()
         std::cout << it->first << " = " << (it++)->second << std::endl;
 }
 
-void    CGI::initEnv(const Request &req, char **env)
+void    Cgi::addEnvInMap(char **env)
 {
-    _env["AUTH_TYPE"]           =   req.getAuthentification();
-    _env["CONTENT_LENGTH"]      =   req.getContentLength();
-    _env["CONTENT_TYPE"]        =   req.getContentType();
-    _env["GATEWAY_INTERFACE"]   =   "CGI/1.1";
-    _env["PATH_INFO"]           =   req.getPath();
-    _env["PATH_TRANSLATED"]     =   req.getPath();
-    _env["QUERY_STRING"]        =   "";
-    _env["REMOTE_ADDR"]         =   ""; // need to be set
-    _env["REMOTE_HOST"]         =   ""; // NULL
-    _env["REMOTE_IDENT"]        =   ""; // NULL
-    _env["REMOTE_USER"]         =   ""; // NULL
-    _env["REMOTE_METHOD"]       =   req.getMethod();
-    _env["SCRIPT_NAME"]         =   req.getPath();
-    _env["SERVER_NAME"]         =   "";
-    _env["SERVER_PORT"]         =   req.getPort();
-    _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
-    _env["SERVER_SOFTWARE"]     =   req.getServerName();
-
     size_t len = tab_len(env);
 
     while (len > 0)
@@ -79,16 +58,100 @@ void    CGI::initEnv(const Request &req, char **env)
         _env[key] = value;
         len--;
     }
+}
+
+void    Cgi::initEnv(const Request &req, char **env)
+{
+    _env["AUTH_TYPE"]           =   req.getAuthentification();
+    _env["CONTENT_LENGTH"]      =   req.getContentLength();
+    _env["CONTENT_TYPE"]        =   req.getContentType();
+    _env["GATEWAY_INTERFACE"]   =   "Cgi/1.1";
+    _env["PATH_INFO"]           =   req.getPath();
+    _env["PATH_TRANSLATED"]     =   req.getPath();
+    _env["QUERY_STRING"]        =   "";
+    _env["REMOTE_ADDR"]         =   ""; // need to be set
+    _env["REMOTE_HOST"]         =   ""; // NULL
+    _env["REMOTE_IDENT"]        =   ""; // NULL
+    _env["REMOTE_USER"]         =   ""; // NULL
+    _env["REMOTE_METHOD"]       =   req.getMethod();
+    _env["SCRIPT_NAME"]         =   req.getPath();
+    _env["SERVER_NAME"]         =   "";
+    _env["SERVER_PORT"]         =   req.getPort();
+    _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
+    _env["SERVER_SOFTWARE"]     =   req.getServerName();
+
+    addEnvInMap(env);
 
 }
 
-std::string   CGI::execute(const std::string &path, char **env)
+char    **Cgi::mapToTab()
+{
+    std::map<std::string, std::string>::iterator    it;
+    char                                            **e;
+    size_t                                          i;
+
+    i = 0;
+    it = this->_env.begin();
+    try
+    {
+        e = new char*[this->_env.size()];
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << "creation of env general failed: " << err.what() << std::endl;
+    }
+
+    while (it != this->_env.end())
+    {
+        std::string  tmp;
+
+        tmp = it->first + "=" + it->second;
+
+        try 
+        {
+            e[i] = new char[tmp.length() + 1];
+        }
+        catch (const std::exception &err)
+        {
+            std::cerr << "creation of var [" << i << "] " << err.what() << std::endl;
+        }
+        strcpy(e[i], tmp.c_str());
+        e[i][tmp.length()] = '\0';
+        i++;
+        it++;
+    }
+    return (e);
+}
+
+char    **exec_args(const std::string &path_cgi, const std::string &path_file)
+{
+    char **args;
+
+    try
+    {
+        args = new char*[3];
+
+        args[0] = strdup(path_cgi.c_str());
+        args[1] = strdup(path_file.c_str());
+        args[2] = NULL;
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << " new call failed (exec_args)" << std::endl;
+    }
+
+    return (args);
+}
+
+std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_file)
 {
     int     p[2];
     pid_t   f;
+    char    **args;
+    char    **env;
 
-    (void)path;
-
+    env = mapToTab();
+    args = exec_args(path_cgi, path_file);
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
@@ -108,16 +171,13 @@ std::string   CGI::execute(const std::string &path, char **env)
             return ("error");
         }
 
-        char **args = new char*[2];
-        args[0] = strdup("/usr/bin/php-cgi");
-        args[1] = strdup("./html/test.php");
-
-        if (execve(path.c_str(), args, env) == -1)
+        if (execve(path_cgi.c_str(), args, env) == -1)
         {
             perror("execve call failed");
             close(p[1]);
             exit(1);
         }
+
     }
     else
     {
@@ -139,6 +199,7 @@ std::string   CGI::execute(const std::string &path, char **env)
         }
 
         close(p[0]);
+        std::cout << respond << std::endl;
         return (respond);
     }
     return ("error");

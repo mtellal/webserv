@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "Cgi.hpp"
 
 Response::Response() :
 _locBlocSelect(false), _isDir(false), _autoindex(false),
@@ -143,7 +144,6 @@ bool	Response::rightPathServer() {
 	return false;
 }
 
-
 bool	Response::rightPath() {
 	bool	err;
 
@@ -270,6 +270,7 @@ void	Response::sendData() {
 	std::string	res;
 	std::string	path;
 	bool		err;
+	Cgi			cgi(this->_req, this->_envp);
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
@@ -296,6 +297,12 @@ void	Response::sendData() {
 			tmp.close();
 	}
 
+	std::cout << path << std::endl;
+	if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
+	{
+		std::cout << ".php file found " << std::endl;
+		std::cout << cgi.execute("cgi-bin/php-cgi", path) << std::endl;
+	}
 	this->sendHeader(path);
 }
 
