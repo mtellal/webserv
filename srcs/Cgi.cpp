@@ -12,16 +12,27 @@
 
 #include "Cgi.hpp"
 
-Cgi::Cgi() : _stdin(0), _stdout(1) {}
+Cgi::Cgi() {}
 
-Cgi::Cgi(const Cgi &src) : _stdin(src._stdin), _stdout(src._stdout) {}
+Cgi::Cgi(const Cgi &src) : _serv(src._serv), _req(src._req), _raw_env(src._raw_env) {}
 
-Cgi::Cgi(const Request &req, char **env)
+Cgi::Cgi(const Server &serv, const Request &req, char **env): _serv(serv), _req(req), _raw_env(env)
 {
-    initEnv(req, env);
+    initEnv();
 }
 
 Cgi::~Cgi() {}
+
+Cgi     &Cgi::operator=(const Cgi &src)
+{
+    if (this == &src)
+    {
+        this->_serv = src._serv;
+        this->_req = src._req;
+        this->_raw_env = src._raw_env;
+    }
+    return (*this);
+}
 
 size_t    tab_len(char **env)
 {
@@ -40,11 +51,15 @@ void    Cgi::printEnv()
         std::cout << it->first << " = " << (it++)->second << std::endl;
 }
 
-void    Cgi::addEnvInMap(char **env)
+void    Cgi::addEnvInMap()
 {
-    size_t i = 0;
-    size_t len = tab_len(env);
+    char    ** env;
+    size_t  i;
+    size_t  len;
 
+    i = 0;
+    env = this->_raw_env;
+    len = tab_len(env);
     while (i < len)
     {
         std::string var_env;
@@ -61,8 +76,11 @@ void    Cgi::addEnvInMap(char **env)
     }
 }
 
-void    Cgi::initEnv(const Request &req, char **env)
+void    Cgi::initEnv()
 {
+    Request &req = this->_req;
+
+    _env["REDIRECT_STATUS"]     =   "200";
     _env["AUTH_TYPE"]           =   req.getAuthentification();
     _env["CONTENT_LENGTH"]      =   req.getContentLength();
     _env["CONTENT_TYPE"]        =   req.getContentType();
@@ -75,13 +93,15 @@ void    Cgi::initEnv(const Request &req, char **env)
     _env["REMOTE_IDENT"]        =   ""; // NULL
     _env["REMOTE_USER"]         =   ""; // NULL
     _env["REMOTE_METHOD"]       =   req.getMethod();
-    _env["SCRIPT_NAME"]         =   req.getPath();
+    std::cout << "path = " << _serv.getRoot() << "/" << req.getPath() << std::endl;
+    _env["SCRIPT_NAME"]         =   "./html/test.php";
+    _env["SCRIPT_FILENAME"]     =   "./html/test.php";
     _env["SERVER_NAME"]         =   "";
     _env["SERVER_PORT"]         =   req.getPort();
     _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
     _env["SERVER_SOFTWARE"]     =   req.getServerName();
 
-    addEnvInMap(env);
+    addEnvInMap();
 
 }
 
@@ -129,15 +149,13 @@ char    **Cgi::mapToTab()
 char    **exec_args(const std::string &path_cgi, const std::string &path_file)
 {
     char        **args;
-    std::string tmp;
 
     try
     {
         args = new char*[3];
 
         args[0] = strdup(path_cgi.c_str());
-        tmp = "./" + path_file;
-        args[1] = strdup(tmp.c_str());
+        args[1] = strdup(path_file.c_str());
         args[2] = NULL;
     }
     catch (const std::exception &err)
@@ -154,8 +172,6 @@ std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_
     pid_t   f;
     char    **args;
     char    **env;
-
-    (void)args;
 
     env = mapToTab();
     args = exec_args(path_cgi, path_file);
@@ -206,7 +222,6 @@ std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_
         }
 
         close(p[0]);
-        std::cout << respond << std::endl;
         return (respond);
     }
     return ("error");

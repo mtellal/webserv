@@ -23,11 +23,13 @@ class Header {
 
 
 	private:
-	Request		_req;
-	int			*_statusCode;
-	std::string	_file;
-	Server		_serv;
-	Response	*_rep;
+
+	std::map<std::string, std::string>	_headerFields;
+	Request								_req;
+	int									*_statusCode;
+	std::string							_file;
+	Server								_serv;
+	Response							*_rep;
 
 	std::string	ft_itos(int nbr) const;
 	std::string	parsContentTypeFile(std::vector<std::string> splitAccept) const;

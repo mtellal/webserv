@@ -12,7 +12,7 @@
 	<?php 
 		echo "<h1>APPEAR WHEN CGI EXECUTED</h1></br>";
 		echo "<h1> The current user is: ";
-		echo $_ENV["USER"];
+		echo $_SERVER["GATEWAY_INTERFACE"];
 		echo "</h1>" ;
 	?>
 

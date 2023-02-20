@@ -11,11 +11,10 @@
 /* ************************************************************************** */
 
 
-#ifndef Cgi_HPP
-#define Cgi_HPP
+#ifndef CGI_HPP
+#define CGI_HPP
 
 #include <string>
-#include "Request.hpp"
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -23,6 +22,8 @@
 #include <cstdlib>
 #include <string.h>
 
+#include "Request.hpp"
+#include "Server.hpp"
 
 class Cgi
 {
@@ -30,23 +31,25 @@ class Cgi
 
         Cgi();
         Cgi(const Cgi &);
-        Cgi(const Request &req, char **env);
+        Cgi(const Server &serv, const Request &req, char **env);
         ~Cgi();
 
         Cgi &operator=(const Cgi &);
         
-        void            initEnv(const Request &req, char **env);
-        std::string     execute(const std::string &path_cgi, const std::string &path_file);
+        void            initEnv();
         void            printEnv();
+        std::string     execute(const std::string &path_cgi, const std::string &path_file);
 
 
     private:
 
-        int                                 _stdin;
-        int                                 _stdout;
+        Server                              _serv;
+        Request                             _req;
+        char                                **_raw_env;
+
         std::map<std::string, std::string>  _env;
 
-        void            addEnvInMap(char **env);
+        void            addEnvInMap();
         char            **mapToTab();
 
         

@@ -315,13 +315,6 @@ void	Response::sendData() {
 			this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
 
-	std::cout << path << std::endl;
-	if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
-	{
-		std::cout << ".php file found " << std::endl;
-		std::cout << cgi.execute("./cgi-bin/php-cgi", path) << std::endl;
-	}
-
 	this->sendHeader(path);
 }
 
@@ -337,22 +330,38 @@ void	Response::sendContentTypeError() {
 	write(this->_req.getFd(), res.c_str(), res.size());
 }
 
-void	Response::sendHeader(std::string path) {
-	Header		header(path, &this->_statusCode, this);
-	std::string	res;
+/*
+	Creer un header avec une map => pouvoir acceder aux champs facilement avec offset op
+*/
+
+void	Response::sendHeader(std::string path)
+{
+	Header			header(path, &this->_statusCode, this);
+	std::string		res;
+	Cgi				cgi(this->_serv, this->_req, this->_envp);
+
 
 	if (header.getContentType() == "406")
 		sendContentTypeError();
 	else
 	{
 		res = header.getHeader();
+		std::cout << res << std::endl;
 		write(this->_req.getFd(), res.c_str(), res.size());
 	}
-	this->sendPage(path);
+
+	if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
+	{
+		std::cout << ".php file found " << std::endl;
+		this->sendPage(path, cgi.execute("./cgi-bin/php-cgi", path));
+	}
+	else
+		this->sendPage(path, "");
 }
 
-void	Response::sendPage(std::string path) {
-	std::ifstream	file(path.c_str(), std::ios::in | std::ios::binary);
+std::string	Response::contentFile(const std::string &path_file)
+{
+	std::ifstream	file(path_file.c_str(), std::ios::in | std::ios::binary);
 	std::string		page;
 
 	if (file)
@@ -361,9 +370,24 @@ void	Response::sendPage(std::string path) {
 		ss << file.rdbuf();
 		page = ss.str();
 	}
-	// std::cout << page << std::endl;
-	write(this->_req.getFd(), page.c_str(), page.size());
 	file.close();
+	return (page);
+}
+
+void		Response::sendPage(std::string path_file, const std::string &cgi_content)
+{
+	std::string	content;
+
+	if (cgi_content.length())
+		content =  cgi_content;
+	else
+		content = contentFile(path_file);
+	
+	if (send(this->_req.getFd(), content.c_str(), content.length(), 0) == -1)
+		perror("send call failed");
+
+	// std::cout << page << std::endl;
+	//write(this->_req.getFd(), content.c_str(), content.size());
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
