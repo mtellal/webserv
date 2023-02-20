@@ -1,7 +1,10 @@
-#include "../../includes/Server.hpp"
+#include "Server.hpp"
 
-Server::Server() : Directives(), _host("0.0.0.0"), _port(8080), _hostSet(false), _portSet(false),
-								_serverNameSet(false), _errorServer(false), _blockClose(false){
+Server::Server() :
+Directives(),  _host("0.0.0.0"),
+_port("8080"), _hostSet(false), _portSet(false), 
+_serverNameSet(false), _errorServer(false), _blockClose(false)
+{
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
 	this->functPtr[2] = &Directives::setErrorPage;
@@ -26,7 +29,7 @@ Server	&Server::operator=(Server const &rhs) {
 
 	if (this != &rhs)
 	{
-		this->_vctLoation = rhs._vctLoation;
+		this->_vctLocation = rhs._vctLocation;
 		this->_host = rhs._host;
 		this->_port = rhs._port;
 		this->_serverName = rhs._serverName;
@@ -39,41 +42,37 @@ Server	&Server::operator=(Server const &rhs) {
 	return *this;
 }
 
-std::string	Server::getHost() const {
-	return this->_host;
-}
+// GETTER 
 
-int			Server::getPort() const {
-	return this->_port;
-}
+std::string					Server::getHost() const { return this->_host; }
 
-std::vector<std::string>	Server::getServerName() const {
-	return this->_serverName;
-}
+std::string					Server::getPort() const { return this->_port; }
 
-std::vector<Location>		Server::getVctLocation() const {
-	return this->_vctLoation;
-}
+std::vector<std::string>	Server::getServerName() const { return this->_serverName; }
 
-bool	Server::getErrorServer() const {
-	return this->_errorServer;
-}
+std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
 
-bool	Server::getBlockClose() const {
-	return this->_blockClose;
-}
+bool						Server::getErrorServer() const { return this->_errorServer; }
 
-bool	Server::getServerNameSet() const {
-	return this->_serverNameSet;
-}
+bool						Server::getBlockClose() const { return this->_blockClose; }
 
-bool	Server::getHostSet() const {
-	return this->_hostSet;
-}
+bool						Server::getServerNameSet() const { return this->_serverNameSet; }
 
-bool	Server::getPortSet() const {
-	return this->_portSet;
-}
+bool						Server::getHostSet() const { return this->_hostSet; }
+
+bool						Server::getPortSet() const { return this->_portSet; }
+
+std::string					Server::getAddress() const { return (this->_address); }
+
+std::string					Server::getDomain() const { return (this->_domain); }
+
+// SETTER 
+
+void						Server::setSocket(size_t fd) { this->_server_fd = fd; }
+
+void						Server::setAddress(std::string a) { this->_address = a; }
+
+void						Server::setDomain(std::string d) { this->_domain = d; }
 
 bool	Server::checkFormatHost(std::string host) {
 	int i = 0;
@@ -86,6 +85,26 @@ bool	Server::checkFormatHost(std::string host) {
 	if (i > 1)
 		return false;
 	return true;
+}
+
+void	Server::addClient(const Client &client)
+{
+	this->_clients_fd.push_back(client.getFD());
+	this->_clients.push_back(client);
+}
+
+int		Server::eraseClient(int fd)
+{
+	for (size_t i = 0; i < this->_clients_fd.size(); i++)
+	{
+		if ((int)this->_clients_fd[i] == fd)
+		{
+			this->_clients_fd.erase(this->_clients_fd.begin() + i);
+			this->_clients.erase(this->_clients.begin() + i);
+			return (0);
+		}
+	}
+	return (-1);
 }
 
 void	Server::error_msg(const int &n_line, const std::string &err_msg)
@@ -158,8 +177,22 @@ bool	Server::checkHost(std::string host) {
 	return true;
 }
 
+void	Server::setPort(std::string port, int *line)
+{
+	if (this->_portSet)
+		error_msg(*line, "listen is already set");
 
-void	Server::setPort(std::string strPort, int *i) {
+	for (size_t i = 0; i < port.length(); i++)
+	{
+		if (port[i] < '0' || port[i] > '9')
+			error_msg(*line, "directive listen, port must be contains only numeric values");
+	}
+	this->_portSet = true;
+	this->_port = port;
+}
+
+/* void	Server::setPort(std::string strPort, int *i) {
+	// Verifier le port ?
 	bool err = false;
 	int port = ft_stoi(strPort, &err);
 
@@ -172,7 +205,7 @@ void	Server::setPort(std::string strPort, int *i) {
 		this->_portSet = true;
 		this->_port = port;
 	}
-}
+} */
 
 void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 	this->_serverNameSet = true;
@@ -212,7 +245,7 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 					this->_errorServer = true;
 					return ;
 				}
-				this->_vctLoation.push_back(locPars);
+				this->_vctLocation.push_back(locPars);
 			}
 			else
 			{
@@ -275,9 +308,9 @@ void	Server::showLocation(std::ostream & o, int i, Server const &rhs) const {
 		// if (tmp[i].getErrorPageSet())
 		// 	rhs.showErrorPageBis(o, i, rhs);
 		if (tmp[i].getClientMaxBodySizeSet())
-			o << "\t\tclient max\t: " << rhs._vctLoation[i].getClientMaxBodySize() << std::endl;
+			o << "\t\tclient max\t: " << rhs._vctLocation[i].getClientMaxBodySize() << std::endl;
 		if (tmp[i].getRootSet())
-			o << "\t\tRoot\t: " << rhs._vctLoation[i].getRoot() << std::endl;
+			o << "\t\tRoot\t: " << rhs._vctLocation[i].getRoot() << std::endl;
 		if (tmp[i].getAutoindexSet())
 			rhs.showAutoindexBis(o, i, rhs);
 		if (tmp[i].getIndexSet())

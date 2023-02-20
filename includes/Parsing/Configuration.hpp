@@ -20,7 +20,7 @@ class Configuration {
 
 	private:
 
-		std::vector<Server> _vctServ;
+		std::vector<Server> _servers;
 		bool				_errorConf;
 
 		void				open_and_check_file(std::string path_file);

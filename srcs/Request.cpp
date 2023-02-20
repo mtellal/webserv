@@ -1,5 +1,5 @@
-#include "../includes/Request.hpp"
-#include "../includes/utils.hpp"
+#include "Request.hpp"
+#include "utils.hpp"
 #include <string.h>
 #include <sys/epoll.h>
 
@@ -261,6 +261,14 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
+
+/*
+			!!!!!!!!	Potentiel douille  !!!!!!
+	- Verifier que les champs necessaire (GET, content-type ...) soient bien recus avant d'envoyer une reponse + envoyer une reponse des que les champs necessaire sont recus
+
+
+*/
+
 int		Request::parsRequest(int fd)
 {
 	size_t						bufflen = 4096;
@@ -299,9 +307,11 @@ int		Request::parsRequest(int fd)
 	}
 
 	vct = ft_split(request, "\n\r");
-	// for (size_t i = 0; i < vct.size(); i++)
-	// 	std::cout << vct[i] << std::endl;
-	// std::cout << std::endl;
+
+	/* for (int i = 0; i < (int)vct.size(); i++)
+		std::cout << vct[i] << std::endl; */
+
+	std::cout << request << std::endl;
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{

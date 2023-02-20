@@ -20,45 +20,50 @@
 # include <map>
 # include <utility>
 
+# include "Client.hpp"
+#include "Request.hpp"
+
 # define NB_EVENTS 255
 
 class SocketServer {
 
 	public:
-	SocketServer();
-	SocketServer(Configuration conf, char **envp);
-	SocketServer(SocketServer const &src);
-	~SocketServer();
 
-	SocketServer	&operator=(SocketServer const &rhs);
+		SocketServer();
+		SocketServer(Configuration conf, char **envp);
+		SocketServer(SocketServer const &src);
+		~SocketServer();
 
-	std::vector<Server>			getVctServer() const;
-	std::vector<int>			getServerFd() const;
-	std::vector<sockaddr_in>	getSockAddr() const;
-	std::map<int, int>			getClientServer() const;
-	int							getEpollFd() const;
-	bool						getErrSocket() const;
+		SocketServer	&operator=(SocketServer const &rhs);
+
+		std::vector<Server>			getVctServer() const;
+		std::vector<size_t>			getServerFd() const;
+		std::map<int, int>			getClientServer() const;
+		int							getEpollFd() const;
+		bool						getErrSocket() const;
 
 
 	private:
-	std::vector<Server>			_vctServ;
-	std::vector<int>			_serverFd;
-	std::vector<sockaddr_in>	_sockAddr;
-	std::map<int, int>			_clientServer;
-	int							_epollFd;
-	bool						_errSocket;
-	char						**_envp;
 
-	void	errorSocket(std::string s);
-	void	initSocket();
-	void	createSockaddr(int i);
-	void	createFdEpoll();
-	void	closeSockets();
-	int		nonBlockFd(int sockeFd);
-	int		isServerFd(int fd) const;
-	int		epollWait();
-	void	createConnection(int i);
-	void	closeConnection(int fd);
+		std::vector<Server>			_servers;
+		std::vector<size_t>			_servers_fd;
+		std::map<int, int>			_clientServerFds;
+		int							_epollFd;
+		bool						_errSocket;
+		char						**_envp;
+
+		void						errorSocket(std::string s);
+		void						initSocket();
+		void						createSockaddr(int i);
+		void						createFdEpoll();
+		void						closeSockets();
+		int							nonBlockFd(int sockeFd);
+		int							isServerFd(int fd) const;
+		int							epollWait();
+		void						createConnection(int i);
+		void						closeConnection(int fd);
+
+		int							pickServBlock(const Request &req);
 
 };
 

@@ -1,4 +1,4 @@
-#include "../../includes/Configuration.hpp"
+#include "Configuration.hpp"
 
 Configuration::Configuration() {}
 
@@ -15,7 +15,7 @@ Configuration::~Configuration() {}
 Configuration &Configuration::operator=(Configuration const &rhs) {
 	if (this != &rhs)
 	{
-		this->_vctServ = rhs._vctServ;
+		this->_servers = rhs._servers;
 		this->_errorConf = rhs._errorConf;
 	}
 	return *this;
@@ -23,7 +23,7 @@ Configuration &Configuration::operator=(Configuration const &rhs) {
 
 std::vector<Server>	Configuration::getVctServer() const
 {
-	return this->_vctServ;
+	return this->_servers;
 }
 
 bool	Configuration::getErrorConf()
@@ -73,7 +73,7 @@ void	Configuration::open_and_check_file(std::string path_file) {
 				file.close();
 				return;
 			}
-			_vctServ.push_back(servPars);
+			_servers.push_back(servPars);
 		}
 		else if (!only_space_or_empty(line))
 		{
@@ -83,7 +83,7 @@ void	Configuration::open_and_check_file(std::string path_file) {
 		}
 		n_line++;
 	}
-	if (this->_vctServ.empty())
+	if (this->_servers.empty())
 		error_msg("Error: File is empty");
 	file.close();
 }

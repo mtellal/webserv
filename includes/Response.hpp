@@ -1,15 +1,26 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-# include "../includes/Request.hpp"
-# include "../includes/Server.hpp"
-# include "../includes/Header.hpp"
+#include <sstream>
+#include <string.h>
+#include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <features.h>
+#include <dirent.h>
+
+# include "Request.hpp"
+# include "Server.hpp"
+# include "Header.hpp"
+# include "DefaultPage.hpp"
 
 class Response {
 
 	public:
 	Response();
-	Response(Request req, std::vector<Server> vctServ, std::map<int, int> clientServer, char **envp);
+	Response(const Request &req, const Server &s, char **envp);
 	Response(Response const &src);
 	~Response();
 
@@ -25,10 +36,9 @@ class Response {
 	void		sendData();
 
 	private:
+
 	Server						_serv;
 	Request						_req;
-	std::vector<Server>			_vctServ;
-	std::map<int, int>			_clientServer;
 	std::vector<std::string>	_path;
 	std::vector<std::string>	_errPath;
 	std::ifstream				_file;
@@ -40,6 +50,10 @@ class Response {
 	bool						_autoindex;
 	bool						_closeConnection;
 	char						**_envp;
+	std::string					cgi_script;
+
+	DefaultPage					_defaultPage;
+
 
 	std::string					rightRoot();
 	std::vector<std::string>	rightIndex();
@@ -50,13 +64,14 @@ class Response {
 
 
 	std::string	testAllPaths(bool *err);
-	std::string	createDefaultErrorPage();
-	std::string	createAutoindexPage();
 	bool		rightPath();
 	void		sendHeader(std::string path);
 	void		sendPage(std::string path);
 	bool		methodNotAllowed() const;
 	void		httpRedir();
 };
+
+
+std::ostream	&operator<<(std::ostream &out, const Response &res);
 
 #endif

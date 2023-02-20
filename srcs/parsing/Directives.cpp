@@ -1,5 +1,5 @@
-#include "../../includes/Directives.hpp"
-#include "../../includes/utils.hpp"
+#include "Directives.hpp"
+#include "utils.hpp"
 
 
 Directives::Directives() :  _clientMaxBodySize(1), _root("html"), _autoindex(false),
