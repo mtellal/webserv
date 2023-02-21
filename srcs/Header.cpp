@@ -13,6 +13,20 @@ Header::Header(std::string file, int *statusCode, Response *rep) : _statusCode(s
 				_file(file), _rep(rep){
 	this->_req = this->_rep->getRequest();
 	this->_serv = this->_rep->getServ();
+
+	this->_header["Content-type"] = this->getContentType();
+	this->_header["Server"] = this->_req.getServerName();
+	this->_header["Date"] = this->getDate();
+	this->_header["Last-Modified"] = this->getLastModified();
+	this->_header["Host"] =this->_req.getHost() + ":" + this->_req.getPort();
+	if (this->_req.getConnectionSet())
+		this->_header["Connection"] = this->_req.getConnection();
+	if (this->_req.getRefererSet())
+		this->_header["Referer"] = this->_req.getReferer();
+	if (this->_req.getAgentSet())
+		this->_header["User-Agent"] = this->_req.getAgent();
+	this->_header["Allow"] = this->getAllow();
+	this->_header["Content-Length"] = this->getContentLength();
 }
 
 Header::Header(Header const &src) {
@@ -33,7 +47,16 @@ Header	&Header::operator=(Header const &rhs) {
 	return *this;
 }
 
-std::string	Header::getHeader() const {
+void	Header::setContentType(std::string const &contentType) {
+	this->_header["Content-type"] = contentType;
+}
+
+void	Header::setContentLength(std::string const &contentLength) {
+	this->_header["Content-Length"] = contentLength;
+}
+
+
+std::string	Header::getHeader() {
 	std::string	res;
 	std::string	contentType;
 
@@ -42,19 +65,19 @@ std::string	Header::getHeader() const {
 		*this->_statusCode = 406;
 
 	res = this->_req.getHttpVersion() + " " + ft_itos(*this->_statusCode) + " " + getHttpStatusCodeMessage(*this->_statusCode) + "\n";
-	res += "Content-Type: " + this->getContentType() + "\n";
-	res += "Server: " + this->_req.getServerName() + "\n";
-	res += "Date: " + this->getDate() + "\n";
-	res += "Last-Modified: " + this->getLastModified();
-	res += "Host: " + this->_req.getHost() + ":" + this->_req.getPort() + "\n";
+	res += "Content-Type: " + this->_header["Content-type"] + "\n";
+	res += "Server: " + this->_header["Server"] + "\n";
+	res += "Date: " + this->_header["Date"] + "\n";
+	res += "Last-Modified: " + this->_header["Last-Modified"];
+	res += "Host: " + this->_header["Host"] + "\n";
 	if (this->_req.getConnectionSet())
-		res += "Connection: " + this->_req.getConnection() + "\n";
+		res += "Connection: " + this->_header["Connection"] + "\n";
 	if (this->_req.getRefererSet())
-		res += "Referer: " + this->_req.getReferer() + "\n";
+		res += "Referer: " + this->_header["Referer"] + "\n";
 	if (this->_req.getAgentSet())
-		res += "User-Agent: " + this->_req.getAgent() + "\n";
-	res += "Allow: " + this->getAllow() + "\n";
-	res += "Content-Length: " + this->getContentLength() + "\n\n";
+		res += "User-Agent: " + this->_header["User-Agent"] + "\n";
+	res += "Allow: " + this->_header["Allow"] + "\n";
+	res += "Content-Length: " + this->_header["Content-Length"] + "\n\n";
 
 	return res;
 }
@@ -68,7 +91,7 @@ std::string	Header::ft_itos(int nbr) const {
 	return s;
 }
 
-std::string	Header::getContentType() const {
+std::string	Header::getContentType() {
 
 	std::string					type;
 	std::string					extension;
