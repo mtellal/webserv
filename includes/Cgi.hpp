@@ -24,43 +24,48 @@
 
 #include "Request.hpp"
 #include "Server.hpp"
+#include "Header.hpp"
 
 class Cgi
 {
     public:
 
-        Cgi();
         Cgi(const Cgi &);
-        Cgi(const Server &serv, const Request &req, char **env);
+        Cgi(const Server &serv, const Request &req, Header &header, char **env);
         ~Cgi();
 
         Cgi &operator=(const Cgi &);
         
+        int             isCgiRequest();
         void            initEnv();
         void            printEnv();
-        std::string     execute(const std::string &path_file);
+        int             execute(const std::string &path_file, std::string &body);
 
+        Header          getHeader() const;
 
     private:
 
         Server                              _serv;
         Request                             _req;
+        Header                              &_header;
         char                                **_raw_env;
         std::map<std::string, std::string>  _env;
         std::map<std::string, std::string>  _map_cgi;
 
         std::string                         _path_cgi;
 
+        std::string                         _body;
         std::string                         _contentType;
         std::string                         _application;
         std::string                         _warning;
         std::string                         _status;
 
+
         void            extractScript(std::string path_file);
         void            addEnvInMap();
         char            **mapToTab();
         char            **exec_args(const std::string &path_file);
-        void            setVar(const std::string &cgi_response);
+        void            extractFields(const std::string &cgi_response);
 
 
 

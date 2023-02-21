@@ -13,11 +13,11 @@
 #include "Cgi.hpp"
 #include "utils.hpp"
 
-Cgi::Cgi() {}
+Cgi::Cgi(const Cgi &src) :
+_serv(src._serv), _req(src._req), _header(src._header), _raw_env(src._raw_env), _map_cgi(src._map_cgi) {}
 
-Cgi::Cgi(const Cgi &src) : _serv(src._serv), _req(src._req), _raw_env(src._raw_env), _map_cgi(src._map_cgi) {}
-
-Cgi::Cgi(const Server &serv, const Request &req, char **env): _serv(serv), _req(req), _raw_env(env), _map_cgi(serv.getCgi())
+Cgi::Cgi(const Server &serv, const Request &req, Header &header, char **env):
+_serv(serv), _req(req), _header(header), _raw_env(env), _map_cgi(serv.getCgi())
 {
     initEnv();
 }
@@ -30,12 +30,16 @@ Cgi     &Cgi::operator=(const Cgi &src)
     {
         this->_serv = src._serv;
         this->_req = src._req;
+        this->_header = src._header;
+        this->_header = src._header;
         this->_raw_env = src._raw_env;
         this->_env = src._env;
         this->_map_cgi = src._map_cgi;
     }
     return (*this);
 }
+
+Header          Cgi::getHeader() const { return (this->_header); }
 
 size_t    tab_len(char **env)
 {
@@ -45,6 +49,18 @@ size_t    tab_len(char **env)
         i++;
     return (i);
 }
+
+int     Cgi::isCgiRequest()
+{
+    this->_map_cgi = this->_serv.getCgi();
+
+    if (this->_map_cgi.size())
+        return (1);
+    else
+        return (-1);
+
+}
+
 
 void    Cgi::printEnv()
 {
@@ -83,6 +99,7 @@ void    Cgi::initEnv()
 {
     Request &req = this->_req;
 
+    _env["PHPRC"]               =   "/etc/php/7.4/cgi/php.ini/";
     _env["REDIRECT_STATUS"]     =   "200";
     _env["AUTH_TYPE"]           =   req.getAuthentification();
     _env["CONTENT_LENGTH"]      =   req.getContentLength();
@@ -96,9 +113,9 @@ void    Cgi::initEnv()
     _env["REMOTE_IDENT"]        =   ""; // NULL
     _env["REMOTE_USER"]         =   ""; // NULL
     _env["REMOTE_METHOD"]       =   req.getMethod();
-    std::cout << "path = " << _serv.getRoot() << "/" << req.getPath() << std::endl;
-    _env["SCRIPT_NAME"]         =   "./html/test.php";
-    _env["SCRIPT_FILENAME"]     =   "./html/test.php";
+    std::cout << "path = " << _serv.getRoot() << req.getPath() << std::endl;
+    _env["SCRIPT_NAME"]         =  "." + _serv.getRoot() + req.getPath();
+    _env["SCRIPT_FILENAME"]     =   "." + _serv.getRoot() + req.getPath();
     _env["SERVER_NAME"]         =   "";
     _env["SERVER_PORT"]         =   req.getPort();
     _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
@@ -186,44 +203,63 @@ void     Cgi::extractScript(std::string path_file)
     }
 }
 
-void    Cgi::setVar(const std::string &cgi_response)
+void    Cgi::extractFields(const std::string &cgi_response)
 {
-    std::vector<std::string>    fields;
+    std::string                 header;
+    std::vector<std::string>    lines;
+    std::vector<std::string>    field;
     std::string                 tabFields[5] = 
         { "Status", "Content-Type", "PHP Warning" };
 
-    std::string header;
 
     header = cgi_response.substr(0, cgi_response.find("\n\r"));
 
-    fields = ft_split(cgi_response, "\n");
-    for (size_t i = 0; i < fields.size(); i++)
+    lines = ft_split(header, "\n");
+    for (size_t i = 0; i < lines.size(); i++)
     {
-        std::cout << header[i] << std::endl;
+        field = ft_split(lines[i], ":");
+
+        if (field.size())
+        {
+            if (field[0] == "Content-type")
+            {
+                this->_header.setContentType(field[1]);
+            }
+        }
     }
 }
 
 
-std::string   Cgi::execute(const std::string &path_file)
+
+int   Cgi::execute(const std::string &path_file, std::string &body)
 {
-    int     p[2];
-    pid_t   f;
-    char    **args;
-    char    **env;
+    int             p[2];
+    pid_t           f;
+
+    char            **args;
+    char            **env;
+
+    std::string     header;
+    size_t          index;
 
     env = mapToTab();
     args = exec_args(path_file);
     extractScript(path_file);
+
     std::cout << "this->_path_cgi = " << this->_path_cgi << std::endl;
+
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
-        return ("error");
+        return (500);
     }
 
     f = fork();
     if (f == -1)
+    {
         perror("fork call failed");
+        return (500);
+    }
     if (f == 0)
     {
         // child
@@ -231,7 +267,7 @@ std::string   Cgi::execute(const std::string &path_file)
         if (dup2(p[1], 1) == -1)
         {
             perror("dup2 call failed");
-            return ("error");
+            exit(1);
         }
 
         if (execve(this->_path_cgi.c_str(), args, env) == -1)
@@ -261,7 +297,27 @@ std::string   Cgi::execute(const std::string &path_file)
         }
 
         close(p[0]);
-        return (respond);
+
+        index = respond.find("\n\r");
+
+        if (index == (size_t)-1)
+        {
+            perror("no \\n\\r in cgi response, can't extract header-body: ");
+            return (500);
+        }
+
+        header = respond.substr(0, respond.find("\n\r"));
+        body = respond.substr(respond.find("\n\r") + 2, respond.length());
+
+        std::cout << header << std::endl;
+
+        extractFields(header);
+
+        std::cout << body.length() << std::endl;
+
+        this->_header.setContentLength(ft_itos(body.length()));
+
+        return (200);
     }
-    return ("error");
+    return (500);
 }

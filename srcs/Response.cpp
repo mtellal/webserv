@@ -336,45 +336,40 @@ void	Response::sendContentTypeError() {
 
 void	Response::sendHeader(std::string path)
 {
-	Header			header(path, &this->_statusCode, this);
 	std::string		res;
-	Cgi				cgi(this->_serv, this->_req, this->_envp);
+	std::string		body;
+	Header			header(path, &this->_statusCode, this);
+	Cgi				cgi(this->_serv, this->_req, header, this->_envp);
+
 
 	if (header.getContentType() == "406")
 		sendContentTypeError();
 	else
 	{
-		if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
+
+		if (cgi.isCgiRequest())
 		{
+
 			std::cout << "cgi found" << std::endl;
 
-			if ( this->_serv.getCgi().size())
-			{	
-				std::string res_cgi = cgi.execute(path);
+			int	status = cgi.execute(path, body);
 
-				size_t index = res_cgi.find("\n\r") + 2;
+			(void)status;
 
-				std::string body = res_cgi.substr(index, res_cgi.length());
+			std::cout << "\n/////////////		BODY	///////////\n" << body << std::endl;
 
-				std::cout << "///////////// BODY	///////" << body << std::endl;
+			header = cgi.getHeader();
 
-				header.setContentType("/text/html");
-				header.setContentLength(ft_itos(body.length()));
-
-				res = header.getHeader();
-				std::cout << res << std::endl;
-
-				write(this->_req.getFd(), res.c_str(), res.size());
-				this->sendPage(path, body);
-			}
-			else
-				std::cerr << "error map cgi empty" << std::endl;
+			std::cout << "\n//////////	HEADER	///////////\n" << header.getHeader() << std::endl;
 		}
 		else
 		{
-			write(this->_req.getFd(), res.c_str(), res.size());
-			this->sendPage(path, "");
+			std::cout << "not an cgi request" << std::endl;
 		}
+
+		res = header.getHeader();
+		write(this->_req.getFd(), res.c_str(), res.size());
+		this->sendPage(path, body);
 	}
 }
 
