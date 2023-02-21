@@ -18,18 +18,20 @@ class Header {
 
 	Header	&operator=(Header const &rhs);
 
-	std::string	getHeader() const;
-	std::string	getContentType() const;
+	void	setContentType(std::string const &contentType);
+	void	setContentLength(std::string const &contentLength);
+
+	std::string	getHeader();
+	std::string	getContentType();
 
 
 	private:
-
-	std::map<std::string, std::string>	_headerFields;
 	Request								_req;
 	int									*_statusCode;
 	std::string							_file;
 	Server								_serv;
 	Response							*_rep;
+	std::map<std::string, std::string>	_header;
 
 	std::string	ft_itos(int nbr) const;
 	std::string	parsContentTypeFile(std::vector<std::string> splitAccept) const;
