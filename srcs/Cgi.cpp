@@ -11,12 +11,13 @@
 /* ************************************************************************** */
 
 #include "Cgi.hpp"
+#include "utils.hpp"
 
 Cgi::Cgi() {}
 
-Cgi::Cgi(const Cgi &src) : _serv(src._serv), _req(src._req), _raw_env(src._raw_env) {}
+Cgi::Cgi(const Cgi &src) : _serv(src._serv), _req(src._req), _raw_env(src._raw_env), _map_cgi(src._map_cgi) {}
 
-Cgi::Cgi(const Server &serv, const Request &req, char **env): _serv(serv), _req(req), _raw_env(env)
+Cgi::Cgi(const Server &serv, const Request &req, char **env): _serv(serv), _req(req), _raw_env(env), _map_cgi(serv.getCgi())
 {
     initEnv();
 }
@@ -30,6 +31,8 @@ Cgi     &Cgi::operator=(const Cgi &src)
         this->_serv = src._serv;
         this->_req = src._req;
         this->_raw_env = src._raw_env;
+        this->_env = src._env;
+        this->_map_cgi = src._map_cgi;
     }
     return (*this);
 }
@@ -146,7 +149,7 @@ char    **Cgi::mapToTab()
     return (e);
 }
 
-char    **exec_args(const std::string &path_cgi, const std::string &path_file)
+char    **Cgi::exec_args(const std::string &path_file)
 {
     char        **args;
 
@@ -154,7 +157,7 @@ char    **exec_args(const std::string &path_cgi, const std::string &path_file)
     {
         args = new char*[3];
 
-        args[0] = strdup(path_cgi.c_str());
+        args[0] = strdup(this->_path_cgi.c_str());
         args[1] = strdup(path_file.c_str());
         args[2] = NULL;
     }
@@ -166,7 +169,42 @@ char    **exec_args(const std::string &path_cgi, const std::string &path_file)
     return (args);
 }
 
-std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_file)
+void     Cgi::extractScript(std::string path_file)
+{
+    std::string                                     extension;
+    std::map<std::string, std::string>::iterator    it;
+    size_t                                          index;
+
+    it =_map_cgi.begin();
+    while (it != this->_map_cgi.end())
+    {
+        extension = ".";
+        extension += it->first;
+        if ((index = path_file.find(extension)) != (size_t)-1 && !path_file[index + extension.length()])
+            this->_path_cgi = "." + it->second;            
+        it++;
+    }
+}
+
+void    Cgi::setVar(const std::string &cgi_response)
+{
+    std::vector<std::string>    fields;
+    std::string                 tabFields[5] = 
+        { "Status", "Content-Type", "PHP Warning" };
+
+    std::string header;
+
+    header = cgi_response.substr(0, cgi_response.find("\n\r"));
+
+    fields = ft_split(cgi_response, "\n");
+    for (size_t i = 0; i < fields.size(); i++)
+    {
+        std::cout << header[i] << std::endl;
+    }
+}
+
+
+std::string   Cgi::execute(const std::string &path_file)
 {
     int     p[2];
     pid_t   f;
@@ -174,8 +212,9 @@ std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_
     char    **env;
 
     env = mapToTab();
-    args = exec_args(path_cgi, path_file);
-
+    args = exec_args(path_file);
+    extractScript(path_file);
+    std::cout << "this->_path_cgi = " << this->_path_cgi << std::endl;
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
@@ -195,7 +234,7 @@ std::string   Cgi::execute(const std::string &path_cgi, const std::string &path_
             return ("error");
         }
 
-        if (execve(path_cgi.c_str(), args, env) == -1)
+        if (execve(this->_path_cgi.c_str(), args, env) == -1)
         {
             perror("execve call failed");
             close(p[1]);

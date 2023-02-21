@@ -38,7 +38,7 @@ class Cgi
         
         void            initEnv();
         void            printEnv();
-        std::string     execute(const std::string &path_cgi, const std::string &path_file);
+        std::string     execute(const std::string &path_file);
 
 
     private:
@@ -46,11 +46,23 @@ class Cgi
         Server                              _serv;
         Request                             _req;
         char                                **_raw_env;
-
         std::map<std::string, std::string>  _env;
+        std::map<std::string, std::string>  _map_cgi;
 
+        std::string                         _path_cgi;
+
+        std::string                         _contentType;
+        std::string                         _application;
+        std::string                         _warning;
+        std::string                         _status;
+
+        void            extractScript(std::string path_file);
         void            addEnvInMap();
         char            **mapToTab();
+        char            **exec_args(const std::string &path_file);
+        void            setVar(const std::string &cgi_response);
+
+
 
         
 

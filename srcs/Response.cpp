@@ -344,32 +344,38 @@ void	Response::sendHeader(std::string path)
 		sendContentTypeError();
 	else
 	{
-		res = header.getHeader();
-		std::cout << res << std::endl;
-		write(this->_req.getFd(), res.c_str(), res.size());
-	}
-
-	if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
-	{
-		std::cout << "cgi found" << std::endl;
-
-		std::map<std::string, std::string>	map;
-
-		map = this->_serv.getCgi();
-
-		if (map.size())
+		if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
 		{
-			std::map<std::string, std::string>::iterator	it;
+			std::cout << "cgi found" << std::endl;
 
-			it = map.find("php");
-			std::cout << it->first << " " << it->second << std::endl;
-			this->sendPage(path, cgi.execute("." + it->first, path));
+			if ( this->_serv.getCgi().size())
+			{	
+				std::string res_cgi = cgi.execute(path);
+
+				size_t index = res_cgi.find("\n\r") + 2;
+
+				std::string body = res_cgi.substr(index, res_cgi.length());
+
+				std::cout << "///////////// BODY	///////" << body << std::endl;
+
+				header.setContentType("/text/html");
+				header.setContentLength(ft_itos(body.length()));
+
+				res = header.getHeader();
+				std::cout << res << std::endl;
+
+				write(this->_req.getFd(), res.c_str(), res.size());
+				this->sendPage(path, body);
+			}
+			else
+				std::cerr << "error map cgi empty" << std::endl;
 		}
 		else
-			std::cerr << "error map cgi empty" << std::endl;
+		{
+			write(this->_req.getFd(), res.c_str(), res.size());
+			this->sendPage(path, "");
+		}
 	}
-	else
-		this->sendPage(path, "");
 }
 
 std::string	Response::contentFile(const std::string &path_file)
@@ -399,7 +405,7 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	if (send(this->_req.getFd(), content.c_str(), content.length(), 0) == -1)
 		perror("send call failed");
 
-	// std::cout << page << std::endl;
+	//std::cout << content << std::endl;
 	//write(this->_req.getFd(), content.c_str(), content.size());
 
 	if (this->_req.getConnection() == "close")
