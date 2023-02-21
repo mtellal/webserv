@@ -239,7 +239,7 @@ int		SocketServer::epollWait() {
 			else
 			{
 				std::cout << "////////////////// RESPONSE	///////////////////" << std::endl;
-
+				
 				Response	rep(req, this->_servers[srv_i], this->_envp);
 				rep.selectLocationBlock();
 				rep.sendData();

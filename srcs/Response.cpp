@@ -340,7 +340,6 @@ void	Response::sendHeader(std::string path)
 	std::string		res;
 	Cgi				cgi(this->_serv, this->_req, this->_envp);
 
-
 	if (header.getContentType() == "406")
 		sendContentTypeError();
 	else
@@ -352,8 +351,22 @@ void	Response::sendHeader(std::string path)
 
 	if (path.length() > 4 && path.substr(path.length() - 4, 4) == ".php")
 	{
-		std::cout << ".php file found " << std::endl;
-		this->sendPage(path, cgi.execute("./cgi-bin/php-cgi", path));
+		std::cout << "cgi found" << std::endl;
+
+		std::map<std::string, std::string>	map;
+
+		map = this->_serv.getCgi();
+
+		if (map.size())
+		{
+			std::map<std::string, std::string>::iterator	it;
+
+			it = map.find("php");
+			std::cout << it->first << " " << it->second << std::endl;
+			this->sendPage(path, cgi.execute("." + it->first, path));
+		}
+		else
+			std::cerr << "error map cgi empty" << std::endl;
 	}
 	else
 		this->sendPage(path, "");

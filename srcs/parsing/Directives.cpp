@@ -34,7 +34,7 @@ Directives	&Directives::operator=(Directives const &rhs) {
 		this->_errorDirectives = rhs._errorDirectives;
 		this->_httpMethods = rhs._httpMethods;
 		this->_httpMethodsSet = rhs._httpMethodsSet;
-
+		this->_cgi = rhs._cgi;
 	}
 	return *this;
 }

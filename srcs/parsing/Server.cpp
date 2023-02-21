@@ -38,6 +38,7 @@ Server	&Server::operator=(Server const &rhs) {
 		this->_serverNameSet = rhs._serverNameSet;
 		this->_errorServer = rhs._errorServer;
 		this->_blockClose = rhs._blockClose;
+		
 	}
 	return *this;
 }

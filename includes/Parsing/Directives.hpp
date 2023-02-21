@@ -14,42 +14,43 @@
 class Directives {
 
 	public:
-	Directives();
-	Directives(Directives const &src);
-	virtual ~Directives();
 
-	Directives	&operator=(Directives const &rhs);
+		Directives();
+		Directives(Directives const &src);
+		virtual ~Directives();
 
-	std::map<int, std::string>					getErrorPage() const;
-	int											getClientMaxBodySize() const;
-	std::string									getRoot() const;
-	bool										getAutoindex() const;
-	std::vector<std::string>					getIndex() const;
-	std::string									getHttpRedir() const;
-	std::vector<std::string>					getHttpMethods() const;
-	bool										getErrorDirectives() const;
+		Directives	&operator=(Directives const &rhs);
 
-	void	setErrorPage(std::vector<std::string> str, int *i);
-	void	setClientMaxBodySize(std::vector<std::string> maxClient, int *i);
-	void	setRoot(std::vector<std::string> root, int *i);
-	void	setAutoindex(std::vector<std::string> autoindex, int *i);
-	void	setIndex(std::vector<std::string> index, int *i);
-	void	setHttpRedir(std::vector<std::string> redir, int *i);
-	void	setHttpMethods(std::vector<std::string> redir, int *i);
-	void	setCgi(std::vector<std::string> cgi, int *i);
+		std::map<int, std::string>					getErrorPage() const;
+		int											getClientMaxBodySize() const;
+		std::string									getRoot() const;
+		bool										getAutoindex() const;
+		std::vector<std::string>					getIndex() const;
+		std::string									getHttpRedir() const;
+		std::vector<std::string>					getHttpMethods() const;
+		bool										getErrorDirectives() const;
 
-	bool	getErrorPageSet() const;
-	bool	getClientMaxBodySizeSet() const;
-	bool	getRootSet() const;
-	bool	getAutoindexSet() const;
-	bool	getIndexSet() const;
-	bool	getHttpRedirSet() const;
-	bool	getHttpMethodsSet() const;
-	std::map<std::string, std::string>	getCgi() const;
+		void	setErrorPage(std::vector<std::string> str, int *i);
+		void	setClientMaxBodySize(std::vector<std::string> maxClient, int *i);
+		void	setRoot(std::vector<std::string> root, int *i);
+		void	setAutoindex(std::vector<std::string> autoindex, int *i);
+		void	setIndex(std::vector<std::string> index, int *i);
+		void	setHttpRedir(std::vector<std::string> redir, int *i);
+		void	setHttpMethods(std::vector<std::string> redir, int *i);
+		void	setCgi(std::vector<std::string> cgi, int *i);
 
-	void	showErrorPage(std::ostream & o) const;
-	void	showAutoindex(std::ostream & o) const;
-	void	showIndex(std::ostream & o) const;
+		bool	getErrorPageSet() const;
+		bool	getClientMaxBodySizeSet() const;
+		bool	getRootSet() const;
+		bool	getAutoindexSet() const;
+		bool	getIndexSet() const;
+		bool	getHttpRedirSet() const;
+		bool	getHttpMethodsSet() const;
+		std::map<std::string, std::string>	getCgi() const;
+
+		void	showErrorPage(std::ostream & o) const;
+		void	showAutoindex(std::ostream & o) const;
+		void	showIndex(std::ostream & o) const;
 
 	protected:
 
@@ -71,6 +72,7 @@ class Directives {
 		bool										_httpMethodsSet;
 
 		bool	checkFormatDir(std::vector<std::string> host, int *i);
+
 
 	private:
 
