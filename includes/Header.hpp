@@ -13,6 +13,7 @@ class Header {
 	public:
 	Header();
 	Header(std::string file, int *statusCode, Response *rep);
+	Header(std::string file, int *statusCode);
 	Header(Header const &src);
 	~Header();
 
@@ -22,6 +23,7 @@ class Header {
 	void	setContentLength(std::string const &contentLength);
 
 	std::string	getHeader();
+	std::string	getHeaderRequestError();
 	std::string	getContentType();
 
 

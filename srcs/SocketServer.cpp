@@ -126,6 +126,8 @@ void	SocketServer::createFdEpoll() {
 		this->_errSocket = true;
 		perror("err epoll_create");
 	}
+	if (this->nonBlockFd(this->_epollFd) == 1)
+		return ;
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
 		event.events = EPOLLIN;

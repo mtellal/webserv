@@ -41,6 +41,7 @@ class Request {
 		bool		getAcceptSet() const;
 		bool		getRefererSet() const;
 		bool		getAgentSet() const;
+		bool		getBadRequest() const;
 
 	private:
 
@@ -68,6 +69,10 @@ class Request {
 	std::string							_authentification;
 	std::string							_contentLength;
 	std::string							_contentType;
+	bool								_methodSet;
+	bool								_hostSet;
+	bool								_tooLarge;
+	bool								_badRequest;
 
 	void	(Request::*functPtr[12])(std::vector<std::string>);
 
@@ -85,7 +90,7 @@ class Request {
 	void	setContentType(std::vector<std::string> strSplit);
 	void	setGetParams(std::vector<std::string> vct, size_t *i);
 
-
+	void	getErrorPage();
 };
 
 std::ostream &operator<<( std::ostream & o, Request const & rhs);

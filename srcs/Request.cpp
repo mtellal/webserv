@@ -1,13 +1,17 @@
 #include "Request.hpp"
+#include "DefaultPage.hpp"
+#include "Header.hpp"
 #include "utils.hpp"
 #include <string.h>
 #include <sys/epoll.h>
+#include <fstream>
 
 Request::Request() {}
 
 Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), _boundarySet(false),
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
-							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0") {
+							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
+							_methodSet(false), _hostSet(false), _tooLarge(false), _badRequest(false) {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
@@ -54,6 +58,9 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_agentSet = rhs._agentSet;
 		this->_agent = rhs._agent;
 		this->_serverName = rhs._serverName;
+		this->_methodSet = rhs._methodSet;
+		this->_hostSet = rhs._hostSet;
+		this->_badRequest = rhs._badRequest;
 	}
 	return *this;
 }
@@ -141,6 +148,10 @@ bool		Request::getAgentSet() const {
 	return this->_agentSet;
 }
 
+bool		Request::getBadRequest() const {
+	return this->_badRequest;
+}
+
 void	Request::parsArgs(std::string arg) {
 	std::vector<std::string>	args;
 	std::vector<std::string>	keyValue;
@@ -160,18 +171,27 @@ void	Request::parsArgs(std::string arg) {
 void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	std::vector<std::string>	splitBis;
 
-	this->_method = strSplit[0];
-	this->_httpVersion = strSplit[2];
-	strSplit = ft_split(strSplit[1].c_str(), "?");
-	if (strSplit.size() == 2)
-		this->parsArgs(strSplit[1]);
-	this->_path = strSplit[0];
+		if (strSplit.size() != 3)
+			this->_badRequest = true;
+		else
+		{
+			this->_method = strSplit[0];
+			if (strSplit[2] != "HTTP/1.0" && strSplit[2] != "HTTP/1.1")
+				this->_badRequest = true;
+			this->_httpVersion = strSplit[2];
+			strSplit = ft_split(strSplit[1].c_str(), "?");
+			if (strSplit.size() == 2)
+				this->parsArgs(strSplit[1]);
+			this->_path = strSplit[0];
+			this->_methodSet = true;
+		}
 }
 
 void	Request::setHostPort(std::vector<std::string> strSplit) {
 	strSplit = ft_split(strSplit[1].c_str(), ":");
 	this->_host = strSplit[0];
 	this->_port = strSplit[1];
+	this->_hostSet = true;
 }
 
 void	Request::setConnection(std::vector<std::string> strSplit) {
@@ -284,13 +304,22 @@ int		Request::parsRequest(int fd)
 
 	std::string request;
 
-	while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
+	// while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
+	// {
+	// 	buff[oct] = '\0';
+	// 	request.append(buff);
+	// 	if (oct < (int)bufflen - 1)
+	// 		break ;
+	// }
+
+	oct = recv(fd, buff, bufflen - 1, 0);
+	if (oct >= (int)bufflen - 2)
 	{
-		buff[oct] = '\0';
-		request.append(buff);
-		if (oct < (int)bufflen - 1)
-			break ;
+		this->_tooLarge = true;
+		this->getErrorPage();
 	}
+	buff[oct] = '\0';
+	request.append(buff);
 
 	if (oct < 1)
 	{
@@ -330,7 +359,34 @@ int		Request::parsRequest(int fd)
 			}
 		}
 	}
+	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
+		this->getErrorPage();
 	return 0;
+}
+
+void	Request::getErrorPage() {
+	std::string	path;
+	std::string	strHeader;
+	std::string	page;
+	int			statusCode;
+
+	if (this->_tooLarge)
+		statusCode = 413;
+	if (!this->_methodSet)
+		statusCode = 400;
+	else
+		statusCode = 500;
+
+	DefaultPage	defaultPage;
+	path = defaultPage.createDefaultErrorPage(statusCode);
+
+	Header header(path, &statusCode);
+	strHeader = header.getHeaderRequestError();
+	send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL);
+
+	page = fileToStr(path);
+	send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL);
+	this->_closeConnection = true;
 }
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {

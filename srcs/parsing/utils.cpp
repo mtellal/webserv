@@ -3,6 +3,8 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <iostream>
+#include <fstream>
+// #include <unistd.h>
 
 int	ft_stoi(const std::string str, bool *err)
 {
@@ -108,14 +110,28 @@ std::string	ft_itos(int nbr)
 }
 
 std::string	getHttpStatusCodeMessage(int statusCode) {
-	int			httpCode[5] = {200, 403, 404, 405, 406};
-	std::string	message[5] = {"OK", "Forbidden", "Not Found",
-							"Method Not Allowed", "Not Acceptable"};
+	int			httpCode[8] = {200, 400, 403, 404, 405, 406, 413, 500};
+	std::string	message[8] = {"OK", "Bad Request", "Forbidden", "Not Found",
+							"Method Not Allowed", "Not Acceptable","Request Entity Too Large" , "Internal Server Error"};
 
-	for (size_t i = 0; i < 5; i++)
+	for (size_t i = 0; i < 8; i++)
 	{
 		if (httpCode[i] == statusCode)
 			return message[i];
 	}
 	return "";
+}
+
+std::string	fileToStr(std::string path) {
+	std::ifstream	file(path.c_str(), std::ios::in | std::ios::binary);
+	std::string		page;
+
+	if (file)
+	{
+		std::ostringstream ss;
+		ss << file.rdbuf();
+		page = ss.str();
+		file.close();
+	}
+	return page;
 }

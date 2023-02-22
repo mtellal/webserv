@@ -32,7 +32,6 @@ class Response {
 	Location	getLocBloc() const;
 	bool		getCloseConnection() const;
 
-	void		selectServerBlock();
 	void		selectLocationBlock();
 	void		sendData();
 

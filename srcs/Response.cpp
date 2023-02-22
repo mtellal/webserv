@@ -270,7 +270,6 @@ void	Response::findRightCodeError() {
 		this->_statusCode = 404;
 }
 
-
 std::string	Response::findRightError() {
 	bool		pageFind = false;
 	std::string	path;
@@ -340,24 +339,16 @@ void	Response::sendHeader(std::string path) {
 	else
 	{
 		res = header.getHeader();
-		write(this->_req.getFd(), res.c_str(), res.size());
+		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
 	}
 	this->sendPage(path);
 }
 
 void	Response::sendPage(std::string path) {
-	std::ifstream	file(path.c_str(), std::ios::in | std::ios::binary);
 	std::string		page;
 
-	if (file)
-	{
-		std::ostringstream ss;
-		ss << file.rdbuf();
-		page = ss.str();
-	}
-	// std::cout << page << std::endl;
-	write(this->_req.getFd(), page.c_str(), page.size());
-	file.close();
+	page = fileToStr(path);
+	send(this->_req.getFd(), page.c_str(), page.size(), MSG_NOSIGNAL);
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
