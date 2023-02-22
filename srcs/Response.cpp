@@ -97,7 +97,11 @@ bool	Response::rightPathLocation() {
 		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	root += newPath;
-	stat(root.c_str(), &fileOrDir);
+	if (stat(root.c_str(), &fileOrDir) == -1)
+	{
+		std::cerr << "can't read file informations from " << root << " because: ";
+		perror("");
+	}
 	if (S_ISREG(fileOrDir.st_mode))
 		this->_path.push_back(root);
 	else if (S_ISDIR(fileOrDir.st_mode))
@@ -113,7 +117,9 @@ bool	Response::rightPathLocation() {
 			this->_autoindex = this->_serv.getAutoindex();
 	}
 	else
+	{
 		return true;
+	}
 	return false;
 }
 
@@ -130,7 +136,11 @@ bool	Response::rightPathServer() {
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
 	root += newPath;
-	stat(root.c_str(), &fileOrDir);
+	if (stat(root.c_str(), &fileOrDir) == -1)
+	{
+		std::cerr << "can't read file informations from " << root << " because: ";
+		perror("");
+	}
 	if (S_ISREG(fileOrDir.st_mode))
 		this->_path.push_back(root);
 	else if (S_ISDIR(fileOrDir.st_mode))
@@ -306,7 +316,8 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
-	std::cout << this->_serv.getRoot() << std::endl;
+	std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
+	std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
@@ -317,7 +328,6 @@ void	Response::sendData() {
 			this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
 
-	std::cout << path << " in sendData()" << std::endl;
 	this->sendHeader(path);
 }
 
@@ -346,7 +356,7 @@ void	Response::sendHeader(std::string path)
 	else
 	{
 
-		if (cgi.isCgiRequest() != -1)
+		if (cgi.isCgiRequest(path) != -1)
 		{
 			std::cout << "cgi found" << std::endl;
 
@@ -354,13 +364,7 @@ void	Response::sendHeader(std::string path)
 
 			header.setStatus(status);
 
-			std::cout << "\n/////////////		BODY	///////////\n" << body << std::endl;
-
 			header = cgi.getHeader();
-		}
-		else
-		{
-			std::cout << "not an cgi request" << std::endl;
 		}
 
 		res = header.getHeader();
@@ -368,9 +372,6 @@ void	Response::sendHeader(std::string path)
 		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
 		std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
 
-
-
-		write(this->_req.getFd(), res.c_str(), res.size());
 		this->sendPage(path, body);
 	}
 }

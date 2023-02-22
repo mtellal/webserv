@@ -50,15 +50,33 @@ size_t    tab_len(char **env)
     return (i);
 }
 
-int     Cgi::isCgiRequest()
+/*
+    Verify if cgi params if set and if the ressource and if the correct extension, 
+    if everything match then set _path_cgi to value (<key/extension, value/path_cgi>)
+*/
+int     Cgi::isCgiRequest(const std::string &path_file)
 {
+    std::string                                     extension;
+    size_t                                          index;
+    std::map<std::string, std::string>::iterator    it;
+
+    index = 0;
     this->_map_cgi = this->_serv.getCgi();
-
-    if (this->_map_cgi.size())
-        return (1);
-    else
+    if (!this->_map_cgi.size())
         return (-1);
-
+    it = this->_map_cgi.begin();
+    while (it != this->_map_cgi.end())
+    {
+        extension = ".";
+        extension += it->first;
+        if ((index = path_file.find(extension)) != (size_t)-1 && !path_file[index + extension.length()])
+        {
+            this->_path_cgi = "." + it->second;            
+            return (1);
+        }
+        it++;
+    }
+    return (-1);
 }
 
 
@@ -186,29 +204,11 @@ char                **Cgi::exec_args(const std::string &path_file)
     return (args);
 }
 
-void                Cgi::extractScript(std::string path_file)
-{
-    std::string                                     extension;
-    std::map<std::string, std::string>::iterator    it;
-    size_t                                          index;
-
-    it =_map_cgi.begin();
-    while (it != this->_map_cgi.end())
-    {
-        extension = ".";
-        extension += it->first;
-        if ((index = path_file.find(extension)) != (size_t)-1 && !path_file[index + extension.length()])
-            this->_path_cgi = "." + it->second;            
-        it++;
-    }
-
-}
-
 void                Cgi::setStatus(int s) { this->_status = s; }
 
 void                Cgi::setContentType(const std::string &ct) { this->_header.setContentType(ct); }
 
-void                Cgi::setPoweredBy(const std::string &app) { this->_header.setContentType(ct); }
+void                Cgi::setPoweredBy(const std::string &app) { this->_application = app; }
 
 void                Cgi::setContentLength(const std::string &cl) { this->_header.setContentLength(cl); }
 
@@ -277,7 +277,6 @@ void                child(int pipe[2], const std::string &path_script, char **ar
         close(pipe[1]);
         exit(1);
     }
-
 }
 
 std::string        parent(int pipe[2])
@@ -317,7 +316,6 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
 
     env = mapToTab();
     args = exec_args(path_file);
-    extractScript(path_file);
 
     std::cout << "this->_path_cgi = " << this->_path_cgi << std::endl;
 
@@ -342,8 +340,17 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     {
         // pere
         
+        int status;
+
+        wait(&status);
+
         response = parent(p);
 
+         if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
+        {
+            std::cout << response << std::endl;
+            return (500);
+        }
         index = response.find("\n\r");
 
         if (index == (size_t)-1)

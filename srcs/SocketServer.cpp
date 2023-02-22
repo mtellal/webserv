@@ -230,7 +230,7 @@ int		SocketServer::epollWait() {
 			createConnection(index_serv);
 		else
 		{
-			std::cout << "////////////////// REQUEST	///////////////////" << std::endl;
+			std::cout << "\n\n\n\n////////////////// REQUEST	///////////////////" << std::endl;
 			Request		req(event[j].data.fd);
 
 

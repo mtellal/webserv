@@ -17,6 +17,7 @@
 #include <string>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
 #include <cstdlib>
@@ -37,10 +38,10 @@ class Cgi
 
         Cgi &operator=(const Cgi &);
         
-        int             isCgiRequest();
+        int             isCgiRequest(const std::string &path_file);
         void            initEnv();
         void            printEnv();
-        int    execute(const std::string &path_file, std::string &body);
+        int             execute(const std::string &path_file, std::string &body);
 
         Header          getHeader() const;
 
@@ -64,7 +65,6 @@ class Cgi
 
 
 
-        void            extractScript(std::string path_file);
         void            addEnvInMap();
         char            **mapToTab();
         char            **exec_args(const std::string &path_file);
@@ -73,6 +73,7 @@ class Cgi
         void            setStatus(int s);
         void            setContentType(const std::string &ct);
         void            setContentLength(const std::string &ct);
+        void            setPoweredBy(const std::string &app);
         void            setCgiErr(const std::string &err);
 
 
