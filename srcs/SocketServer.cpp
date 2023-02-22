@@ -1,6 +1,7 @@
 #include "SocketServer.hpp"
 #include "Response.hpp"
 #include <string.h>
+#include <cstring>
 
 SocketServer::SocketServer() {}
 
@@ -54,16 +55,6 @@ void	SocketServer::errorSocket(std::string s)
 	return ;
 }
 
-std::string		getDomainInfo(const struct sockaddr addr)
-{
-	char	domain[50];
-
-	if (getnameinfo(&addr, sizeof(addr), domain, sizeof(domain), 0, 0, 0) == -1)
-		std::cerr << "getnameinfo() call failed" << std::endl;
-	//std::cout << "domain: " << domain << std::endl;
-	return (domain);
-}
-
 std::string		getAddressInfo(const struct sockaddr addr)
 {
 	char	address[50];
@@ -97,10 +88,7 @@ void	SocketServer::initSocket()
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
 		this->_servers[i].setSocket(serv_socket);
-		this->_servers[i].setDomain(getDomainInfo(*res->ai_addr));
 		this->_servers[i].setAddress(getAddressInfo(*res->ai_addr));
-
-		//std::cout << "domain: " <<  _servers[i].getDomain() << "\naddress: " << _servers[i].getAddress() << std::endl;
 
 		this->_servers_fd.push_back(serv_socket);
 
@@ -192,13 +180,26 @@ int		SocketServer::isServerFd(int fd) const {
 
 int		SocketServer::pickServBlock(const Request &req)
 {
+	struct addrinfo	tmp;
+	struct addrinfo *res = NULL;
+	std::string 	ip;
+
+	memset(&tmp, 0, sizeof(tmp));
+	tmp.ai_family = AF_INET;
+	tmp.ai_socktype = SOCK_STREAM;
+
+	if (getaddrinfo(req.getHost().c_str(), req.getPort().c_str(), &tmp, &res) == -1)
+		perror("getaddrinfo call failed");
+	else
+		ip = getAddressInfo(*(res->ai_addr));
+	freeaddrinfo(res);
+
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		if ((this->_servers[i].getAddress() == req.getHost() 
-			|| this->_servers[i].getDomain() == req.getHost())
+		if (this->_servers[i].getAddress() == ip
 			&& this->_servers[i].getPort() == req.getPort())
-		{
-			return (i);
+		{		
+				return (i);
 		}
 	}
 	return (-1);
@@ -234,19 +235,23 @@ int		SocketServer::epollWait() {
 				return 1;
 			else if (req.getcloseConnection())
 				this->closeConnection(event[j].data.fd);
-			else if ((srv_i = pickServBlock(req)) == -1)
-				std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
 			else
 			{
-				std::cout << "////////////////// RESPONSE	///////////////////" << std::endl;
+				if ((srv_i = pickServBlock(req)) == -1)
+					std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
+				else
+				{	std::cout << "////////////////// RESPONSE	///////////////////" << std::endl;
 				
-				Response	rep(req, this->_servers[srv_i], this->_envp);
-				rep.selectLocationBlock();
-				rep.sendData();
-				if (rep.getCloseConnection())
-					this->closeConnection(event[j].data.fd);
+					std::cout << "server picked is: " << srv_i << std::endl;
 
-				std::cout << "////////////////// END RESPONSE	///////////////////" << std::endl;
+					Response	rep(req, this->_servers[srv_i], this->_envp);
+					rep.selectLocationBlock();
+					rep.sendData();
+					if (rep.getCloseConnection())
+						this->closeConnection(event[j].data.fd);
+
+					std::cout << "////////////////// END RESPONSE	///////////////////" << std::endl;
+				}		
 			}
 		}
 	}

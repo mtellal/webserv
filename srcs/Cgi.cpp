@@ -201,6 +201,7 @@ void     Cgi::extractScript(std::string path_file)
             this->_path_cgi = "." + it->second;            
         it++;
     }
+
 }
 
 void    Cgi::extractFields(const std::string &cgi_response)

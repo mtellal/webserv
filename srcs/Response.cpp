@@ -306,6 +306,8 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
+	std::cout << this->_serv.getRoot() << std::endl;
+
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
 	if (err or this->methodNotAllowed())
@@ -315,6 +317,7 @@ void	Response::sendData() {
 			this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
 
+	std::cout << path << " in sendData()" << std::endl;
 	this->sendHeader(path);
 }
 
@@ -329,10 +332,6 @@ void	Response::sendContentTypeError() {
 	res = header.getHeader();
 	write(this->_req.getFd(), res.c_str(), res.size());
 }
-
-/*
-	Creer un header avec une map => pouvoir acceder aux champs facilement avec offset op
-*/
 
 void	Response::sendHeader(std::string path)
 {
