@@ -346,20 +346,17 @@ void	Response::sendHeader(std::string path)
 	else
 	{
 
-		if (cgi.isCgiRequest())
+		if (cgi.isCgiRequest() != -1)
 		{
-
 			std::cout << "cgi found" << std::endl;
 
 			int	status = cgi.execute(path, body);
 
-			(void)status;
+			header.setStatus(status);
 
 			std::cout << "\n/////////////		BODY	///////////\n" << body << std::endl;
 
 			header = cgi.getHeader();
-
-			std::cout << "\n//////////	HEADER	///////////\n" << header.getHeader() << std::endl;
 		}
 		else
 		{
@@ -367,6 +364,12 @@ void	Response::sendHeader(std::string path)
 		}
 
 		res = header.getHeader();
+
+		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
+		std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
+
+
+
 		write(this->_req.getFd(), res.c_str(), res.size());
 		this->sendPage(path, body);
 	}

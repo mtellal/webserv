@@ -14,10 +14,10 @@
 #include "utils.hpp"
 
 Cgi::Cgi(const Cgi &src) :
-_serv(src._serv), _req(src._req), _header(src._header), _raw_env(src._raw_env), _map_cgi(src._map_cgi) {}
+_serv(src._serv), _req(src._req), _header(src._header), _raw_env(src._raw_env), _map_cgi(src._map_cgi), _status(0){}
 
 Cgi::Cgi(const Server &serv, const Request &req, Header &header, char **env):
-_serv(serv), _req(req), _header(header), _raw_env(env), _map_cgi(serv.getCgi())
+_serv(serv), _req(req), _header(header), _raw_env(env), _map_cgi(serv.getCgi()), _status(0)
 {
     initEnv();
 }
@@ -166,7 +166,7 @@ char    **Cgi::mapToTab()
     return (e);
 }
 
-char    **Cgi::exec_args(const std::string &path_file)
+char                **Cgi::exec_args(const std::string &path_file)
 {
     char        **args;
 
@@ -186,7 +186,7 @@ char    **Cgi::exec_args(const std::string &path_file)
     return (args);
 }
 
-void     Cgi::extractScript(std::string path_file)
+void                Cgi::extractScript(std::string path_file)
 {
     std::string                                     extension;
     std::map<std::string, std::string>::iterator    it;
@@ -204,13 +204,37 @@ void     Cgi::extractScript(std::string path_file)
 
 }
 
-void    Cgi::extractFields(const std::string &cgi_response)
+void                Cgi::setStatus(int s) { this->_status = s; }
+
+void                Cgi::setContentType(const std::string &ct) { this->_header.setContentType(ct); }
+
+void                Cgi::setPoweredBy(const std::string &app) { this->_header.setContentType(ct); }
+
+void                Cgi::setContentLength(const std::string &cl) { this->_header.setContentLength(cl); }
+
+void                Cgi::setCgiErr(const std::string &err) { this->_cgi_err = err; }
+
+void                Cgi::extractFields(const std::string &cgi_response)
 {
     std::string                 header;
     std::vector<std::string>    lines;
     std::vector<std::string>    field;
     std::string                 tabFields[5] = 
-        { "Status", "Content-Type", "PHP Warning" };
+    {
+            "Content-type",
+            "Content-length",
+            "X-Powered-By",
+            "PHP Warning",
+            "PHP Parse error" 
+
+    };
+    void                (Cgi::*functionPtr[5])(const std::string &) = 
+    {
+        &Cgi::setContentType,
+        &Cgi::setContentLength,
+        &Cgi::setCgiErr,
+        &Cgi::setCgiErr
+    };
 
 
     header = cgi_response.substr(0, cgi_response.find("\n\r"));
@@ -222,17 +246,64 @@ void    Cgi::extractFields(const std::string &cgi_response)
 
         if (field.size())
         {
-            if (field[0] == "Content-type")
+            for (size_t j = 0; j < 5; j++)
             {
-                this->_header.setContentType(field[1]);
+                if (tabFields[j] == field[0])
+                {
+                    if (field.size() == 3)
+                        (this->*functionPtr[j])(field[1] + field[2]);
+                    else if (field[0] == "Status")
+                        this->setStatus(ft_stoi(field[1], NULL));
+                    else
+                        (this->*functionPtr[j])(field[1]);
+                }
             }
         }
     }
 }
 
+void                child(int pipe[2], const std::string &path_script, char **args, char **env)
+{
+    close(pipe[0]);
+    if (dup2(pipe[1], 1) == -1)
+    {
+        perror("dup2 call failed");
+        exit(1);
+    }
 
+    if (execve(path_script.c_str(), args, env) == -1)
+    {
+        perror("execve call failed");
+        close(pipe[1]);
+        exit(1);
+    }
 
-int   Cgi::execute(const std::string &path_file, std::string &body)
+}
+
+std::string        parent(int pipe[2])
+{
+    std::string response;
+    int         len = 100;
+    char        buff[len];
+    int         bytes;
+
+    close(pipe[1]);
+    bytes = read(pipe[0], buff, len - 1);
+    buff[bytes] = '\0';
+    response.append(buff);
+
+    while (bytes > 0)
+    {
+        bytes = read(pipe[0], buff, len - 1);
+        buff[bytes] = '\0';
+        response.append(buff);
+    }
+
+    close(pipe[0]);
+    return (response);
+}
+
+int           Cgi::execute(const std::string &path_file, std::string &body)
 {
     int             p[2];
     pid_t           f;
@@ -240,6 +311,7 @@ int   Cgi::execute(const std::string &path_file, std::string &body)
     char            **args;
     char            **env;
 
+    std::string     response;
     std::string     header;
     size_t          index;
 
@@ -264,51 +336,24 @@ int   Cgi::execute(const std::string &path_file, std::string &body)
     if (f == 0)
     {
         // child
-        close(p[0]);
-        if (dup2(p[1], 1) == -1)
-        {
-            perror("dup2 call failed");
-            exit(1);
-        }
-
-        if (execve(this->_path_cgi.c_str(), args, env) == -1)
-        {
-            perror("execve call failed");
-            close(p[1]);
-            exit(1);
-        }
+        child(p, this->_path_cgi, args, env);
     }
     else
     {
         // pere
-        close(p[1]);
-        std::string respond;
-        int len = 100;
-        char buff[len];
+        
+        response = parent(p);
 
-        int bytes = read(p[0], buff, len - 1);
-        buff[bytes] = '\0';
-        respond.append(buff);
-
-        while (bytes > 0)
-        {
-            bytes = read(p[0], buff, len - 1);
-            buff[bytes] = '\0';
-            respond.append(buff);
-        }
-
-        close(p[0]);
-
-        index = respond.find("\n\r");
+        index = response.find("\n\r");
 
         if (index == (size_t)-1)
         {
             perror("no \\n\\r in cgi response, can't extract header-body: ");
-            return (500);
+            return (502);
         }
 
-        header = respond.substr(0, respond.find("\n\r"));
-        body = respond.substr(respond.find("\n\r") + 2, respond.length());
+        header = response.substr(0, response.find("\n\r"));
+        body = response.substr(response.find("\n\r") + 2, response.length());
 
         std::cout << header << std::endl;
 
@@ -318,7 +363,8 @@ int   Cgi::execute(const std::string &path_file, std::string &body)
 
         this->_header.setContentLength(ft_itos(body.length()));
 
-        return (200);
+        if ((this->_status == 0 || this->_status == 200) && !this->_cgi_err.length())
+            return (200);
     }
     return (500);
 }

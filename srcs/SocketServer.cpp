@@ -176,7 +176,10 @@ int		SocketServer::isServerFd(int fd) const {
 	return -1;
 }
 
-//	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
+/*
+	Compare ip and host from servers in configuration file, 
+	with the ip addr of the request (after dns research, ex: localhost => 127.0.0.0.1)
+*/
 
 int		SocketServer::pickServBlock(const Request &req)
 {

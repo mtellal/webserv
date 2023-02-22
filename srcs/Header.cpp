@@ -55,6 +55,9 @@ void	Header::setContentLength(std::string const &contentLength) {
 	this->_header["Content-Length"] = contentLength;
 }
 
+void	Header::setStatus(int s) {
+	*this->_statusCode = s;
+}
 
 std::string	Header::getHeader() {
 	std::string	res;
