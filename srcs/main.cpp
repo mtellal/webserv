@@ -31,14 +31,19 @@ int main(int argc, char **argv, char **envp)
 /*
 	Pour get et post, checker le format des args envoyes
 	Voir 4096
-	location / ?
-	HTTP 1.1
-	Method HEAD
-	Avec valgrind, arreter le chargement de la page = leaks de write
-	Ajouter des codes erreur
+
+	Method HEAD ?
+
+	Plusieurs fois le meme port dans le fichier conf ?
+	-> Msg envoye.
+
 	Fichier Response.cpp a clarifier
 
 	Arguments POST + Securisation du formulaire :
 	https://www.electro-info.ovh/les-formulaires-en-PHP
 	GET ne permet pas l'upload de fichiers
+
+	Tester le code 406
+
+	favicon ?
 */

@@ -29,6 +29,16 @@ Header::Header(std::string file, int *statusCode, Response *rep) : _statusCode(s
 	this->_header["Content-Length"] = this->getContentLength();
 }
 
+Header::Header(std::string file, int *statusCode) : _statusCode(statusCode), _file(file) {
+	this->_header["Content-type"] = "text/html";
+	this->_header["Server"] = "Webserv/1.0";
+	this->_header["Date"] = this->getDate();
+	this->_header["Last-Modified"] = this->getLastModified();
+	this->_header["Content-Length"] = this->getContentLength();
+
+}
+
+
 Header::Header(Header const &src) {
 	*this = src;
 }
@@ -80,6 +90,19 @@ std::string	Header::getHeader() {
 	if (this->_req.getAgentSet())
 		res += "User-Agent: " + this->_header["User-Agent"] + "\n";
 	res += "Allow: " + this->_header["Allow"] + "\n";
+	res += "Content-Length: " + this->_header["Content-Length"] + "\n\n";
+
+	return res;
+}
+
+std::string	Header::getHeaderRequestError() {
+	std::string	res;
+
+	res = "HTTP/1.1 " + ft_itos(*this->_statusCode) + " " + getHttpStatusCodeMessage(*this->_statusCode) + "\n";
+	res += "Content-Type: " + this->_header["Content-type"] + "\n";
+	res += "Server: " + this->_header["Server"] + "\n";
+	res += "Date: " + this->_header["Date"] + "\n";
+	res += "Last-Modified: " + this->_header["Last-Modified"];
 	res += "Content-Length: " + this->_header["Content-Length"] + "\n\n";
 
 	return res;

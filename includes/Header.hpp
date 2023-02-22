@@ -14,9 +14,10 @@ class Header {
 
 		Header();
 		Header(std::string file, int *statusCode, Response *rep);
+		Header(std::string file, int *statusCode);
 		Header(Header const &src);
 		~Header();
-
+	
 		Header	&operator=(Header const &rhs);
 
 		void	setContentType(std::string const &contentType);
@@ -24,6 +25,7 @@ class Header {
 		void	setStatus(int status);
 
 		std::string	getHeader();
+		std::string	getHeaderRequestError();
 		std::string	getContentType();
 
 

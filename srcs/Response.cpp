@@ -279,7 +279,6 @@ void	Response::findRightCodeError() {
 		this->_statusCode = 404;
 }
 
-
 std::string	Response::findRightError() {
 	bool		pageFind = false;
 	std::string	path;
@@ -355,7 +354,6 @@ void	Response::sendHeader(std::string path)
 		sendContentTypeError();
 	else
 	{
-
 		if (cgi.isCgiRequest(path) != -1)
 		{
 			std::cout << "cgi found" << std::endl;
@@ -372,35 +370,23 @@ void	Response::sendHeader(std::string path)
 		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
 		std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
 
+		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
+
 		this->sendPage(path, body);
 	}
 }
 
-std::string	Response::contentFile(const std::string &path_file)
-{
-	std::ifstream	file(path_file.c_str(), std::ios::in | std::ios::binary);
-	std::string		page;
-
-	if (file)
-	{
-		std::ostringstream ss;
-		ss << file.rdbuf();
-		page = ss.str();
-	}
-	file.close();
-	return (page);
-}
 
 void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 {
-	std::string	content;
+	std::string	body;
 
 	if (cgi_content.length())
-		content =  cgi_content;
+		body =  cgi_content;
 	else
-		content = contentFile(path_file);
+		body = fileToStr(path_file);
 	
-	if (send(this->_req.getFd(), content.c_str(), content.length(), 0) == -1)
+	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) == -1)
 		perror("send call failed");
 
 	//std::cout << content << std::endl;
