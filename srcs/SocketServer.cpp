@@ -74,6 +74,59 @@ std::string		getAddressInfo(const struct sockaddr addr)
 	return (address);
 }
 
+std::string	SocketServer::getHostNameFromIP(const std::string& ipAddress) {
+	std::ifstream hostsFile("/etc/hosts");
+	std::string line;
+
+	if (!hostsFile.is_open()) {
+		std::cerr << "Unable to open hosts file" << std::endl;
+		return "";
+	}
+	while (std::getline(hostsFile, line))
+	{
+		if (line.empty() || line[0] == '#') continue;
+		std::istringstream iss(line);
+		std::string firstToken, hostName;
+		iss >> firstToken >> hostName;
+		if (firstToken == ipAddress)
+		{
+			hostsFile.close();
+			return hostName;
+		}
+	}
+	hostsFile.close();
+	return "";
+}
+
+std::string	SocketServer::getIPFromHostName(const std::string& hostName) {
+	struct hostent* host = gethostbyname(hostName.c_str());
+	if (!host) {
+		std::cerr << "Unable to resolve host name " << hostName << std::endl;
+		return "";
+	}
+
+	std::stringstream ss;
+	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
+	return ss.str();
+}
+
+bool	SocketServer::hostAlreadySet(size_t maxIdx) {
+	std::vector<Server>	vctServ = this->getVctServer();
+	std::string			host = vctServ[maxIdx].getHost();
+
+	for (size_t j = 0; j < maxIdx; j++)
+	{
+		if ((host == getIPFromHostName(vctServ[j].getHost()) ||
+			host == getHostNameFromIP(vctServ[j].getHost()) ||
+			host == vctServ[j].getHost()) &&
+			vctServ[maxIdx].getPort() == vctServ[j].getPort())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void	SocketServer::initSocket()
 {
 	int				opt = 1;
@@ -86,29 +139,9 @@ void	SocketServer::initSocket()
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-
-	std::vector<Server> tmp = this->getVctServer();
-	bool				brk;
-
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		brk = false;
-		for (size_t j = 0; j < i; j++)
-		{
-			// std::cout << tmp[j].getHost() << " " << this->_servers[i].getHost() << std::endl;
-			// std::cout << tmp[j].getPort() << " " << this->_servers[i].getPort() << std::endl << std::endl;
-			if (tmp[j].getHost() == this->_servers[i].getHost() &&
-				tmp[j].getPort() == this->_servers[i].getPort())
-			{
-				// std::cout << "1111111111111111" << std::endl;
-				brk = true;
-				break ;
-			}
-		}
-		
-		// std::cout << std::endl << std::endl;
-
-		if (!brk)
+		if (!this->hostAlreadySet(i))
 		{
 			if (getaddrinfo(_servers[i].getHost().c_str(), _servers[i].getPort().c_str(), &hints, &res) != 0)
 				return (errorSocket("getaddrinfo call failed"));
@@ -142,9 +175,6 @@ void	SocketServer::initSocket()
 
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
-
-	std::vector<Server> tmp = this->getVctServer();
-	bool				brk;
 	int					j = 0;
 
 	this->_epollFd = epoll_create(NB_EVENTS);
@@ -157,24 +187,14 @@ void	SocketServer::createFdEpoll() {
 		return ;
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		brk = false;
-		for (size_t j = 0; j < i; j++)
-		{
-			if (tmp[j].getHost() == this->_servers[i].getHost() &&
-				tmp[j].getPort() == this->_servers[i].getPort())
-			{
-				brk = true;
-				break ;
-			}
-		}
-		if (!brk)
+		if (!this->hostAlreadySet(i))
 		{
 			event.events = EPOLLIN;
 			event.data.fd = this->_servers_fd[j];
 			if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, this->_servers_fd[j], &event) == -1)
 			{
 				this->_errSocket = true;
-				perror("err epoll_ctl 111");
+				perror("err epoll_ctl");
 			}
 			j++;
 		}
@@ -250,25 +270,32 @@ int		SocketServer::selectBlockWithServerName(std::vector<Server> vctServSelect, 
 	return index[0];
 }
 
+std::string	SocketServer::getRightHost(const std::string& host) {
+	std::vector<std::string>	resSplit;
+
+	resSplit = ft_split(host.c_str(), ".");
+	if (resSplit.size() == 4)
+		return host;
+	else
+		return getIPFromHostName(host);
+}
+
 
 //	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
 int		SocketServer::pickServBlock(const Request &req)
 {
-	std::vector<Server>	tmp = this->getVctServer();
+	// std::vector<Server>	tmp = this->getVctServer();
 	std::vector<Server>	vctServSelect;
 	std::vector<int>	index;
+	std::string			host;
 
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		// std::cout << this->_servers[i].getAddress() << " " << req.getHost() << std::endl; 
-		// std::cout << this->_servers[i].getDomain() << " " << req.getHost() << std::endl;
-		// std::cout << this->_servers[i].getHost() << " " << req.getHost() << std::endl;
-		// std::cout << this->_servers[i].getPort() << " " << req.getPort() << std::endl << std::endl;
-
-		if ((this->_servers[i].getAddress() == req.getHost() 
-			|| this->_servers[i].getDomain() == req.getHost()
-			|| this->_servers[i].getHost() == req.getHost())
-			&& this->_servers[i].getPort() == req.getPort())
+		host = getRightHost(req.getHost());
+		if ((host == getIPFromHostName(this->_servers[i].getHost()) ||
+			host == getHostNameFromIP(this->_servers[i].getHost()) ||
+			host == this->_servers[i].getHost()) &&
+			req.getPort() == this->_servers[i].getPort())
 		{
 			vctServSelect.push_back(this->_servers[i]);
 			index.push_back(i);
@@ -279,7 +306,24 @@ int		SocketServer::pickServBlock(const Request &req)
 	else if (vctServSelect.size() > 1)
 		return selectBlockWithServerName(vctServSelect, index, req);
 	else
+	{
+		for (size_t i = 0; i < this->_servers.size(); i++)
+		{
+			if (!this->_servers[i].getHostSet() &&
+				(req.getPort() == this->_servers[i].getPort()))
+			{
+				// std::cout << "====================================" << std::endl;
+				vctServSelect.push_back(this->_servers[i]);
+				index.push_back(i);
+			}
+		}
+			if (vctServSelect.size() == 1)
+				return index[0];
+			else if (vctServSelect.size() > 1)
+				return selectBlockWithServerName(vctServSelect, index, req);
 		std::cout << "ERR pick server block" << std::endl;
+		return 0;
+	}
 	// if (re)
 	// std::cout << "SIZE = " << res.size() << std::endl;
 	// std::cout << "SIZE = " << tmp.size() << std::endl;
@@ -293,7 +337,7 @@ int		SocketServer::epollWait() {
 	int			index_serv;
 	int 		srv_i;
 
-	nbrFd = epoll_wait(this->_epollFd, event, NB_EVENTS, -1);
+	nbrFd = epoll_wait(this->_epollFd, event, NB_EVENTS, 1000);
 	if (nbrFd == -1)
 	{
 		perror("epoll_wait");

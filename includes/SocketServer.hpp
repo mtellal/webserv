@@ -61,6 +61,11 @@ class SocketServer {
 		int							epollWait();
 		void						createConnection(int i);
 		void						closeConnection(int fd);
+		bool						hostAlreadySet(size_t maxIdx);
+		std::string					getHostNameFromIP(const std::string& ipAddress);
+		std::string 				getIPFromHostName(const std::string& hostName);
+		std::string 				getRightHost(const std::string& host);
+
 
 		int							pickServBlock(const Request &req);
 		int							selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index, const Request &req);

@@ -33,12 +33,9 @@ int main(int argc, char **argv, char **envp)
 	Pour get et post, checker le format des args envoyes
 	Voir 4096
 
+	Pb si 2 adresses ecoutent sur le meme port
+
 	Method HEAD ?
-
-	Plusieurs fois le meme port dans le fichier conf ?
-	-> Msg envoye.
-
-	Fichier Response.cpp a clarifier
 
 	Tester le code 406
 
