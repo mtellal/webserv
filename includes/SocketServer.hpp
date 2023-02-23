@@ -54,7 +54,6 @@ class SocketServer {
 
 		void						errorSocket(std::string s);
 		void						initSocket();
-		void						createSockaddr(int i);
 		void						createFdEpoll();
 		void						closeSockets();
 		int							nonBlockFd(int sockeFd);
@@ -64,6 +63,7 @@ class SocketServer {
 		void						closeConnection(int fd);
 
 		int							pickServBlock(const Request &req);
+		int							selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index, const Request &req);
 
 };
 

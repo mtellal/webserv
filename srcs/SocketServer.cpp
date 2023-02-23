@@ -86,39 +86,66 @@ void	SocketServer::initSocket()
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
+
+	std::vector<Server> tmp = this->getVctServer();
+	bool				brk;
+
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (getaddrinfo(_servers[i].getHost().c_str(), _servers[i].getPort().c_str(), &hints, &res) != 0)
-			return (errorSocket("getaddrinfo call failed"));
+		brk = false;
+		for (size_t j = 0; j < i; j++)
+		{
+			// std::cout << tmp[j].getHost() << " " << this->_servers[i].getHost() << std::endl;
+			// std::cout << tmp[j].getPort() << " " << this->_servers[i].getPort() << std::endl << std::endl;
+			if (tmp[j].getHost() == this->_servers[i].getHost() &&
+				tmp[j].getPort() == this->_servers[i].getPort())
+			{
+				// std::cout << "1111111111111111" << std::endl;
+				brk = true;
+				break ;
+			}
+		}
 		
-		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
-			return (errorSocket("socket call failed"));
+		// std::cout << std::endl << std::endl;
 
-		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+		if (!brk)
+		{
+			if (getaddrinfo(_servers[i].getHost().c_str(), _servers[i].getPort().c_str(), &hints, &res) != 0)
+				return (errorSocket("getaddrinfo call failed"));
+			
+			if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
+				return (errorSocket("socket call failed"));
 
-		this->_servers[i].setSocket(serv_socket);
-		this->_servers[i].setDomain(getDomainInfo(*res->ai_addr));
-		this->_servers[i].setAddress(getAddressInfo(*res->ai_addr));
+			setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-		//std::cout << "domain: " <<  _servers[i].getDomain() << "\naddress: " << _servers[i].getAddress() << std::endl;
+			this->_servers[i].setSocket(serv_socket);
+			this->_servers[i].setDomain(getDomainInfo(*res->ai_addr));
+			this->_servers[i].setAddress(getAddressInfo(*res->ai_addr));
 
-		this->_servers_fd.push_back(serv_socket);
+			//std::cout << "domain: " <<  _servers[i].getDomain() << "\naddress: " << _servers[i].getAddress() << std::endl;
 
-		if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
-			return (errorSocket("bind call failed"));
-		
-		freeaddrinfo((struct addrinfo *)res);
-		res = NULL;
+			this->_servers_fd.push_back(serv_socket);
 
-		if (nonBlockFd(serv_socket))
-			return ;
-		if (listen(serv_socket, NB_EVENTS) == -1)
-			return (errorSocket("Listen call failed"));
+			if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
+				return (errorSocket("bind call failed"));
+			
+			freeaddrinfo((struct addrinfo *)res);
+			res = NULL;
+
+			if (nonBlockFd(serv_socket))
+				return ;
+			if (listen(serv_socket, NB_EVENTS) == -1)
+				return (errorSocket("Listen call failed"));
+		}
 	}
 }
 
 void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
+
+	std::vector<Server> tmp = this->getVctServer();
+	bool				brk;
+	int					j = 0;
 
 	this->_epollFd = epoll_create(NB_EVENTS);
 	if (this->_epollFd == -1)
@@ -130,12 +157,26 @@ void	SocketServer::createFdEpoll() {
 		return ;
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		event.events = EPOLLIN;
-		event.data.fd = this->_servers_fd[i];
-		if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, this->_servers_fd[i], &event) == -1)
+		brk = false;
+		for (size_t j = 0; j < i; j++)
 		{
-			this->_errSocket = true;
-			perror("err epoll_ctl");
+			if (tmp[j].getHost() == this->_servers[i].getHost() &&
+				tmp[j].getPort() == this->_servers[i].getPort())
+			{
+				brk = true;
+				break ;
+			}
+		}
+		if (!brk)
+		{
+			event.events = EPOLLIN;
+			event.data.fd = this->_servers_fd[j];
+			if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, this->_servers_fd[j], &event) == -1)
+			{
+				this->_errSocket = true;
+				perror("err epoll_ctl 111");
+			}
+			j++;
 		}
 	}
 	event.events = EPOLLIN;
@@ -190,19 +231,59 @@ int		SocketServer::isServerFd(int fd) const {
 	return -1;
 }
 
-//	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
+int		SocketServer::selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index, const Request &req) {
+	std::vector<std::string>	serverName;
 
-int		SocketServer::pickServBlock(const Request &req)
-{
-	for (size_t i = 0; i < this->_servers.size(); i++)
+
+	for (size_t i = 0; i < vctServSelect.size(); i++)
 	{
-		if ((this->_servers[i].getAddress() == req.getHost() 
-			|| this->_servers[i].getDomain() == req.getHost())
-			&& this->_servers[i].getPort() == req.getPort())
+		if (vctServSelect[i].getServerNameSet())
 		{
-			return (i);
+			serverName = vctServSelect[i].getServerName();
+			for (size_t j = 0; j < serverName.size(); j++)
+			{
+				if (serverName[j] == req.getHost())
+					return index[i];
+			}
 		}
 	}
+	return index[0];
+}
+
+
+//	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
+int		SocketServer::pickServBlock(const Request &req)
+{
+	std::vector<Server>	tmp = this->getVctServer();
+	std::vector<Server>	vctServSelect;
+	std::vector<int>	index;
+
+	for (size_t i = 0; i < this->_servers.size(); i++)
+	{
+		// std::cout << this->_servers[i].getAddress() << " " << req.getHost() << std::endl; 
+		// std::cout << this->_servers[i].getDomain() << " " << req.getHost() << std::endl;
+		// std::cout << this->_servers[i].getHost() << " " << req.getHost() << std::endl;
+		// std::cout << this->_servers[i].getPort() << " " << req.getPort() << std::endl << std::endl;
+
+		if ((this->_servers[i].getAddress() == req.getHost() 
+			|| this->_servers[i].getDomain() == req.getHost()
+			|| this->_servers[i].getHost() == req.getHost())
+			&& this->_servers[i].getPort() == req.getPort())
+		{
+			vctServSelect.push_back(this->_servers[i]);
+			index.push_back(i);
+		}
+	}
+	if (vctServSelect.size() == 1)
+		return index[0];
+	else if (vctServSelect.size() > 1)
+		return selectBlockWithServerName(vctServSelect, index, req);
+	else
+		std::cout << "ERR pick server block" << std::endl;
+	// if (re)
+	// std::cout << "SIZE = " << res.size() << std::endl;
+	// std::cout << "SIZE = " << tmp.size() << std::endl;
+	// return 0;
 	return (-1);
 }
 
@@ -240,6 +321,7 @@ int		SocketServer::epollWait() {
 				std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
 			else
 			{
+				// std::cout << "BLOCK SELECT = " << srv_i << std::endl;
 				std::cout << "////////////////// RESPONSE	///////////////////" << std::endl;
 
 				Response	rep(req, this->_servers[srv_i], this->_envp);
