@@ -210,6 +210,24 @@ int		SocketServer::pickServBlock(const Request &req)
 	return (-1);
 }
 
+void	printRequest()
+{
+	std::cout << "\n\n\n\n///////////////////////////////////////////////////////////" << std::endl;
+	std::cout <<         "			R E Q U E S T"		 << std::endl;
+	std::cout << "///////////////////////////////////////////////////////////" << std::endl;
+
+}
+
+void	printResponse(int end = 0)
+{
+	std::cout << "\n\n\n\n///////////////////////////////////////////////////////////" << std::endl;
+	if (end)
+		std::cout <<         "		E N D   R E S P O N S E"		 << std::endl;
+	else
+		std::cout <<         "			R E S P O N S E"		 << std::endl;
+	std::cout << "///////////////////////////////////////////////////////////\n\n" << std::endl;
+}
+
 int		SocketServer::epollWait() {
 	struct epoll_event	event[NB_EVENTS];
 	int			nbrFd;
@@ -232,20 +250,26 @@ int		SocketServer::epollWait() {
 			createConnection(index_serv);
 		else
 		{
-			std::cout << "\n\n\n\n////////////////// REQUEST	///////////////////" << std::endl;
+			printRequest();
+
 			Request		req(event[j].data.fd);
 
 
 			if (req.getErrRequest())
+			{
 				return 1;
+			}
 			else if (req.getcloseConnection())
+			{
 				this->closeConnection(event[j].data.fd);
+			}
 			else
 			{
 				if ((srv_i = pickServBlock(req)) == -1)
 					std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
 				else
-				{	std::cout << "////////////////// RESPONSE	///////////////////" << std::endl;
+				{	
+					printResponse();
 				
 					std::cout << "server picked is: " << srv_i << std::endl;
 
@@ -255,7 +279,8 @@ int		SocketServer::epollWait() {
 					if (rep.getCloseConnection())
 						this->closeConnection(event[j].data.fd);
 
-					std::cout << "////////////////// END RESPONSE	///////////////////" << std::endl;
+					printResponse(1);
+
 				}		
 			}
 		}

@@ -358,7 +358,7 @@ void	Response::sendHeader(std::string path)
 		{
 			std::cout << "cgi found" << std::endl;
 
-			int	status = cgi.execute(path, body);
+			int	status = cgi.execute(STDIN_FILENO, path, body);
 
 			header.setStatus(status);
 

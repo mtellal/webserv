@@ -304,22 +304,27 @@ int		Request::parsRequest(int fd)
 
 	std::string request;
 
-	// while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
-	// {
-	// 	buff[oct] = '\0';
-	// 	request.append(buff);
-	// 	if (oct < (int)bufflen - 1)
-	// 		break ;
-	// }
+	std::string	header;
+	std::string	body;
 
-	oct = recv(fd, buff, bufflen - 1, 0);
+	while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
+	{
+		buff[oct] = '\0';
+		request.append(buff);
+	 	if (oct < (int)bufflen - 1)
+	 		break ;
+	}
+
+	/* oct = recv(fd, buff, bufflen - 1, 0);
 	if (oct >= (int)bufflen - 2)
 	{
 		this->_tooLarge = true;
 		this->getErrorPage();
 	}
 	buff[oct] = '\0';
-	request.append(buff);
+	request.append(buff); */
+
+	std::cout << "////// bytes = " << oct << "\n\n" << std::endl;
 
 	if (oct < 1)
 	{
@@ -335,32 +340,54 @@ int		Request::parsRequest(int fd)
 		}
 	}
 
-	vct = ft_split(request, "\n\r");
+	//std::cout << request << std::endl;
 
-	/* for (int i = 0; i < (int)vct.size(); i++)
-		std::cout << vct[i] << std::endl; */
+	size_t	index = request.find("\r\n\r\n");
 
-	std::cout << request << std::endl;
-
-	for (size_t i = 0; i < vct.size(); i++)
+	if (index != (size_t)-1)
 	{
-		strSplit = ft_split(vct[i].c_str(), " ");
-		if (this->_boundarySet and strSplit[0] == this->_boundary)
-			this->setGetParams(vct, &i);
-		else
+		header = request.substr(0, index);
+		body = request.substr(index + 4, request.length());
+
+		vct = ft_split(header, "\n\r");
+
+
+		/* for (int i = 0; i < (int)vct.size(); i++)
+			std::cout << vct[i] << std::endl; */
+
+		std::cout << "\n	////		REQUEST HEADER		////	\n" << header << std::endl;
+		std::cout << "\n	////		REQUEST BODY		////	\n" << body << std::endl;
+
+		for (size_t i = 0; i < vct.size(); i++)
 		{
-			for (size_t j = 0; j < 12; j++)
+			strSplit = ft_split(vct[i].c_str(), " ");
+			if (this->_boundarySet and strSplit[0] == this->_boundary)
+				this->setGetParams(vct, &i);
+			else
 			{
-				if (strSplit[0] == key[j])
+				for (size_t j = 0; j < 12; j++)
 				{
-					(this->*functPtr[j])(strSplit);
-					break ;
+					if (strSplit[0] == key[j])
+					{
+						(this->*functPtr[j])(strSplit);
+						break ;
+					}
 				}
 			}
 		}
+
+		if (this->_methodSet && this->_method == "POST" && this->_contentLength != ft_itos(body.length()))
+		{
+			std::cout << "/////////// NEED TO WAIT ANOTHER REQUEST" << std::endl;
+		}
 	}
+	else
+	{
+
+	}
+
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
-		this->getErrorPage();
+			this->getErrorPage();
 	return 0;
 }
 

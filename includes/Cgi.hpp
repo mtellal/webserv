@@ -41,7 +41,7 @@ class Cgi
         int             isCgiRequest(const std::string &path_file);
         void            initEnv();
         void            printEnv();
-        int             execute(const std::string &path_file, std::string &body);
+        int             execute(int fdin, const std::string &path_file, std::string &body);
 
         Header          getHeader() const;
 
@@ -63,6 +63,8 @@ class Cgi
         std::string                         _application;
         std::string                         _cgi_err;
 
+        bool                                _post;
+        bool                                _get;
 
 
         void            addEnvInMap();

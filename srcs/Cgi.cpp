@@ -14,10 +14,12 @@
 #include "utils.hpp"
 
 Cgi::Cgi(const Cgi &src) :
-_serv(src._serv), _req(src._req), _header(src._header), _raw_env(src._raw_env), _map_cgi(src._map_cgi), _status(0){}
+_serv(src._serv), _req(src._req), _header(src._header), _raw_env(src._raw_env), _map_cgi(src._map_cgi), _status(0),
+_post(false), _get(false) {}
 
 Cgi::Cgi(const Server &serv, const Request &req, Header &header, char **env):
-_serv(serv), _req(req), _header(header), _raw_env(env), _map_cgi(serv.getCgi()), _status(0)
+_serv(serv), _req(req), _header(header), _raw_env(env), _map_cgi(serv.getCgi()), _status(0), 
+_post(false), _get(false)
 {
     initEnv();
 }
@@ -35,6 +37,8 @@ Cgi     &Cgi::operator=(const Cgi &src)
         this->_raw_env = src._raw_env;
         this->_env = src._env;
         this->_map_cgi = src._map_cgi;
+        this->_get = src._get;
+        this->_post = src._post;
     }
     return (*this);
 }
@@ -117,7 +121,6 @@ void    Cgi::initEnv()
 {
     Request &req = this->_req;
 
-    _env["PHPRC"]               =   "/etc/php/7.4/cgi/php.ini/";
     _env["REDIRECT_STATUS"]     =   "200";
     _env["AUTH_TYPE"]           =   req.getAuthentification();
     _env["CONTENT_LENGTH"]      =   req.getContentLength();
@@ -262,9 +265,13 @@ void                Cgi::extractFields(const std::string &cgi_response)
     }
 }
 
-void                child(int pipe[2], const std::string &path_script, char **args, char **env)
+void                child(int fdin, int pipe[2], const std::string &path_script, char **args, char **env)
 {
-    close(pipe[0]);
+    if (dup2(fdin, 0) == -1)
+    {
+        perror("dup2 call failed");
+        exit(1);
+    }
     if (dup2(pipe[1], 1) == -1)
     {
         perror("dup2 call failed");
@@ -302,7 +309,13 @@ std::string        parent(int pipe[2])
     return (response);
 }
 
-int           Cgi::execute(const std::string &path_file, std::string &body)
+
+/*
+    GET: set data from env var;
+    POST: redirect recv bytes in stdin cgi process
+*/
+
+int           Cgi::execute(int fdin, const std::string &path_file, std::string &body)
 {
     int             p[2];
     pid_t           f;
@@ -334,7 +347,7 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     if (f == 0)
     {
         // child
-        child(p, this->_path_cgi, args, env);
+        child(fdin, p, this->_path_cgi, args, env);
     }
     else
     {
