@@ -212,7 +212,7 @@ int		SocketServer::pickServBlock(const Request &req)
 
 void	printRequest()
 {
-	std::cout << "\n\n///////////////////////////////////////////////////////////" << std::endl;
+	std::cout << "\n///////////////////////////////////////////////////////////" << std::endl;
 	std::cout <<         "			R E Q U E S T"		 << std::endl;
 	std::cout << "///////////////////////////////////////////////////////////" << std::endl;
 
@@ -220,14 +220,14 @@ void	printRequest()
 
 void	printResponse(int end = 0)
 {
-	std::cout << "\n\n\n\n///////////////////////////////////////////////////////////" << std::endl;
+	std::cout << "\n\n///////////////////////////////////////////////////////////" << std::endl;
 	if (end)
 		std::cout <<         "		E N D   R E S P O N S E"		 << std::endl;
 	else
 		std::cout <<         "			R E S P O N S E"		 << std::endl;
 	std::cout << "///////////////////////////////////////////////////////////\n" << std::endl;
 	if (end)
-		std::cout << "\n\n		//////////////////////////////////////////////////		\n\n" << std::endl;
+		std::cout << "\n		//////////////////////////////////////////////////		\n" << std::endl;
 }
 
 size_t	SocketServer::isAwaitingRequest(int fd)
@@ -269,27 +269,32 @@ int		SocketServer::epollWait() {
 
 			if ((idx_wreq = isAwaitingRequest(event[j].data.fd)) != (size_t)-1)
 			{
-				Request		req(this->_awaitingRequest[idx_wreq]);
-
-				if (this->_awaitingRequest[idx_wreq].getEndAwaitingRequest())
-					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);
+				std::cout << "Request created from awainting Request" << std::endl;
+				req = this->_awaitingRequest[idx_wreq];
 			}
 			else
-				Request		req(event[j].data.fd);
+				std::cout << "Request created from defautl contructor" << std::endl;
 
 
-			if (req.getErrRequest())
+			if (req.parsRequest(event[j].data.fd))
 			{
 				return 1;
 			}
+			else if (req.getEndAwaitingRequest())
+				this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);
 			else if (req.getcloseConnection())
 			{
 				this->closeConnection(event[j].data.fd);
 			}
-			else if (req.getAwaitingRequest()
-						&& this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
+			else if (req.getAwaitingRequest())
 			{
-				this->_awaitingRequest.push_back(req);
+				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
+				{
+					std::cout << "\nreq is push back to _awaitingRequest\n" << std::endl;
+					this->_awaitingRequest.push_back(req);
+				}
+				else
+					this->_awaitingRequest[idx_wreq] = req;
 			}
 			else
 			{

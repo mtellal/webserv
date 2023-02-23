@@ -12,7 +12,7 @@ Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), 
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
 							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
 _methodSet(false), _hostSet(false), _tooLarge(false),
-_badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false) 
+_badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false), _bytesRecieved(0)
 {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
@@ -26,9 +26,6 @@ _badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false)
 	this->functPtr[9] = &Request::setAuthentification;
 	this->functPtr[10] = &Request::setContentLength;
 	this->functPtr[11] = &Request::setContentType;
-
-	if (parsRequest(fd))
-		this->_errRequest = true;
 }
 
 Request::Request(Request const &src) {
@@ -45,11 +42,14 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_queryStringSet = rhs._queryStringSet;
 		this->_boundarySet = rhs._boundarySet;
 		this->_closeConnection = rhs._closeConnection;
+		this->_boundary = rhs._boundary;
+
 		this->_method = rhs._method;
 		this->_path = rhs._path;
 		this->_httpVersion = rhs._httpVersion;
 		this->_host = rhs._host;
 		this->_port = rhs._port;
+
 		this->_connection = rhs._connection;
 		this->_connectionSet = rhs._connectionSet;
 		this->_accept = rhs._accept;
@@ -59,14 +59,31 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_referer = rhs._referer;
 		this->_agentSet = rhs._agentSet;
 		this->_agent = rhs._agent;
+
 		this->_serverName = rhs._serverName;
+		this->_authentification = rhs._authentification;
+		this->_contentLength = rhs._contentLength;
+		this->_contentType = rhs._contentType;
 		this->_methodSet = rhs._methodSet;
 		this->_hostSet = rhs._hostSet;
+		this->_tooLarge = rhs._tooLarge;
 		this->_badRequest = rhs._badRequest;
+
 		this->_awaitingRequest = rhs._awaitingRequest;
 		this->_endAwaitingRequest = rhs._endAwaitingRequest;
+		this->_bytesRecieved = rhs._bytesRecieved;
 	}
 	return *this;
+}
+
+size_t		Request::getBytesRecievd() const
+{
+	return (this->_bytesRecieved);
+}
+
+void		Request::setErrorRequest(bool v)
+{
+	this->_errRequest = v;
 }
 
 int			Request::getFd() const {
@@ -319,24 +336,45 @@ int		Request::parsRequest(int fd)
 	std::string	header;
 	std::string	body;
 
-	while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
+	size_t	total = 0;
+
+	if (this->_awaitingRequest)
 	{
-		buff[oct] = '\0';
-		request.append(buff);
-	 	if (oct < (int)bufflen - 1)
-	 		break ;
+		std::cout << "//////////////// BINARY DATAS	(RECV)//////////////////" << std::endl;
+
+		std::ofstream out("./uploads/tmp", std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
+
+		if (!out.is_open())
+			perror("error output tmp file");
+
+		while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
+		{
+			total += oct;
+			buff[oct] = '\0';
+			out.write(buff, bufflen);
+			if (oct < (int)bufflen - 1)
+				break ;
+		}
+		
+		out.close();
+	}
+	else
+	{
+		while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
+		{
+			total += oct;
+			buff[oct] = '\0';
+			request.append(buff);
+			if (oct < (int)bufflen - 1)
+				break ;
+		}
 	}
 
-	/* oct = recv(fd, buff, bufflen - 1, 0);
-	if (oct >= (int)bufflen - 2)
-	{
-		this->_tooLarge = true;
-		this->getErrorPage();
-	}
-	buff[oct] = '\0';
-	request.append(buff); */
+	std::cout << total << " bytes read" << std::endl;
+	
+	this->_bytesRecieved += total;
 
-	std::cout << "////// bytes = " << oct << "\n\n" << std::endl;
+	std::cout << "this->_bytesRecieved = " << this->_bytesRecieved << std::endl;
 
 	if (oct < 1)
 	{
@@ -347,17 +385,17 @@ int		Request::parsRequest(int fd)
 		}
 		else if (oct == -1)
 		{
-			std::cout << "recv call failed" << std::endl;
+			perror("recv call failed");
 			return (1);
 		}
 	}
 
 	//std::cout << request << std::endl;
 
-	size_t	index = request.find("\r\n\r\n");
-
-	if (index != (size_t)-1)
+	if (!this->_awaitingRequest)
 	{
+		size_t	index = request.find("\r\n\r\n");
+
 		header = request.substr(0, index);
 		body = request.substr(index + 4, request.length());
 
@@ -387,45 +425,39 @@ int		Request::parsRequest(int fd)
 				}
 			}
 		}
-
-		std::cout << "contentLength = " << this->_contentLength << std::endl;
-		std::cout << "this->_method = " << this->_method << std::endl;
-		
-
+	
 		if (this->_methodSet && this->_method == "POST" && this->_contentLength != ft_itos(body.length()))
 		{
-			std::cout << "boundary = " << this->_boundary << std::endl;
-
-			std::cout << body << std::endl;
-
-			std::vector<std::string> tab_body = ft_split(body, this->_boundary);
-
-			std::cout << "size tab body = " << tab_body.size() <<  std::endl;
-			
-			if (!body.length())
-			{
-				this->_awaitingRequest = false;
-				this->_endAwaitingRequest = true;
-				return (0);
-			}
-
-			std::cout << "//////////	B O D Y		///////////" << body << std::endl;
-
-			std::ofstream out("./upload/tmp", std::ios_base::app);
-
-			out << body[0];
-
-			out.close();
-
-
 			std::cout << "/////////// NEED TO WAIT ANOTHER REQUEST" << std::endl;
 			this->_awaitingRequest = true;
+		}
+		else
+		{
+			std::cout << " ///	NOT AN AWAITING REQUEST	/////" << std::endl;
+		}
+	
+		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
+			this->getErrorPage();
+	
+	}
+	else
+	{
+		std::cout << "INSIDE HANDLING BINARY ELSE" << std::endl;
+	
+		if ((int)this->_bytesRecieved >= ft_stoi(this->_contentLength, NULL))
+		{
+			std::cout << "BYTES RECIEVED = CONTENT LENGTH" << std::endl;
+			this->_awaitingRequest = false;
+			this->_endAwaitingRequest = true;
 			return (0);
 		}
 	}
 
-	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
-			this->getErrorPage();
+	std::cout << "contentLength = " << this->_contentLength << std::endl;
+	std::cout << "this->_method = " << this->_method << std::endl;
+	std::cout << "bytesRecieved = " << this->_bytesRecieved << std::endl;
+	std::cout << "boundary = " << this->_boundary << std::endl;
+
 	return 0;
 }
 

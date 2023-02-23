@@ -19,33 +19,37 @@ class Request {
 
 		Request	&operator=(Request const &rhs);
 
+		int									parsRequest(int fd);
 
-	int									getFd() const;
-	bool								getErrRequest() const;
-	bool								getcloseConnection() const;
-	std::string							getMethod() const;
-	std::string							getPath() const;
-	std::string							getHttpVersion() const;
-	std::string							getHost() const;
-	std::string							getPort() const;
-	std::string							getConnection() const;
-	std::string							getAccept() const;
-	std::string							getReferer() const;
-	std::string							getAgent() const;
-	std::string							getServerName() const;
-	std::string							getAuthentification() const;
-	std::string							getContentLength() const;
-	std::string							getContentType() const;
-	std::map<std::string, std::string>	getQueryString() const;
-	bool								getAwaitingRequest() const;
-	bool								getEndAwaitingRequest() const; 
+		void								setErrorRequest(bool);
+		int									getFd() const;
+		bool								getErrRequest() const;
+		bool								getcloseConnection() const;
+		std::string							getMethod() const;
+		std::string							getPath() const;
+		std::string							getHttpVersion() const;
+		std::string							getHost() const;
+		std::string							getPort() const;
+		std::string							getConnection() const;
+		std::string							getAccept() const;
+		std::string							getReferer() const;
+		std::string							getAgent() const;
+		std::string							getServerName() const;
+		std::string							getAuthentification() const;
+		std::string							getContentLength() const;
+		std::string							getContentType() const;
+		std::map<std::string, std::string>	getQueryString() const;
+		bool								getAwaitingRequest() const;
+		bool								getEndAwaitingRequest() const; 
+
+		size_t								getBytesRecievd() const;
 
 
-		bool		getConnectionSet() const;
-		bool		getAcceptSet() const;
-		bool		getRefererSet() const;
-		bool		getAgentSet() const;
-		bool		getBadRequest() const;
+		bool								getConnectionSet() const;
+		bool								getAcceptSet() const;
+		bool								getRefererSet() const;
+		bool								getAgentSet() const;
+		bool								getBadRequest() const;
 
 	private:
 
@@ -81,9 +85,10 @@ class Request {
 	bool								_awaitingRequest;
 	bool								_endAwaitingRequest;
 
+	size_t								_bytesRecieved;
+
 	void	(Request::*functPtr[12])(std::vector<std::string>);
 
-	int		parsRequest(int fd);
 	void	parsArgs(std::string tmp);
 
 	void	setMethodVersionPath(std::vector<std::string> strSplit);
