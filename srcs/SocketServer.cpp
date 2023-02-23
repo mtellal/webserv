@@ -212,7 +212,7 @@ int		SocketServer::pickServBlock(const Request &req)
 
 void	printRequest()
 {
-	std::cout << "\n\n\n\n///////////////////////////////////////////////////////////" << std::endl;
+	std::cout << "\n\n///////////////////////////////////////////////////////////" << std::endl;
 	std::cout <<         "			R E Q U E S T"		 << std::endl;
 	std::cout << "///////////////////////////////////////////////////////////" << std::endl;
 
@@ -225,13 +225,26 @@ void	printResponse(int end = 0)
 		std::cout <<         "		E N D   R E S P O N S E"		 << std::endl;
 	else
 		std::cout <<         "			R E S P O N S E"		 << std::endl;
-	std::cout << "///////////////////////////////////////////////////////////\n\n" << std::endl;
+	std::cout << "///////////////////////////////////////////////////////////\n" << std::endl;
+	if (end)
+		std::cout << "\n\n		//////////////////////////////////////////////////		\n\n" << std::endl;
+}
+
+size_t	SocketServer::isAwaitingRequest(int fd)
+{
+	for (size_t i = 0; i < this->_awaitingRequest.size(); i++)
+	{
+		if (fd == this->_awaitingRequest[i].getFd())
+			return (i);
+	}
+	return (-1);
 }
 
 int		SocketServer::epollWait() {
 	struct epoll_event	event[NB_EVENTS];
 	int			nbrFd;
 	int			index_serv;
+	size_t		idx_wreq;
 	int 		srv_i;
 
 	nbrFd = epoll_wait(this->_epollFd, event, NB_EVENTS, -1);
@@ -254,6 +267,16 @@ int		SocketServer::epollWait() {
 
 			Request		req(event[j].data.fd);
 
+			if ((idx_wreq = isAwaitingRequest(event[j].data.fd)) != (size_t)-1)
+			{
+				Request		req(this->_awaitingRequest[idx_wreq]);
+
+				if (this->_awaitingRequest[idx_wreq].getEndAwaitingRequest())
+					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);
+			}
+			else
+				Request		req(event[j].data.fd);
+
 
 			if (req.getErrRequest())
 			{
@@ -262,6 +285,11 @@ int		SocketServer::epollWait() {
 			else if (req.getcloseConnection())
 			{
 				this->closeConnection(event[j].data.fd);
+			}
+			else if (req.getAwaitingRequest()
+						&& this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
+			{
+				this->_awaitingRequest.push_back(req);
 			}
 			else
 			{

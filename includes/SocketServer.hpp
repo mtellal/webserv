@@ -51,6 +51,7 @@ class SocketServer {
 		int							_epollFd;
 		bool						_errSocket;
 		char						**_envp;
+		std::vector<Request>		_awaitingRequest;
 
 		void						errorSocket(std::string s);
 		void						initSocket();
@@ -64,6 +65,9 @@ class SocketServer {
 		void						closeConnection(int fd);
 
 		int							pickServBlock(const Request &req);
+
+		size_t						isAwaitingRequest(int fd);
+
 
 };
 

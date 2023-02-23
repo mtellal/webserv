@@ -6,6 +6,7 @@
 # include <sys/socket.h>
 # include <vector>
 # include <map>
+# include <fstream>
 
 class Request {
 
@@ -36,6 +37,9 @@ class Request {
 	std::string							getContentLength() const;
 	std::string							getContentType() const;
 	std::map<std::string, std::string>	getQueryString() const;
+	bool								getAwaitingRequest() const;
+	bool								getEndAwaitingRequest() const; 
+
 
 		bool		getConnectionSet() const;
 		bool		getAcceptSet() const;
@@ -73,6 +77,9 @@ class Request {
 	bool								_hostSet;
 	bool								_tooLarge;
 	bool								_badRequest;
+
+	bool								_awaitingRequest;
+	bool								_endAwaitingRequest;
 
 	void	(Request::*functPtr[12])(std::vector<std::string>);
 

@@ -11,7 +11,9 @@ Request::Request() {}
 Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), _boundarySet(false),
 							_closeConnection(false), _connectionSet(false), _acceptSet(false),
 							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
-							_methodSet(false), _hostSet(false), _tooLarge(false), _badRequest(false) {
+_methodSet(false), _hostSet(false), _tooLarge(false),
+_badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false) 
+{
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
 	this->functPtr[2] = &Request::setMethodVersionPath;
@@ -61,6 +63,8 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_methodSet = rhs._methodSet;
 		this->_hostSet = rhs._hostSet;
 		this->_badRequest = rhs._badRequest;
+		this->_awaitingRequest = rhs._awaitingRequest;
+		this->_endAwaitingRequest = rhs._endAwaitingRequest;
 	}
 	return *this;
 }
@@ -150,6 +154,14 @@ bool		Request::getAgentSet() const {
 
 bool		Request::getBadRequest() const {
 	return this->_badRequest;
+}
+
+bool		Request::getAwaitingRequest() const {
+	return this->_awaitingRequest;
+}
+
+bool		Request::getEndAwaitingRequest() const {
+	return this->_endAwaitingRequest;
 }
 
 void	Request::parsArgs(std::string arg) {
@@ -376,14 +388,40 @@ int		Request::parsRequest(int fd)
 			}
 		}
 
+		std::cout << "contentLength = " << this->_contentLength << std::endl;
+		std::cout << "this->_method = " << this->_method << std::endl;
+		
+
 		if (this->_methodSet && this->_method == "POST" && this->_contentLength != ft_itos(body.length()))
 		{
-			std::cout << "/////////// NEED TO WAIT ANOTHER REQUEST" << std::endl;
-		}
-	}
-	else
-	{
+			std::cout << "boundary = " << this->_boundary << std::endl;
 
+			std::cout << body << std::endl;
+
+			std::vector<std::string> tab_body = ft_split(body, this->_boundary);
+
+			std::cout << "size tab body = " << tab_body.size() <<  std::endl;
+			
+			if (!body.length())
+			{
+				this->_awaitingRequest = false;
+				this->_endAwaitingRequest = true;
+				return (0);
+			}
+
+			std::cout << "//////////	B O D Y		///////////" << body << std::endl;
+
+			std::ofstream out("./upload/tmp", std::ios_base::app);
+
+			out << body[0];
+
+			out.close();
+
+
+			std::cout << "/////////// NEED TO WAIT ANOTHER REQUEST" << std::endl;
+			this->_awaitingRequest = true;
+			return (0);
+		}
 	}
 
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
