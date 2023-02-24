@@ -96,7 +96,7 @@ std::string	Header::getHeaderRequestError() {
 	std::string	res;
 
 	res = "HTTP/1.1 " + ft_itos(*this->_statusCode) + " " + getHttpStatusCodeMessage(*this->_statusCode) + "\n";
-	res += "Content-Type: " + this->_header["Content-type"] + "\n";
+	res += "Content-Type: text/html\n";
 	res += "Server: " + this->_header["Server"] + "\n";
 	res += "Date: " + this->_header["Date"] + "\n";
 	res += "Last-Modified: " + this->_header["Last-Modified"];

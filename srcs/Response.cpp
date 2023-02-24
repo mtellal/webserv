@@ -318,16 +318,17 @@ void	Response::sendData() {
 	this->sendHeader(path);
 }
 
-void	Response::sendContentTypeError() {
+std::string	Response::sendContentTypeError() {
 	std::string	res;
 	std::string	path;
 
 	path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
 
-	Header	header(path, &this->_statusCode, this);
+	Header	header(path, &this->_statusCode);
 
-	res = header.getHeader();
+	res = header.getHeaderRequestError();
 	write(this->_req.getFd(), res.c_str(), res.size());
+	return path;
 }
 
 void	Response::sendHeader(std::string path) {
@@ -335,7 +336,10 @@ void	Response::sendHeader(std::string path) {
 	std::string	res;
 
 	if (header.getContentType() == "406")
-		sendContentTypeError();
+	{
+		this->_statusCode = 406;
+		path = sendContentTypeError();
+	}
 	else
 	{
 		res = header.getHeader();

@@ -59,7 +59,7 @@ class SocketServer {
 		int							nonBlockFd(int sockeFd);
 		int							isServerFd(int fd) const;
 		int							epollWait();
-		void						createConnection(int i);
+		void						createConnection(int index_serv_fd);
 		void						closeConnection(int fd);
 		bool						hostAlreadySet(size_t maxIdx);
 		std::string					getHostNameFromIP(const std::string& ipAddress);

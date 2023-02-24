@@ -130,7 +130,7 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 		if (splitPort.size() == 2)
 		{
 			if (!this->checkHost(splitPort[0]))
-				error_msg(*i, "directive listen, wrong syntaxe");
+				error_msg(*i, "directive listen, wrong syntaxe or unable to resolve host name");
 
 			this->_hostSet = true;
 			this->_host = splitPort[0];
@@ -150,7 +150,6 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 					error_msg(*i, "directive listen, wrong syntaxe");
 				else
 				{
-					// this->_hostSet = true;
 					this->_host = "0.0.0.0";
 					this->setPort(host[1], i);
 				}
@@ -161,10 +160,8 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 
 std::string	Server::getIPFromHostName(const std::string& hostName) {
 	struct hostent* host = gethostbyname(hostName.c_str());
-	if (!host) {
-		std::cerr << "Unable to resolve host name " << hostName << std::endl;
+	if (!host)
 		return "";
-	}
 
 	std::stringstream ss;
 	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
@@ -172,30 +169,17 @@ std::string	Server::getIPFromHostName(const std::string& hostName) {
 }
 
 bool	Server::checkHost(std::string host) {
-	// (void)host;
-
 	std::vector<std::string> splitHost;
-	// bool	err;
-	// int		nb;
 
-	// if (host == "localhost")
-	// 	host = "127.0.0.1";
 	splitHost = ft_split(host.c_str(), ".");
-	if (splitHost.size() != 4)
-	{
-		splitHost = ft_split(getIPFromHostName(host), ".");
-		if (splitHost.size() != 4)
-			return false;
-	}
-	// 	return false;
-	// for (int j = 0; j < 4; j++)
-	// {
-	// 	err = false;
-	// 	nb = ft_stoi(splitHost[j], &err);
-	// 	if (err or nb < 0 or nb > 255)
-	// 		return false;
-	// }
-	return true;
+	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
+		host == "0.0.0.0")
+		return true;
+
+	splitHost = ft_split(getIPFromHostName(host), ".");
+	if (splitHost.size() == 4 && splitHost[0] == "127")
+		return true;
+	return false;
 }
 
 void	Server::setPort(std::string port, int *line)

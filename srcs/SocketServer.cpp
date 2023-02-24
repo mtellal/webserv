@@ -70,7 +70,6 @@ std::string		getAddressInfo(const struct sockaddr addr)
 
 	if (getnameinfo(&addr, sizeof(addr), address, sizeof(address), 0, 0, NI_NUMERICHOST) == -1)
 		std::cerr << "getnameinfo() call failed" << std::endl;
-	//std::cout << "address: " << address << std::endl;
 	return (address);
 }
 
@@ -78,20 +77,20 @@ std::string	SocketServer::getHostNameFromIP(const std::string& ipAddress) {
 	std::ifstream hostsFile("/etc/hosts");
 	std::string line;
 
-	if (!hostsFile.is_open()) {
-		std::cerr << "Unable to open hosts file" << std::endl;
+	if (!hostsFile.is_open())
 		return "";
-	}
 	while (std::getline(hostsFile, line))
 	{
-		if (line.empty() || line[0] == '#') continue;
-		std::istringstream iss(line);
-		std::string firstToken, hostName;
-		iss >> firstToken >> hostName;
-		if (firstToken == ipAddress)
+		if (!line.empty() && line[0] != '#')
 		{
-			hostsFile.close();
-			return hostName;
+			std::istringstream iss(line);
+			std::string firstToken, hostName;
+			iss >> firstToken >> hostName;
+			if (firstToken == ipAddress)
+			{
+				hostsFile.close();
+				return hostName;
+			}
 		}
 	}
 	hostsFile.close();
@@ -100,10 +99,8 @@ std::string	SocketServer::getHostNameFromIP(const std::string& ipAddress) {
 
 std::string	SocketServer::getIPFromHostName(const std::string& hostName) {
 	struct hostent* host = gethostbyname(hostName.c_str());
-	if (!host) {
-		std::cerr << "Unable to resolve host name " << hostName << std::endl;
+	if (!host)
 		return "";
-	}
 
 	std::stringstream ss;
 	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
@@ -112,17 +109,11 @@ std::string	SocketServer::getIPFromHostName(const std::string& hostName) {
 
 bool	SocketServer::hostAlreadySet(size_t maxIdx) {
 	std::vector<Server>	vctServ = this->getVctServer();
-	std::string			host = vctServ[maxIdx].getHost();
 
 	for (size_t j = 0; j < maxIdx; j++)
 	{
-		if ((host == getIPFromHostName(vctServ[j].getHost()) ||
-			host == getHostNameFromIP(vctServ[j].getHost()) ||
-			host == vctServ[j].getHost()) &&
-			vctServ[maxIdx].getPort() == vctServ[j].getPort())
-		{
+		if (vctServ[maxIdx].getPort() == vctServ[j].getPort())
 			return true;
-		}
 	}
 	return false;
 }
@@ -143,7 +134,7 @@ void	SocketServer::initSocket()
 	{
 		if (!this->hostAlreadySet(i))
 		{
-			if (getaddrinfo(_servers[i].getHost().c_str(), _servers[i].getPort().c_str(), &hints, &res) != 0)
+			if (getaddrinfo("0.0.0.0", _servers[i].getPort().c_str(), &hints, &res) != 0)
 				return (errorSocket("getaddrinfo call failed"));
 			
 			if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
@@ -214,7 +205,7 @@ void	SocketServer::closeSockets() {
 		close(it->first);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, it->first, NULL);
 	}
-	for (size_t i = 0; i < this->_servers.size(); i++)
+	for (size_t i = 0; i < this->_servers_fd.size(); i++)
 	{
 		close(this->_servers_fd[i]);
 		epoll_ctl(this->_epollFd, EPOLL_CTL_DEL, this->_servers_fd[i], NULL);
@@ -280,11 +271,9 @@ std::string	SocketServer::getRightHost(const std::string& host) {
 		return getIPFromHostName(host);
 }
 
-
 //	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
 int		SocketServer::pickServBlock(const Request &req)
 {
-	// std::vector<Server>	tmp = this->getVctServer();
 	std::vector<Server>	vctServSelect;
 	std::vector<int>	index;
 	std::string			host;
@@ -312,7 +301,6 @@ int		SocketServer::pickServBlock(const Request &req)
 			if (!this->_servers[i].getHostSet() &&
 				(req.getPort() == this->_servers[i].getPort()))
 			{
-				// std::cout << "====================================" << std::endl;
 				vctServSelect.push_back(this->_servers[i]);
 				index.push_back(i);
 			}
@@ -321,14 +309,12 @@ int		SocketServer::pickServBlock(const Request &req)
 				return index[0];
 			else if (vctServSelect.size() > 1)
 				return selectBlockWithServerName(vctServSelect, index, req);
-		std::cout << "ERR pick server block" << std::endl;
-		return 0;
 	}
-	// if (re)
-	// std::cout << "SIZE = " << res.size() << std::endl;
-	// std::cout << "SIZE = " << tmp.size() << std::endl;
-	// return 0;
-	return (-1);
+	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
+		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
+		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */
+	std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
+	return -1;
 }
 
 int		SocketServer::epollWait() {
@@ -346,15 +332,17 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
-		// std::cout << "fd = " << event[j].data.fd << std::endl;
+		// std::cout << "EVENT = " << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
 			return 1;
 		if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
 			createConnection(index_serv);
 		else
 		{
+			// std::cout << "INDEX SERVER -> " << index_serv << std::endl;
 			std::cout << "////////////////// REQUEST	///////////////////" << std::endl;
 			Request		req(event[j].data.fd);
+			// std::cout << "////////////////// END REQUEST  ///////////////////" << std::endl;
 
 
 			if (req.getErrRequest())
@@ -362,7 +350,10 @@ int		SocketServer::epollWait() {
 			else if (req.getcloseConnection())
 				this->closeConnection(event[j].data.fd);
 			else if ((srv_i = pickServBlock(req)) == -1)
+			{
 				std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
+				this->closeConnection(event[j].data.fd);
+			}
 			else
 			{
 				// std::cout << "BLOCK SELECT = " << srv_i << std::endl;
@@ -381,7 +372,7 @@ int		SocketServer::epollWait() {
 	return 0;
 }
 
-void	SocketServer::createConnection(int index_serv)
+void	SocketServer::createConnection(int index_serv_fd)
 {
 	Client				client;
 	int					client_fd;
@@ -389,8 +380,10 @@ void	SocketServer::createConnection(int index_serv)
 	socklen_t			tmp_len = sizeof(tmp);
 	struct epoll_event	event;
 
-	std::cout << "new connection from serv: " << index_serv << std::endl;
-	if ((client_fd = accept(this->_servers_fd[index_serv], (struct sockaddr *)&tmp,
+	std::cout << "////////////	NEW CONNECTION 	///////////\n";
+
+	// std::cout << "new connection from serv: " << index_serv << std::endl;
+	if ((client_fd = accept(this->_servers_fd[index_serv_fd], (struct sockaddr *)&tmp,
 			&tmp_len)) == -1)
 	{
 		perror("accept() call failed");
@@ -402,9 +395,9 @@ void	SocketServer::createConnection(int index_serv)
 
 	client.set(getAddressInfo(tmp), client_fd, tmp);
 
-	this->_servers[index_serv].addClient(client);
+	this->_servers[index_serv_fd].addClient(client);
 
-	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv));
+	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv_fd));
 
 	event.events = EPOLLIN;
 	event.data.fd = client_fd;
@@ -415,22 +408,23 @@ void	SocketServer::createConnection(int index_serv)
 		return ;
 	}
 	
-	std::cout << "////////////	NEW CONNECTION 	///////////\n";
-	std::cout << client << std::endl;
+	// std::cout << client << std::endl;
 
 }
 
 void	SocketServer::closeConnection(int fd)
 {
-	size_t	index_serv;
+	std::cout << "//////////// CLOSE CONNECTION ///////////\n";
 
-	index_serv = _clientServerFds[fd];
+	size_t	index_serv_fd;
 
-	std::cout << "client[" << fd << "] DISCONNECTED\n";
-	std::cout << "form: serv[" << index_serv << "] =>" << this->_servers[index_serv].getHost() << ":" << this->_servers[index_serv].getPort() << std::endl; 
+	index_serv_fd = _clientServerFds[fd];
 
+	// std::cout << "idx Serv Fd = " << index_serv_fd << std::endl;
+	// std::cout << "client[" << fd << "] DISCONNECTED\n";
+	// std::cout << "form: serv[" << index_serv_fd << "] =>" << this->_servers_fd[index_serv_fd] << ":" << this->_servers_fd[index_serv_fd]<< std::endl; 
 
-	this->_servers[index_serv].eraseClient(fd);
+	this->_servers[index_serv_fd].eraseClient(fd);
 
 	this->_clientServerFds.erase(fd);
 

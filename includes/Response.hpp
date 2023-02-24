@@ -69,7 +69,7 @@ class Response {
 	void		httpRedir();
 	void		findRightCodeError();
 	std::string	findRightError();
-	void		sendContentTypeError();
+	std::string	sendContentTypeError();
 };
 
 
