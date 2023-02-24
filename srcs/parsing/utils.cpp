@@ -99,6 +99,26 @@ std::vector<std::string>	ft_split(const std::string &s, const std::string &chars
 	return (v);
 }
 
+std::vector<std::string>	ft_split_str(const std::string &src, const std::string &charset)
+{
+	std::vector<std::string>	v;
+	std::string					s(src);
+	size_t						index;
+	std::string					tmp;
+
+	while ((index = s.find(charset)) != (size_t)-1)
+	{
+		tmp = s.substr(0, index);
+		if (tmp.length())
+			v.push_back(s.substr(0, index));
+		s = s.substr(index + charset.length(), s.length()); 
+	}
+	if (s.length())
+		v.push_back(s);
+	return (v);
+}
+
+
 std::string	ft_itos(int nbr)
 {
 	std::string s;

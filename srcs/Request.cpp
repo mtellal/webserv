@@ -310,18 +310,22 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
+void	Request::openOutputFile(const std::string &tmpfile, std::ofstream &out)
+{
+	std::ifstream tmp(tmpfile.c_str());
 
-/*
-			!!!!!!!!	Potentiel douille  !!!!!!
-	- Verifier que les champs necessaire (GET, content-type ...) soient bien recus avant d'envoyer une reponse + envoyer une reponse des que les champs necessaire sont recus
+	if (tmp)
+		out.open(tmpfile.c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+	else
+		out.open(tmpfile.c_str(), std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
 
+}
 
-*/
 
 int		Request::parsRequest(int fd)
 {
 	size_t						bufflen = 4096;
-	char						buff[bufflen];
+	char						buff[bufflen + 1];
 	int							oct;
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
@@ -336,45 +340,57 @@ int		Request::parsRequest(int fd)
 	std::string	header;
 	std::string	body;
 
+	std::ofstream out;
+
 	size_t	total = 0;
 
 	if (this->_awaitingRequest)
 	{
 		std::cout << "//////////////// BINARY DATAS	(RECV)//////////////////" << std::endl;
 
-		std::ofstream out("./uploads/tmp", std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
-
-		if (!out.is_open())
-			perror("error output tmp file");
-
-		while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
-		{
-			total += oct;
-			buff[oct] = '\0';
-			out.write(buff, bufflen);
-			if (oct < (int)bufflen - 1)
-				break ;
-		}
-		
-		out.close();
+		this->openOutputFile("./uploads/tmp", out);
 	}
-	else
+
+	while ((oct = recv(fd, buff, bufflen, 0)) > 0)
 	{
-		while ((oct = recv(fd, buff, bufflen - 1, 0)) > 0)
-		{
-			total += oct;
-			buff[oct] = '\0';
-			request.append(buff);
-			if (oct < (int)bufflen - 1)
-				break ;
-		}
+		total += oct;
+		buff[oct] = '\0';
+		request.append(buff);
+		if (this->_awaitingRequest)
+			out.write(buff, oct);
+		if (oct < (int)bufflen - 1)
+			break ;
+	}
+
+	if (this->_awaitingRequest)	
+	{
+		request = fileToStr("./uploads/tmp");
+
+		std::cout << "request.length() = " << request.length() << std::endl;
+
+		std::vector<std::string> v = ft_split_str(request, "\r\n");
+
+		std::cout << v.size() << std::endl;
+
+		std::cout << v[1] << std::endl;
+		std::cout << v[2] << std::endl;
+
+		std::ofstream image;
+
+		this->openOutputFile("./uploads/image.webp", image);
+
+		image.write(v[3].c_str(), v[3].length());
+
+		image.close();
+
+		this->_bytesRecieved += total;
+
+		std::cout << "this->_bytesRecieved = " << this->_bytesRecieved << std::endl;
+
+		out.close();
 	}
 
 	std::cout << total << " bytes read" << std::endl;
-	
-	this->_bytesRecieved += total;
-
-	std::cout << "this->_bytesRecieved = " << this->_bytesRecieved << std::endl;
 
 	if (oct < 1)
 	{
@@ -444,7 +460,7 @@ int		Request::parsRequest(int fd)
 	{
 		std::cout << "INSIDE HANDLING BINARY ELSE" << std::endl;
 	
-		if ((int)this->_bytesRecieved >= ft_stoi(this->_contentLength, NULL))
+		if ((int)this->_bytesRecieved == ft_stoi(this->_contentLength, NULL))
 		{
 			std::cout << "BYTES RECIEVED = CONTENT LENGTH" << std::endl;
 			this->_awaitingRequest = false;

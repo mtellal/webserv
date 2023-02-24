@@ -101,6 +101,8 @@ class Request {
 	void	setContentLength(std::vector<std::string> strSplit);
 	void	setContentType(std::vector<std::string> strSplit);
 	void	setGetParams(std::vector<std::string> vct, size_t *i);
+	void	openOutputFile(const std::string &tmpfile, std::ofstream &out);
+
 
 	void	getErrorPage();
 };
