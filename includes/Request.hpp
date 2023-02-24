@@ -87,6 +87,8 @@ class Request {
 
 	size_t								_bytesRecieved;
 
+	bool								_tmpFileExists;
+
 	void	(Request::*functPtr[12])(std::vector<std::string>);
 
 	void	parsArgs(std::string tmp);
@@ -102,6 +104,8 @@ class Request {
 	void	setContentType(std::vector<std::string> strSplit);
 	void	setGetParams(std::vector<std::string> vct, size_t *i);
 	void	openOutputFile(const std::string &tmpfile, std::ofstream &out);
+	void	extractFile(const std::string &inpath, const std::string &outpath);
+
 
 
 	void	getErrorPage();
