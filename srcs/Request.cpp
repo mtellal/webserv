@@ -322,12 +322,37 @@ void	Request::openOutputFile(const std::string &tmpfile, std::ofstream &out)
 
 }
 
+std::string	Request::extractFileName(const std::string &line)
+{
+	std::string 				tmp(line);
+	std::vector<std::string>	v;
+	std::vector<std::string>	keys;
+
+	v = ft_split(tmp, " ");
+	for (size_t i = 0; i < v.size(); i++)
+	{
+		if (v[i].find("=") != (size_t)-1)
+		{
+			keys = ft_split(v[i], "=");
+			if (keys[0] == "filename")
+			{
+				keys = ft_split(keys[1], "\"");
+				if (keys.size())
+					return (keys[0]); 
+			}
+		}
+	}
+	return ("");
+}
+
 void	Request::extractFile(const std::string &inpath, const std::string &outpath)
 {
 	std::string					request;
 	std::vector<std::string>	v;
 	std::ofstream				outfile(outpath.c_str(), 
 		std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+	std::string fileName = "./uploads/";
 
 	size_t total = 0;
 
@@ -341,7 +366,10 @@ void	Request::extractFile(const std::string &inpath, const std::string &outpath)
 	for (size_t i = 0; i < v.size() - 1; i++)
 	{
 		if (v[i] == this->_boundary)
+		{
+			fileName += this->extractFileName(v[i + 1]); // = Content-disposition
 			i += 3;
+		}
 		if (i + 1 < v.size() - 1)
 			v[i] += "\r\n";
 		total += v[i].length();
@@ -349,31 +377,12 @@ void	Request::extractFile(const std::string &inpath, const std::string &outpath)
 	}
 
 	std::cout << total << " bytes write" << std::endl;
+
+	if (rename(outpath.c_str(), fileName.c_str()))
+		perror("error rename fiel failed");
+
 	outfile.close();
 }
-
-/* void	Request::extractFile(const std::string &inpath, const std::string &outpath)
-{
-	std::string					request;
-	std::vector<std::string>	v;
-	std::ofstream				outfile(outpath.c_str(), 
-		std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-	std::ifstream				infile(inpath.c_str(), std::ifstream::in | std::ifstream::binary);
-
-	size_t total = 0;
-
-	std::string line;
-	size_t 
-	while (std::getline(infile, line))
-	{
-		if (line == this->_boundary)
-
-	}
-
-	std::cout << total << " bytes write" << std::endl;
-	outfile.close();
-} */
-
 
 void		Request::extractFields(const std::string &header)
 {

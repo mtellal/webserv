@@ -107,6 +107,9 @@ class Request {
 	void	extractFile(const std::string &inpath, const std::string &outpath);
 	void	extractFields(const std::string &header);
 
+	std	::string	extractFileName(const std::string &line);
+
+
 
 
 
