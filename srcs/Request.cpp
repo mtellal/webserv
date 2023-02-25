@@ -450,10 +450,10 @@ int		Request::parsRequest(int fd)
 		size_t	index = request.find("\r\n\r\n");
 
 		header = request.substr(0, index);
+		body = request.substr(index + 4, request.length());
 
 		this->extractFields(header);
 
-		body = request.substr(index + 4, request.length());
 
 		std::cout << "\n///////	HEADER		///////////\n" << header << std::endl;
 		std::cout << "\n///////	BODY		///////////\n" << body << std::endl;;
@@ -466,7 +466,9 @@ int		Request::parsRequest(int fd)
 
 			std::ofstream	out("./uploads/tmp", std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
 
-			out.write(body.c_str(), total - (header.length() + 4));
+			out.write(&buff[index + 4],  total - (header.length() + 4));
+
+			//out.write(body.c_str(), total - (header.length() + 4));
 
 			std::cout << total - (header.length() + 4) << " bytes write (total - header)" << std::endl;
 
