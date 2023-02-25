@@ -105,6 +105,9 @@ class Request {
 	void	setGetParams(std::vector<std::string> vct, size_t *i);
 	void	openOutputFile(const std::string &tmpfile, std::ofstream &out);
 	void	extractFile(const std::string &inpath, const std::string &outpath);
+	void	extractFields(const std::string &header);
+
+
 
 
 

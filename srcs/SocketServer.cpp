@@ -309,7 +309,7 @@ int		SocketServer::epollWait() {
 					Response	rep(req, this->_servers[srv_i], this->_envp);
 					rep.selectLocationBlock();
 					rep.sendData();
-					if (rep.getCloseConnection())
+					if (rep.getCloseConnection() && !req.getAwaitingRequest())
 						this->closeConnection(event[j].data.fd);
 
 					printResponse(1);
