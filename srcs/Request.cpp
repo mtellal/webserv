@@ -345,35 +345,60 @@ std::string	Request::extractFileName(const std::string &line)
 	return ("");
 }
 
-void	Request::extractFile(const std::string &inpath, const std::string &outpath)
+/*
+	Extract and save the data in boundary 
+*/
+
+void	Request::extractFile(const std::string &inpath)
 {
 	std::string					request;
-	std::vector<std::string>	v;
+	std::string					outpath = "./uploads/file";
 	std::ofstream				outfile(outpath.c_str(), 
 		std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
 	std::string fileName = "./uploads/";
+	std::string	contentDispo = "Content-Disposition:";
+	std::string	contentLen = "Content-Type:";
+
 
 	size_t total = 0;
 
 	request = fileToStr(inpath);
-	
+
+
+	std::vector<std::string>	bounds;
+
+	std::vector<std::string>	data;
+
+	bounds = ft_split_str(request, this->_boundary);
+
+	std::cout << "bounds.size() = " << bounds.size() << std::endl;
+
+
 	if (!outfile.is_open())
 		perror("error open outfile ");
 
-	v = ft_split_str(request, "\r\n");
-
-	for (size_t i = 0; i < v.size() - 1; i++)
+	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
 	{
-		if (v[i] == this->_boundary)
+		std::cout << "bounds[" << i << "] = " << bounds[i].length() << ")" << std::endl;
+
+		data = ft_split_str(bounds[i], "\r\n");
+		
+		for (size_t i = 0; i < data.size(); i++)
 		{
-			fileName += this->extractFileName(v[i + 1]); // = Content-disposition
-			i += 3;
+			if (!memcmp(data[i].c_str(), contentDispo.c_str(), contentDispo.length()))
+			{
+				fileName += this->extractFileName(data[i]);
+			}
+			else if (memcmp(data[i].c_str(), contentLen.c_str(), contentLen.length()))
+			{
+				if (i + 1 < data.size())
+					data[i] += "\r\n";
+				outfile.write(data[i].c_str(), data[i].length());
+				total += data[i].length();
+			}
 		}
-		if (i + 1 < v.size() - 1)
-			v[i] += "\r\n";
-		total += v[i].length();
-		outfile.write(v[i].c_str(), v[i].length());
+
 	}
 
 	std::cout << total << " bytes write" << std::endl;
@@ -384,6 +409,9 @@ void	Request::extractFile(const std::string &inpath, const std::string &outpath)
 	outfile.close();
 }
 
+/*
+	Extract and set HTTP fields
+*/
 void		Request::extractFields(const std::string &header)
 {
 	std::vector<std::string>	vct;
@@ -412,12 +440,57 @@ void		Request::extractFields(const std::string &header)
 		}
 }
 
+void	Request::awaitingRequest(int fd)
+{
+	int							bytes = 0;
+	size_t						total_bytes = 0;
+	size_t						bufflen = 4096;
+	char						buff[bufflen + 1];
+	std::ofstream 				out;
+
+	std::cout << "//////////////// BINARY DATAS	(RECV)//////////////////" << std::endl;
+
+	if (this->_tmpFileExists)
+		out.open("./uploads/tmp",
+			std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
+	else
+	{
+		out.open("./uploads/tmp", std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+		this->_tmpFileExists = true;
+	}
+
+	while ((bytes = recv(fd, buff, bufflen, 0)) > 0)
+	{
+		total_bytes += bytes;
+		buff[bytes] = '\0';
+		out.write(buff, bytes);
+		if (bytes < (int)bufflen)
+			break ;
+	}
+
+	out.close();
+
+	std::cout << total_bytes << " bytes read" << std::endl;
+
+	this->_bytesRecieved += total_bytes;
+
+	if ((int)this->_bytesRecieved == ft_stoi(this->_contentLength, NULL))
+	{
+		std::cout << "BYTES RECIEVED = CONTENT LENGTH" << std::endl;
+		
+		this->extractFile("./uploads/tmp");
+
+		this->_awaitingRequest = false;
+		this->_endAwaitingRequest = true;
+		this->_tmpFileExists = false;
+	}
+}
+
 int		Request::parsRequest(int fd)
 {
 	size_t						bufflen = 4096;
 	char						buff[bufflen + 1];
 	int							oct = 0;
-	std::vector<std::string>	tmpBis;
 
 	std::string request;
 
@@ -513,6 +586,11 @@ int		Request::parsRequest(int fd)
 		}
 		else
 		{
+			if (this->_tmpFileExists)
+			{
+				this->extractFile("./uploads/tmp");
+				this->_tmpFileExists = false;
+			}
 			std::cout << " ///	NOT AN AWAITING REQUEST	/////" << std::endl;
 		}
 
@@ -522,46 +600,7 @@ int		Request::parsRequest(int fd)
 	}
 	else
 	{
-		std::cout << "//////////////// BINARY DATAS	(RECV)//////////////////" << std::endl;
-
-		if (this->_tmpFileExists)
-			out.open("./uploads/tmp",
-				std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
-		else
-		{
-			out.open("./uploads/tmp", std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-			this->_tmpFileExists = true;
-		}
-
-		while ((oct = recv(fd, buff, bufflen, 0)) > 0)
-		{
-			total += oct;
-			buff[oct] = '\0';
-			request.append(buff);
-			if (this->_awaitingRequest)
-				out.write(buff, oct);
-			if (oct < (int)bufflen)
-				break ;
-		}
-	
-		out.close();
-	
-		std::cout << total << " bytes read" << std::endl;
-
-		this->_bytesRecieved += total;
-
-		if ((int)this->_bytesRecieved == ft_stoi(this->_contentLength, NULL))
-		{
-			std::cout << "BYTES RECIEVED = CONTENT LENGTH" << std::endl;
-			
-			this->extractFile("./uploads/tmp", "./uploads/image.webp");
-
-			this->_awaitingRequest = false;
-			this->_endAwaitingRequest = true;
-			this->_tmpFileExists = false;
-
-			return (0);
-		}
+		this->awaitingRequest(fd);
 	}
 
 	std::cout << "contentLength = " << this->_contentLength << std::endl;
