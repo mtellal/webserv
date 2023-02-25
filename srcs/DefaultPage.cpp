@@ -86,7 +86,7 @@ std::string     DefaultPage::createDefaultErrorPage(int statusCode) {
 	file << "	<meta charset=\"UTF-8\">" << std::endl;
 	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
 	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;
-	file << "	<title>TMP Webserv " + ft_itos(statusCode) + "</title>" << std::endl;
+	file << "	<title>Webserv " + ft_itos(statusCode) + "</title>" << std::endl;
 	file << "</head>" << std::endl;
 	file << "<body>" << std::endl;
 	file << "	<h1>Error " + ft_itos(statusCode) + ", " + getHttpStatusCodeMessage(statusCode) + " :(</h1>" << std::endl;

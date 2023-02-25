@@ -134,7 +134,7 @@ void	SocketServer::initSocket()
 	{
 		if (!this->hostAlreadySet(i))
 		{
-			if (getaddrinfo("0.0.0.0", _servers[i].getPort().c_str(), &hints, &res) != 0)
+			if (getaddrinfo(NULL, _servers[i].getPort().c_str(), &hints, &res) != 0)
 				return (errorSocket("getaddrinfo call failed"));
 			
 			if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
@@ -244,7 +244,6 @@ int		SocketServer::isServerFd(int fd) const {
 
 int		SocketServer::selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index, const Request &req) {
 	std::vector<std::string>	serverName;
-
 
 	for (size_t i = 0; i < vctServSelect.size(); i++)
 	{

@@ -29,7 +29,7 @@ class Location : public Directives {
 
 	private:
 
-		void	(Location::*functPtr[8])(std::vector<std::string>, int *i);
+		void	(Location::*functPtr[9])(std::vector<std::string>, int *i);
 
 		void	setPath(int *i, std::string loc);
 		void	error_line(const int &n_line, const std::string &err_msg);

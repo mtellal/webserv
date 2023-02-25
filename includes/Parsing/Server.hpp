@@ -58,7 +58,7 @@ class Server : public Directives {
 		bool						_serverNameSet;
 		bool						_errorServer;
 		bool						_blockClose;
-		void						(Server::*functPtr[10])(std::vector<std::string>, int *i);
+		void						(Server::*functPtr[11])(std::vector<std::string>, int *i);
 
 		void						setHost(std::vector<std::string> host, int *i);
 		bool						checkFormatHost(std::string host);

@@ -11,6 +11,7 @@ Location::Location(int *i, std::vector<std::string> loc) : _errorLoc(false) {
 	this->functPtr[5] = &Directives::setIndex;
 	this->functPtr[6] = &Directives::setHttpRedir;
 	this->functPtr[7] = &Location::setCgi;
+	this->functPtr[8] = &Location::setUpload;
 
 	this->setPath(i, loc[1]);
 }
@@ -63,8 +64,8 @@ void	Location::setPath(int *i, std::string loc) {
 void	Location::readLocationBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string key[8] = { "http_methods", "error_page", "client_max_body_size",
-						 "root", "autoindex", "index", "return", "cgi" };
+	std::string key[9] = { "http_methods", "error_page", "client_max_body_size",
+						 "root", "autoindex", "index", "return", "cgi", "upload" };
 
 	*i += 1;
 	while (getline(file, line))
@@ -76,7 +77,7 @@ void	Location::readLocationBlock(std::ifstream &file, int *i) {
 
 			if (tmp.size() == 1 and tmp[0] == "}")
 				return ;
-			while (j < 8)
+			while (j < 9)
 			{
 				if (tmp[0] == key[j])
 				{
@@ -91,7 +92,7 @@ void	Location::readLocationBlock(std::ifstream &file, int *i) {
 				}
 				j++;
 			}
-			if (j == 8)
+			if (j == 9)
 				error_line(*i, " incorrect directive");
 			if (this->_errorLoc or this->_errorDirectives)
 			{

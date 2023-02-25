@@ -40,7 +40,5 @@ int main(int argc, char **argv, char **envp)
 
 	Method HEAD ?
 
-	Tester le code 406
-
 	favicon ?
 */

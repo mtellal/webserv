@@ -5,7 +5,8 @@
 Directives::Directives() :  _clientMaxBodySize(1), _root("html"), _autoindex(false),
 						_errorPageSet(false), _clientMaxBodySizeSet(false),
 						_rootSet(false), _autoindexSet(false), _indexSet(false),
-						_httpRedirSet(false), _errorDirectives(false), _httpMethodsSet(false) {
+						_httpRedirSet(false), _errorDirectives(false), _httpMethodsSet(false),
+						_uploadSet(false) {
 	this->_index.push_back("index.html");
 	this->_httpMethods.push_back("GET");
 }
@@ -34,6 +35,8 @@ Directives	&Directives::operator=(Directives const &rhs) {
 		this->_errorDirectives = rhs._errorDirectives;
 		this->_httpMethods = rhs._httpMethods;
 		this->_httpMethodsSet = rhs._httpMethodsSet;
+		this->_upload = rhs._upload;
+		this->_uploadSet = rhs._uploadSet;
 
 	}
 	return *this;
@@ -91,6 +94,14 @@ bool						Directives::getHttpRedirSet() const {
 	return this->_httpRedirSet;
 }
 
+bool						Directives::getHttpMethodsSet() const {
+	return this->_httpMethodsSet;
+}
+
+bool						Directives::getUploadSet() const {
+	return this->_uploadSet;
+}
+
 std::vector<std::string>	Directives::getHttpMethods() const {
 	return this->_httpMethods;
 }
@@ -98,6 +109,11 @@ std::vector<std::string>	Directives::getHttpMethods() const {
 std::map<std::string, std::string>	Directives::getCgi() const {
 	return this->_cgi;
 }
+
+std::string	Directives::getUpload() const {
+	return this->_upload;
+}
+
 
 void	Directives::error_line(const int &n_line, const std::string &err_msg)
 {
@@ -243,6 +259,16 @@ void	Directives::setCgi(std::vector<std::string> cgi, int *i) {
 		error_line(*i, "Directive cgi, wrong args");
 	else
 		this->_cgi.insert(std::make_pair(cgi[1], cgi[2]));
+}
+
+void	Directives::setUpload(std::vector<std::string> upload, int *i) {
+	if (upload.size()!= 2)
+		error_line(*i, "Directive upload, wrong args");
+	else
+	{
+		this->_upload = upload[1];
+		this->_uploadSet = true;
+	}
 }
 
 // void	Directives::showErrorPage(std::ostream & o) const {

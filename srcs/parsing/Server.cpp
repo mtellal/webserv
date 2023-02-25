@@ -17,6 +17,7 @@ _serverNameSet(false), _errorServer(false), _blockClose(false)
 	this->functPtr[7] = &Directives::setHttpRedir;
 	this->functPtr[8] = &Directives::setHttpMethods;
 	this->functPtr[9] = &Directives::setCgi;
+	this->functPtr[10] = &Directives::setUpload;
 
 }
 
@@ -223,8 +224,8 @@ void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 void	Server::readServBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string words[10] = { "listen", "server_name", "error_page", "client_max_body_size",
-						 "root", "autoindex", "index", "return", "http_methods", "cgi" };
+	std::string words[11] = { "listen", "server_name", "error_page", "client_max_body_size",
+						 "root", "autoindex", "index", "return", "http_methods", "cgi", "upload" };
 
 	*i += 1;
 	while (std::getline(file, line))
@@ -254,7 +255,7 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 			}
 			else
 			{
-				while (j < 10)
+				while (j < 11)
 				{
 					if (tmp[0] == words[j])
 					{
@@ -269,7 +270,7 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 					}
 					j++;
 				}
-				if (j == 10)
+				if (j == 11)
 					error_msg(*i, "incorrect directive");
 				if (this->_errorServer or this->_errorDirectives)
 					return ;
