@@ -345,6 +345,71 @@ std::string	Request::extractFileName(const std::string &line)
 	return ("");
 }
 
+
+void	Request::parseBoundaryData(const std::string &bound_data)
+{
+	std::vector<std::string>	data;
+	std::vector<std::string>	fields;
+
+	bool						contentType;
+	size_t 						total;
+
+	std::string					fileName;
+
+	std::string					outpath = "./uploads/file";
+	std::ofstream				outfile;
+
+	fileName = "./uploads/";
+	total = 0;
+	contentType = false;
+	data = ft_split_str(bound_data, "\r\n\r\n");
+
+	std::cout << "data.size(): " << data.size() << std::endl;
+
+	if (data.size())
+	{
+		fields = ft_split(data[0], "\r\n");
+
+		std::cout << "fields: " << fields.size() << std::endl;
+
+		if (fields.size() >= 2)
+		{
+			if (!memcmp(fields[0].c_str(), "Content-Disposition:", 20))
+				fileName += this->extractFileName(fields[0]);
+			if (!memcmp(fields[1].c_str(), "Content-Type:", 13))
+				contentType = true;
+		}
+
+		if (contentType)
+		{
+			std::cout << "IT S A FILE" << std::endl;
+
+			outfile.open(outpath.c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+			if (!outfile.is_open())
+				perror("error open outfile ");
+
+			for (size_t i = 1; i < data.size(); i++)
+			{
+				if (data[i].length())
+					outfile.write(data[i].c_str(), data[i].length() - 2);
+				total += data[i].length();
+			}
+
+			std::cout << total << "total bytes write in " << fileName << std::endl;
+
+			outfile.close();
+			
+			if (rename(outpath.c_str(), fileName.c_str()))
+				perror("error rename fiel failed");
+		}
+
+	}
+
+	std::cout << total << " bytes write" << std::endl;
+}
+
+
 /*
 	Extract and save the data in boundary 
 */
@@ -352,61 +417,21 @@ std::string	Request::extractFileName(const std::string &line)
 void	Request::extractFile(const std::string &inpath)
 {
 	std::string					request;
-	std::string					outpath = "./uploads/file";
-	std::ofstream				outfile(outpath.c_str(), 
-		std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-
-	std::string fileName = "./uploads/";
-	std::string	contentDispo = "Content-Disposition:";
-	std::string	contentLen = "Content-Type:";
-
-
-	size_t total = 0;
-
-	request = fileToStr(inpath);
-
-
 	std::vector<std::string>	bounds;
 
-	std::vector<std::string>	data;
+	request = fileToStr(inpath);
 
 	bounds = ft_split_str(request, this->_boundary);
 
 	std::cout << "bounds.size() = " << bounds.size() << std::endl;
 
-
-	if (!outfile.is_open())
-		perror("error open outfile ");
-
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
 	{
 		std::cout << "bounds[" << i << "] = " << bounds[i].length() << ")" << std::endl;
 
-		data = ft_split_str(bounds[i], "\r\n");
-		
-		for (size_t i = 0; i < data.size(); i++)
-		{
-			if (!memcmp(data[i].c_str(), contentDispo.c_str(), contentDispo.length()))
-			{
-				fileName += this->extractFileName(data[i]);
-			}
-			else if (memcmp(data[i].c_str(), contentLen.c_str(), contentLen.length()))
-			{
-				if (i + 1 < data.size())
-					data[i] += "\r\n";
-				outfile.write(data[i].c_str(), data[i].length());
-				total += data[i].length();
-			}
-		}
+		this->parseBoundaryData(bounds[i]);
 
 	}
-
-	std::cout << total << " bytes write" << std::endl;
-
-	if (rename(outpath.c_str(), fileName.c_str()))
-		perror("error rename fiel failed");
-
-	outfile.close();
 }
 
 /*

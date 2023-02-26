@@ -106,6 +106,8 @@ class Request {
 	void	openOutputFile(const std::string &tmpfile, std::ofstream &out);
 	void	extractFile(const std::string &inpath);
 	void	extractFields(const std::string &header);
+	void	parseBoundaryData(const std::string &bound_data);
+
 
 	std	::string	extractFileName(const std::string &line);
 	void			awaitingRequest(int fd);
