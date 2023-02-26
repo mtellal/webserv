@@ -337,10 +337,10 @@ int		Request::parsRequest(int fd)
 
 	vct = ft_split(request, "\n\r");
 
-	/* for (int i = 0; i < (int)vct.size(); i++)
-		std::cout << vct[i] << std::endl; */
+	// for (int i = 0; i < (int)vct.size(); i++)
+	// 	std::cout << vct[i] << std::endl;
 
-	std::cout << request << std::endl;
+	// std::cout << request << std::endl;
 
 	for (size_t i = 0; i < vct.size(); i++)
 	{
@@ -359,6 +359,17 @@ int		Request::parsRequest(int fd)
 			}
 		}
 	}
+
+	// Test de la methode delete
+	// this->_method = "DELETE";
+	// this->_path = "/index.html";
+	// this->_httpVersion = "HTTP/1.1";
+	// this->_host = "localhost";
+	// this->_port = "8080";
+	// this->_methodSet = true;
+	// this->_hostSet = true;
+
+
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 		this->getErrorPage();
 	return 0;
@@ -378,7 +389,7 @@ void	Request::getErrorPage() {
 		statusCode = 500;
 
 	DefaultPage	defaultPage;
-	path = defaultPage.createDefaultErrorPage(statusCode);
+	path = defaultPage.createDefaultPage(statusCode);
 
 	Header header(path, &statusCode);
 	strHeader = header.getHeaderRequestError();

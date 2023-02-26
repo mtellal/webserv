@@ -1,4 +1,6 @@
 #include "Response.hpp"
+#include <stdio.h>
+#include <cstdlib>
 
 Response::Response() :
 _locBlocSelect(false), _isDir(false), _autoindex(false),
@@ -97,7 +99,7 @@ bool	Response::rightPathLocation() {
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	root += newPath;
 	stat(root.c_str(), &fileOrDir);
-	if (S_ISREG(fileOrDir.st_mode))
+	if (S_ISREG(fileOrDir.st_mode)  || this->_req.getMethod() == "DELETE")
 		this->_path.push_back(root);
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
@@ -130,7 +132,7 @@ bool	Response::rightPathServer() {
 	newPath = this->_req.getPath();
 	root += newPath;
 	stat(root.c_str(), &fileOrDir);
-	if (S_ISREG(fileOrDir.st_mode))
+	if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
 		this->_path.push_back(root);
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
@@ -282,7 +284,7 @@ std::string	Response::findRightError() {
 	if (this->_autoindex and !this->methodNotAllowed())
 		path = this->_defaultPage.createAutoindexPage(this->_path);
 	else if (!tmp or !pageFind)
-		path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
+		path = this->_defaultPage.createDefaultPage(this->_statusCode);
 	if (tmp)
 		tmp.close();
 	return path;
@@ -302,19 +304,52 @@ void	Response::httpRedir() {
 	return ;
 }
 
+std::string	Response::deleteResource(std::string path) {
+	struct stat stat_buf;
+	int result = stat(path.c_str(), &stat_buf);
+
+	if (result != 0)
+		this->_statusCode = 204;
+	if (S_ISDIR(stat_buf.st_mode))
+	{
+		result = std::system(("rm -rf " + path).c_str());
+		if (result == 0)
+			this->_statusCode = 200;
+		else
+			this->_statusCode = 204;
+	}
+	else if (S_ISREG(stat_buf.st_mode))
+	{
+		result = std::remove(path.c_str());
+		if (result == 0)
+			this->_statusCode = 200;
+		else
+			this->_statusCode = 204;
+	}
+	else
+	{
+		this->_statusCode = 204;
+	}
+
+	return this->_defaultPage.createDefaultPage(this->_statusCode);
+}
+
 void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
+
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
-	if (err or this->methodNotAllowed())
+	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
 
 	if (((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
-			this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
+		this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
 
+	if (this->_req.getMethod() == "DELETE")
+		path = this->deleteResource(this->_path[0]);
 	this->sendHeader(path);
 }
 
@@ -322,7 +357,7 @@ std::string	Response::sendContentTypeError() {
 	std::string	res;
 	std::string	path;
 
-	path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
+	path = this->_defaultPage.createDefaultPage(this->_statusCode);
 
 	Header	header(path, &this->_statusCode);
 

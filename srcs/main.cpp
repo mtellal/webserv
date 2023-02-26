@@ -38,6 +38,7 @@ int main(int argc, char **argv, char **envp)
 	Ajouter directive fichier conf -> Make the route able to accept uploaded files and
 	configure where they should be saved.
 
+	Method DELETE, code 202 ?
 	Method HEAD ?
 
 	favicon ?

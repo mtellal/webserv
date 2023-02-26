@@ -33,7 +33,7 @@ class	DefaultPage
         DefaultPage    &operator=(const DefaultPage &pages);
 
         std::string     createResFormPage();
-        std::string     createDefaultErrorPage(int statusCode);
+        std::string     createDefaultPage(int statusCode);
         std::string     createAutoindexPage(std::vector<std::string> p);
 
 

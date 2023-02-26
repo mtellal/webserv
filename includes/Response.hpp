@@ -70,6 +70,7 @@ class Response {
 	void		findRightCodeError();
 	std::string	findRightError();
 	std::string	sendContentTypeError();
+	std::string	deleteResource(std::string path);
 };
 
 
