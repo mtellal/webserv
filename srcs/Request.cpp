@@ -8,11 +8,13 @@
 
 Request::Request() {}
 
-Request::Request(int fd) : _fd(fd), _errRequest(false), _queryStringSet(false), _boundarySet(false),
-							_closeConnection(false), _connectionSet(false), _acceptSet(false),
-							_refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
+Request::Request(int fd) : 
+_fd(fd), _errRequest(false), _queryStringSet(false), _boundarySet(false),
+_closeConnection(false), _connectionSet(false), _acceptSet(false),
+_refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
 _methodSet(false), _hostSet(false), _tooLarge(false),
-_badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false), _bytesRecieved(0), _tmpFileExists(false)
+_badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false),
+_bytesRecieved(0), _bodyFileExists(false), _bodyFilePath(this->_bodyFilePath.c_str())
 {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
@@ -72,7 +74,8 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_awaitingRequest = rhs._awaitingRequest;
 		this->_endAwaitingRequest = rhs._endAwaitingRequest;
 		this->_bytesRecieved = rhs._bytesRecieved;
-		this->_tmpFileExists = rhs._tmpFileExists;
+		this->_bodyFileExists = rhs._bodyFileExists;
+		this->_bodyFilePath = rhs._bodyFilePath;
 	}
 	return *this;
 }
@@ -311,17 +314,6 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
-void	Request::openOutputFile(const std::string &tmpfile, std::ofstream &out)
-{
-	std::ifstream tmp(tmpfile.c_str());
-
-	if (tmp)
-		out.open(tmpfile.c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-	else
-		out.open(tmpfile.c_str(), std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
-
-}
-
 std::string	Request::extractFileName(const std::string &line)
 {
 	std::string 				tmp(line);
@@ -345,7 +337,6 @@ std::string	Request::extractFileName(const std::string &line)
 	return ("");
 }
 
-
 void	Request::parseBoundaryData(const std::string &bound_data)
 {
 	std::vector<std::string>	data;
@@ -355,8 +346,6 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 	size_t 						total;
 
 	std::string					fileName;
-
-	std::string					outpath = "./uploads/file";
 	std::ofstream				outfile;
 
 	fileName = "./uploads/";
@@ -364,14 +353,9 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 	contentType = false;
 	data = ft_split_str(bound_data, "\r\n\r\n");
 
-	std::cout << "data.size(): " << data.size() << std::endl;
-
 	if (data.size())
 	{
 		fields = ft_split(data[0], "\r\n");
-
-		std::cout << "fields: " << fields.size() << std::endl;
-
 		if (fields.size() >= 2)
 		{
 			if (!memcmp(fields[0].c_str(), "Content-Disposition:", 20))
@@ -382,9 +366,8 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 
 		if (contentType)
 		{
-			std::cout << "IT S A FILE" << std::endl;
-
-			outfile.open(outpath.c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+			outfile.open(this->_bodyFilePath.c_str(),
+				std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
 			if (!outfile.is_open())
 				perror("error open outfile ");
@@ -395,18 +378,12 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 					outfile.write(data[i].c_str(), data[i].length() - 2);
 				total += data[i].length();
 			}
-
-			std::cout << total << "total bytes write in " << fileName << std::endl;
-
 			outfile.close();
 			
-			if (rename(outpath.c_str(), fileName.c_str()))
+			if (rename(_bodyFilePath.c_str(), fileName.c_str()))
 				perror("error rename fiel failed");
 		}
-
 	}
-
-	std::cout << total << " bytes write" << std::endl;
 }
 
 
@@ -420,18 +397,9 @@ void	Request::extractFile(const std::string &inpath)
 	std::vector<std::string>	bounds;
 
 	request = fileToStr(inpath);
-
 	bounds = ft_split_str(request, this->_boundary);
-
-	std::cout << "bounds.size() = " << bounds.size() << std::endl;
-
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
-	{
-		std::cout << "bounds[" << i << "] = " << bounds[i].length() << ")" << std::endl;
-
 		this->parseBoundaryData(bounds[i]);
-
-	}
 }
 
 /*
@@ -465,7 +433,7 @@ void		Request::extractFields(const std::string &header)
 		}
 }
 
-void	Request::awaitingRequest(int fd)
+int	Request::awaitingRequest(int fd)
 {
 	int							bytes = 0;
 	size_t						total_bytes = 0;
@@ -473,15 +441,23 @@ void	Request::awaitingRequest(int fd)
 	char						buff[bufflen + 1];
 	std::ofstream 				out;
 
-	std::cout << "//////////////// BINARY DATAS	(RECV)//////////////////" << std::endl;
-
-	if (this->_tmpFileExists)
-		out.open("./uploads/tmp",
+	if (this->_bodyFileExists)
+		out.open(this->_bodyFilePath.c_str(),
 			std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
 	else
 	{
-		out.open("./uploads/tmp", std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
-		this->_tmpFileExists = true;
+		out.open(this->_bodyFilePath.c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+		this->_bodyFileExists = true;
+	}
+
+	if (!out.is_open())
+	{
+		out.close();
+		remove(this->_bodyFilePath.c_str());
+		this->_awaitingRequest = false;
+		this->_endAwaitingRequest = true;
+		this->getErrorPage();
+		return (0);
 	}
 
 	while ((bytes = recv(fd, buff, bufflen, 0)) > 0)
@@ -493,24 +469,39 @@ void	Request::awaitingRequest(int fd)
 			break ;
 	}
 
+	if (bytes < 1)
+	{
+		out.close();
+		remove(this->_bodyFilePath.c_str());
+		this->_awaitingRequest = false;
+		this->_endAwaitingRequest = true;
+
+		if (!bytes)
+		{
+			this->_closeConnection = true;
+			return (0);
+		}
+		else if (bytes == -1)
+		{
+			perror("recv call failed");
+			this->getErrorPage();
+			return (-1);
+		}
+	}
+
 	out.close();
-
-	std::cout << total_bytes << " bytes read" << std::endl;
-
 	this->_bytesRecieved += total_bytes;
 
 	if ((int)this->_bytesRecieved == ft_stoi(this->_contentLength, NULL))
-	{
-		std::cout << "BYTES RECIEVED = CONTENT LENGTH" << std::endl;
-		
-		this->extractFile("./uploads/tmp");
-
-		remove("./uploads/tmp");
-
+	{		
+		this->extractFile(this->_bodyFilePath.c_str());
+		remove(this->_bodyFilePath.c_str());
 		this->_awaitingRequest = false;
 		this->_endAwaitingRequest = true;
-		this->_tmpFileExists = false;
+		this->_bodyFileExists = false;
 	}
+
+	return (0);
 }
 
 int		Request::parsRequest(int fd)
@@ -530,7 +521,6 @@ int		Request::parsRequest(int fd)
 
 	if (!this->_awaitingRequest)
 	{
-
 		oct = recv(fd, buff, bufflen, 0);
 
 		if (oct < 1)
@@ -543,6 +533,7 @@ int		Request::parsRequest(int fd)
 			else if (oct == -1)
 			{
 				perror("recv call failed");
+				this->getErrorPage();
 				return (1);
 			}
 		}
@@ -573,11 +564,9 @@ int		Request::parsRequest(int fd)
 		if (body.length())
 		{
 
-			std::ofstream	out("./uploads/tmp", std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
+			std::ofstream	out(this->_bodyFilePath.c_str(), std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
 
 			out.write(&buff[index + 4],  total - (header.length() + 4));
-
-			//out.write(body.c_str(), total - (header.length() + 4));
 
 			std::cout << total - (header.length() + 4) << " bytes write (total - header)" << std::endl;
 
@@ -595,7 +584,7 @@ int		Request::parsRequest(int fd)
 
 			out.close();
 
-			this->_tmpFileExists = true;
+			this->_bodyFileExists = true;
 			
 			std::cout << total - (header.length() + 4) << " bytes write " << std::endl;
 	
@@ -613,28 +602,24 @@ int		Request::parsRequest(int fd)
 		}
 		else
 		{
-			if (this->_tmpFileExists)
+			if (this->_bodyFileExists)
 			{
-				this->extractFile("./uploads/tmp");
-				this->_tmpFileExists = false;
-				remove("./uploads/tmp");
+				this->extractFile(this->_bodyFilePath.c_str());
+				this->_bodyFileExists = false;
+				remove(this->_bodyFilePath.c_str());
 			}
 			std::cout << " ///	NOT AN AWAITING REQUEST	/////" << std::endl;
 		}
 
 		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 			this->getErrorPage();
-	
 	}
 	else
 	{
-		this->awaitingRequest(fd);
+		int res = this->awaitingRequest(fd);
+		if (res)
+			return (res);
 	}
-
-	std::cout << "contentLength = " << this->_contentLength << std::endl;
-	std::cout << "this->_method = " << this->_method << std::endl;
-	std::cout << "bytesRecieved = " << this->_bytesRecieved << std::endl;
-	std::cout << "boundary = " << this->_boundary << std::endl;
 
 	return 0;
 }

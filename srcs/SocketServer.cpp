@@ -276,8 +276,7 @@ int		SocketServer::epollWait() {
 				std::cout << "Request created from defautl contructor" << std::endl;
 
 
-			if (req.parsRequest(event[j].data.fd))
-				return 1;
+			req.parsRequest(event[j].data.fd);
 
 			if (req.getEndAwaitingRequest())
 					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);

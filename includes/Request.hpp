@@ -84,10 +84,9 @@ class Request {
 
 	bool								_awaitingRequest;
 	bool								_endAwaitingRequest;
-
 	size_t								_bytesRecieved;
-
-	bool								_tmpFileExists;
+	bool								_bodyFileExists;
+	std::string							_bodyFilePath;
 
 	void	(Request::*functPtr[12])(std::vector<std::string>);
 
@@ -103,14 +102,14 @@ class Request {
 	void	setContentLength(std::vector<std::string> strSplit);
 	void	setContentType(std::vector<std::string> strSplit);
 	void	setGetParams(std::vector<std::string> vct, size_t *i);
-	void	openOutputFile(const std::string &tmpfile, std::ofstream &out);
+	
 	void	extractFile(const std::string &inpath);
 	void	extractFields(const std::string &header);
 	void	parseBoundaryData(const std::string &bound_data);
 
 
 	std	::string	extractFileName(const std::string &line);
-	void			awaitingRequest(int fd);
+	int				awaitingRequest(int fd);
 
 
 
