@@ -505,6 +505,8 @@ void	Request::awaitingRequest(int fd)
 		
 		this->extractFile("./uploads/tmp");
 
+		remove("./uploads/tmp");
+
 		this->_awaitingRequest = false;
 		this->_endAwaitingRequest = true;
 		this->_tmpFileExists = false;
@@ -615,6 +617,7 @@ int		Request::parsRequest(int fd)
 			{
 				this->extractFile("./uploads/tmp");
 				this->_tmpFileExists = false;
+				remove("./uploads/tmp");
 			}
 			std::cout << " ///	NOT AN AWAITING REQUEST	/////" << std::endl;
 		}
