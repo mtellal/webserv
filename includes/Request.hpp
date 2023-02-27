@@ -19,7 +19,7 @@ class Request {
 
 		Request	&operator=(Request const &rhs);
 
-		int									parsRequest(int fd);
+		void								parsRequest(int fd);
 
 		void								setErrorRequest(bool);
 		int									getFd() const;
@@ -103,13 +103,17 @@ class Request {
 	void	setContentType(std::vector<std::string> strSplit);
 	void	setGetParams(std::vector<std::string> vct, size_t *i);
 	
-	void	extractFile(const std::string &inpath);
-	void	extractFields(const std::string &header);
+	void	parseBodyFile(const std::string &inpath);
+	void	setHTTPFields(const std::string &header);
 	void	parseBoundaryData(const std::string &bound_data);
 
 
 	std	::string	extractFileName(const std::string &line);
 	int				awaitingRequest(int fd);
+	void			quitAwaitingRequest();
+	void			quitRequest();
+
+
 
 
 
