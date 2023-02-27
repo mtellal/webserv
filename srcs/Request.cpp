@@ -14,7 +14,7 @@ _closeConnection(false), _connectionSet(false), _acceptSet(false),
 _refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
 _methodSet(false), _hostSet(false), _tooLarge(false),
 _badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false),
-_bytesRecieved(0), _bodyFileExists(false), _bodyFilePath(this->_bodyFilePath.c_str())
+_bytesRecieved(0), _bodyFileExists(false), _bodyFilePath("./uploads/bodyfile")
 {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
@@ -337,25 +337,28 @@ std::string	Request::extractFileName(const std::string &line)
 	return ("");
 }
 
-void	Request::parseBoundaryData(const std::string &bound_data)
+/* void	Request::parseBoundaryData(const std::string &bound_data)
 {
 	std::vector<std::string>	data;
 	std::vector<std::string>	fields;
 
 	bool						contentType;
-	size_t 						total;
 
 	std::string					fileName;
 	std::ofstream				outfile;
 
 	fileName = "./uploads/";
-	total = 0;
 	contentType = false;
 	data = ft_split_str(bound_data, "\r\n\r\n");
+
+	std::cout << "data.size(): " << data.size() << std::endl;
 
 	if (data.size())
 	{
 		fields = ft_split(data[0], "\r\n");
+
+		std::cout << "fields.size(): " << fields.size() << std::endl;
+
 		if (fields.size() >= 2)
 		{
 			if (!memcmp(fields[0].c_str(), "Content-Disposition:", 20))
@@ -374,17 +377,63 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 
 			for (size_t i = 1; i < data.size(); i++)
 			{
-				if (data[i].length())
-					outfile.write(data[i].c_str(), data[i].length() - 2);
-				total += data[i].length();
+					data[i] += "\r\n\r\n";
+					outfile.write(data[i].c_str(), data[i].length());
 			}
 			outfile.close();
 			
-			if (rename(_bodyFilePath.c_str(), fileName.c_str()))
-				perror("error rename fiel failed");
+			 if (rename(_bodyFilePath.c_str(), fileName.c_str()))
+				perror("error rename fiel failed"); 
 		}
 	}
+} */
+
+
+void	Request::parseBoundaryData(const std::string &bound_data)
+{
+	bool						contentType;
+	size_t						index;
+	std::string					fileName;
+	std::vector<std::string>	fields;
+	std::ofstream				outfile;
+
+
+	fileName = "./uploads/";
+	contentType = false;
+	index = bound_data.find("\r\n\r\n");
+
+	if (index == (size_t)-1)
+		std::cerr << "err index == -1" << std::endl;
+
+	fields = ft_split(bound_data.substr(0, index), "\r\n");
+
+	std::cout << "fields.size(): " << fields.size() << std::endl;
+
+	if (fields.size() >= 2)
+	{
+		if (!memcmp(fields[0].c_str(), "Content-Disposition:", 20))
+			fileName += this->extractFileName(fields[0]);
+		if (!memcmp(fields[1].c_str(), "Content-Type:", 13))
+			contentType = true;
+	}
+
+	if (contentType)
+	{
+		outfile.open(this->_bodyFilePath.c_str(),
+			std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+		if (!outfile.is_open())
+			perror("error open outfile ");
+
+		outfile.write(bound_data.c_str() + index + 4, bound_data.length() - index - 4 - 2);
+
+		outfile.close();
+		
+		/* if (rename(_bodyFilePath.c_str(), fileName.c_str()))
+			perror("error rename fiel failed"); */
+	}
 }
+
 
 
 /*
@@ -398,6 +447,7 @@ void	Request::extractFile(const std::string &inpath)
 
 	request = fileToStr(inpath);
 	bounds = ft_split_str(request, this->_boundary);
+	std::cout << "bounds.size(): " << bounds.size() << std::endl;
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
 		this->parseBoundaryData(bounds[i]);
 }
@@ -469,25 +519,14 @@ int	Request::awaitingRequest(int fd)
 			break ;
 	}
 
-	if (bytes < 1)
+	/* if (!bytes)
 	{
-		out.close();
 		remove(this->_bodyFilePath.c_str());
 		this->_awaitingRequest = false;
 		this->_endAwaitingRequest = true;
-
-		if (!bytes)
-		{
-			this->_closeConnection = true;
-			return (0);
-		}
-		else if (bytes == -1)
-		{
-			perror("recv call failed");
-			this->getErrorPage();
-			return (-1);
-		}
-	}
+		this->_closeConnection = true;
+		return (0);
+	} */
 
 	out.close();
 	this->_bytesRecieved += total_bytes;
@@ -495,11 +534,13 @@ int	Request::awaitingRequest(int fd)
 	if ((int)this->_bytesRecieved == ft_stoi(this->_contentLength, NULL))
 	{		
 		this->extractFile(this->_bodyFilePath.c_str());
-		remove(this->_bodyFilePath.c_str());
+		//remove(this->_bodyFilePath.c_str());
 		this->_awaitingRequest = false;
 		this->_endAwaitingRequest = true;
 		this->_bodyFileExists = false;
+		return (0);
 	}
+
 
 	return (0);
 }
@@ -606,7 +647,7 @@ int		Request::parsRequest(int fd)
 			{
 				this->extractFile(this->_bodyFilePath.c_str());
 				this->_bodyFileExists = false;
-				remove(this->_bodyFilePath.c_str());
+				//remove(this->_bodyFilePath.c_str());
 			}
 			std::cout << " ///	NOT AN AWAITING REQUEST	/////" << std::endl;
 		}
