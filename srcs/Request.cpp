@@ -403,7 +403,6 @@ void	Request::parseBodyFile(const std::string &inpath)
 
 	request = fileToStr(inpath);
 	bounds = ft_split_str(request, this->_boundary);
-	std::cout << "bounds.size(): " << bounds.size() << std::endl;
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
 		this->parseBoundaryData(bounds[i]);
 }
@@ -502,6 +501,62 @@ void	Request::quitRequest()
 	return ;
 }
 
+bool		Request::postRequest(const std::string &header, size_t total)
+{
+	if (this->_methodSet && this->_method == "POST")
+	{
+		if (ft_stoi(this->_contentLength, NULL) != (int)(total - (header.length() + 4)))
+		{
+			std::cout << "Request: NEED TO WAIT ANOTHER REQUEST" << std::endl;
+			this->_awaitingRequest = true;
+			this->_bytesRecieved += (total - (header.length() + 4));		
+			std::cout << "Request: _bytesRecieved = " << this->_bytesRecieved << std::endl;	
+		}
+		else
+		{
+			this->parseBodyFile(this->_bodyFilePath.c_str());
+			this->_bodyFileExists = false;
+			remove(this->_bodyFilePath.c_str());
+		}			
+		return (true);
+	}
+	return (false);
+}
+
+void	Request::bodyRequest(int fd, const std::string &body, size_t &body_bytes, size_t index)
+{
+	size_t			bufflen = 4096;
+	char			buff[bufflen + 1];
+	int				oct = 0;
+	std::ofstream 	out;
+
+
+	if (body.length())
+	{
+		out.open(this->_bodyFilePath.c_str(), std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
+
+		if (!out.is_open())
+		{
+			perror("can't open body file: ");
+			return (this->quitRequest());
+		}
+
+		out.write(&buff[index + 4],  body_bytes);
+
+		while ((oct = recv(fd, buff, bufflen, 0)) > 0)
+		{
+			body_bytes += oct;
+			buff[oct] = '\0';
+			out.write(buff, oct);
+			if (oct < (int)bufflen)
+				break ;
+		}
+
+		out.close();
+		this->_bodyFileExists = true;
+		std::cout << "Request: " <<  body_bytes << " bytes wrote in " << this->_bodyFileExists << std::endl;	
+	}
+}
 
 void		Request::parsRequest(int fd)
 {
@@ -510,17 +565,16 @@ void		Request::parsRequest(int fd)
 	int				oct = 0;
 	size_t			index;
 	size_t			total;
+	size_t 			body_bytes;
 	std::string 	request;
 	std::string		header;
 	std::string		body;
 	std::ofstream 	out;
 
-
 	total = 0;
 	if (!this->_awaitingRequest)
 	{
 		oct = recv(fd, buff, bufflen, 0);
-
 		if (oct < 1)
 		{
 			if (!oct)
@@ -528,19 +582,18 @@ void		Request::parsRequest(int fd)
 			else if (oct == -1)
 			{
 				perror("recv call failed");
-				this->quitRequest();
+				return (this->quitRequest());
 			}
 		}
-		
+
 		total = oct;
 		buff[oct] = '\0';
 		request.append(buff);
-
+		
 		index = request.find("\r\n\r\n");
 
 		if (index == -(size_t)1)
 			return (this->quitRequest());
-
 
 		header = request.substr(0, index);
 		body = request.substr(index + 4, request.length());
@@ -552,47 +605,12 @@ void		Request::parsRequest(int fd)
 
 		std::cout << "Request: body.length() = " << body.length() << std::endl;
 
-		if (body.length())
-		{
+		body_bytes = total - (header.length() + 4);
 
-			std::ofstream	out(this->_bodyFilePath.c_str(), std::ofstream::out | std::ofstream::binary | std::ofstream::trunc);
+		this->bodyRequest(fd, body, body_bytes, index);
 
-			out.write(&buff[index + 4],  total - (header.length() + 4));
-
-			while ((oct = recv(fd, buff, bufflen, 0)) > 0)
-			{
-				total += oct;
-				buff[oct] = '\0';
-				out.write(buff, oct);
-				if (oct < (int)bufflen)
-					break ;
-			}
-
-			out.close();
-
-			this->_bodyFileExists = true;
-			
-			std::cout << "Request: " <<  total - (header.length() + 4) << " bytes wrote (total - header) in " << this->_bodyFileExists << std::endl;	
-		}
-
-		if (this->_methodSet && this->_method == "POST"
-					&& ft_stoi(this->_contentLength, NULL) != (int)(total - (header.length() + 4)))
-		{
-			std::cout << "Request: NEED TO WAIT ANOTHER REQUEST" << std::endl;
-			this->_awaitingRequest = true;
-			this->_bytesRecieved += (total - (header.length() + 4));		
-			std::cout << "Request: _bytesRecieved = " << this->_bytesRecieved << std::endl;	
-		}
-		else
-		{
-			if (this->_bodyFileExists)
-			{
-				this->parseBodyFile(this->_bodyFilePath.c_str());
-				this->_bodyFileExists = false;
-				remove(this->_bodyFilePath.c_str());
-			}
+		if (!this->postRequest(header, body_bytes))
 			std::cout << "Request: ///	NOT AN AWAITING REQUEST	/////" << std::endl;
-		}
 
 		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 			this->getErrorPage();
