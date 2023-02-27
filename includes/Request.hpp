@@ -8,6 +8,8 @@
 # include <map>
 # include <fstream>
 
+# define BUFFLEN 4096
+
 class Request {
 
 	public:
@@ -100,23 +102,19 @@ class Request {
 		void			setContentLength(std::vector<std::string> strSplit);
 		void			setContentType(std::vector<std::string> strSplit);
 		void			setGetParams(std::vector<std::string> vct, size_t *i);
-		
-		void			parseBodyFile(const std::string &inpath);
+		void			parseBodyFile();
 		void			setHTTPFields(const std::string &header);
 		void			parseBoundaryData(const std::string &bound_data);
-
-
-		std::string		extractFileName(const std::string &line);
-		int				awaitingRequest(int fd);
+		void			bodyRequest(const std::string &body, size_t &total);
+		void			bodyRequest(int fd, char buff[BUFFLEN + 1],
+										const std::string &body, size_t &body_bytes, size_t index);
 		void			quitAwaitingRequest();
 		void			quitRequest();
-		bool			postRequest(const std::string &header, size_t total);
-		void			bodyRequest(const std::string &body, size_t &total);
-
-		void			bodyRequest(int fd, const std::string &body, size_t &body_bytes, size_t index);
-
-
 		void			getErrorPage();
+
+		bool			postRequest(size_t total);
+		int				awaitingRequest(int fd);
+		std::string		extractFileName(const std::string &line);
 };
 
 std::ostream &operator<<( std::ostream & o, Request const & rhs);

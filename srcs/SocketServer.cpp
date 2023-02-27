@@ -268,13 +268,7 @@ int		SocketServer::epollWait() {
 			Request		req(event[j].data.fd);
 
 			if ((idx_wreq = isAwaitingRequest(event[j].data.fd)) != (size_t)-1)
-			{
-				std::cout << "Request created from awainting Request" << std::endl;
 				req = this->_awaitingRequest[idx_wreq];
-			}
-			else
-				std::cout << "Request created from defautl contructor" << std::endl;
-
 
 			req.parsRequest(event[j].data.fd);
 
@@ -282,16 +276,11 @@ int		SocketServer::epollWait() {
 					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);
 
 			if (req.getcloseConnection())
-			{
 				this->closeConnection(event[j].data.fd);
-			}
 			else if (req.getAwaitingRequest())
 			{
 				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
-				{
-					std::cout << "\nreq is push back to _awaitingRequest\n" << std::endl;
 					this->_awaitingRequest.push_back(req);
-				}
 				else
 					this->_awaitingRequest[idx_wreq] = req;
 			}
