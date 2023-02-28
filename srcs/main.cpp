@@ -4,9 +4,6 @@
 int main(int argc, char **argv, char **envp)
 {
 	std::string	file;
- 
-	(void)argv;
-	(void)envp;
 
 	if (argc > 2)
 	{
@@ -32,6 +29,15 @@ int main(int argc, char **argv, char **envp)
 	Pour get et post, checker le format des args envoyes
 	Voir 4096
 
+	Voir comportement nginx quand on listen avec une adress precise + 1 port, et qu'on
+	essaye de se connecter sur une autre adresse avec ce meme port.
+
+	Autres codes err ?
+
+	Ajouter directive fichier conf -> Make the route able to accept uploaded files and
+	configure where they should be saved.
+
+	Method DELETE, code 202 ?
 	Method HEAD ?
 
 	Plusieurs fois le meme port dans le fichier conf ?

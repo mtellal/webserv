@@ -58,7 +58,7 @@ class Server : public Directives {
 		bool						_serverNameSet;
 		bool						_errorServer;
 		bool						_blockClose;
-		void						(Server::*functPtr[10])(std::vector<std::string>, int *i);
+		void						(Server::*functPtr[11])(std::vector<std::string>, int *i);
 
 		void						setHost(std::vector<std::string> host, int *i);
 		bool						checkFormatHost(std::string host);
@@ -68,6 +68,7 @@ class Server : public Directives {
 		bool						isLocationBlock(std::vector<std::string> splitLine);
 		bool						checkHost(std::string host);
 		void						error_msg(const int &n_line, const std::string &err_msg);
+		std::string					getIPFromHostName(const std::string& hostName);
 
 
 };

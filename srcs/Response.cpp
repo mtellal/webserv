@@ -1,6 +1,9 @@
 #include "Response.hpp"
 #include "Cgi.hpp"
 
+#include <stdio.h>
+#include <cstdlib>
+
 Response::Response() :
 _locBlocSelect(false), _isDir(false), _autoindex(false),
 _closeConnection(false)	{}
@@ -102,7 +105,7 @@ bool	Response::rightPathLocation() {
 		std::cerr << "can't read file informations from " << root << " because: ";
 		perror("");
 	}
-	if (S_ISREG(fileOrDir.st_mode))
+	if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
 		this->_path.push_back(root);
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
@@ -141,7 +144,7 @@ bool	Response::rightPathServer() {
 		std::cerr << "can't read file informations from " << root << " because: ";
 		perror("");
 	}
-	if (S_ISREG(fileOrDir.st_mode))
+	if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
 		this->_path.push_back(root);
 	else if (S_ISDIR(fileOrDir.st_mode))
 	{
@@ -291,7 +294,7 @@ std::string	Response::findRightError() {
 	if (this->_autoindex and !this->methodNotAllowed())
 		path = this->_defaultPage.createAutoindexPage(this->_path);
 	else if (!tmp or !pageFind)
-		path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
+		path = this->_defaultPage.createDefaultPage(this->_statusCode);
 	if (tmp)
 		tmp.close();
 	return path;
@@ -311,6 +314,36 @@ void	Response::httpRedir() {
 	return ;
 }
 
+std::string	Response::deleteResource(std::string path) {
+	struct stat stat_buf;
+	int result = stat(path.c_str(), &stat_buf);
+
+	if (result != 0)
+		this->_statusCode = 204;
+	if (S_ISDIR(stat_buf.st_mode))
+	{
+		result = std::system(("rm -rf " + path).c_str());
+		if (result == 0)
+			this->_statusCode = 200;
+		else
+			this->_statusCode = 204;
+	}
+	else if (S_ISREG(stat_buf.st_mode))
+	{
+		result = std::remove(path.c_str());
+		if (result == 0)
+			this->_statusCode = 200;
+		else
+			this->_statusCode = 204;
+	}
+	else
+	{
+		this->_statusCode = 204;
+	}
+
+	return this->_defaultPage.createDefaultPage(this->_statusCode);
+}
+
 void	Response::sendData() {
 	std::string	path;
 	bool		err;
@@ -320,26 +353,29 @@ void	Response::sendData() {
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
-	if (err or this->methodNotAllowed())
+	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
 
 	if (((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
-			this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
+		this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
 
+	if (this->_req.getMethod() == "DELETE")
+		path = this->deleteResource(this->_path[0]);
 	this->sendHeader(path);
 }
 
-void	Response::sendContentTypeError() {
+std::string	Response::sendContentTypeError() {
 	std::string	res;
 	std::string	path;
 
-	path = this->_defaultPage.createDefaultErrorPage(this->_statusCode);
+	path = this->_defaultPage.createDefaultPage(this->_statusCode);
 
-	Header	header(path, &this->_statusCode, this);
+	Header	header(path, &this->_statusCode);
 
-	res = header.getHeader();
+	res = header.getHeaderRequestError();
 	write(this->_req.getFd(), res.c_str(), res.size());
+	return path;
 }
 
 void	Response::sendHeader(std::string path)
@@ -351,7 +387,10 @@ void	Response::sendHeader(std::string path)
 
 
 	if (header.getContentType() == "406")
-		sendContentTypeError();
+	{
+		this->_statusCode = 406;
+		path = sendContentTypeError();
+	}
 	else
 	{
 		if (cgi.isCgiRequest(path) != -1)

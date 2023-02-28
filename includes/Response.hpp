@@ -28,15 +28,14 @@ class Response
 
 		Response	&operator=(Response const &rhs);
 
-		Server		getServ() const;
-		Request		getRequest() const;
-		bool		getlocBlocSelect() const;
-		Location	getLocBloc() const;
-		bool		getCloseConnection() const;
-
-		void		selectServerBlock();
-		void		selectLocationBlock();
-		void		sendData();
+		void						selectServerBlock();
+		void						selectLocationBlock();
+		void						sendData();
+		bool						getlocBlocSelect() const;
+		bool						getCloseConnection() const;
+		Server						getServ() const;
+		Request						getRequest() const;
+		Location					getLocBloc() const;
 
 
 	private:
@@ -57,24 +56,22 @@ class Response
 		std::string					cgi_script;
 		DefaultPage					_defaultPage;
 
-		std::string					rightRoot();
-		std::vector<std::string>	rightIndex();
 		bool						rightPathLocation();
 		bool						rightPathServer();
 		std::string					rightPathErr(bool &pageFind);
+		std::string					rightRoot();
+		std::vector<std::string>	rightIndex();
 
-
-		std::string	testAllPaths(bool *err);
-		bool		rightPath();
-		void		sendHeader(std::string path);
-		void		sendPage(std::string path, const std::string &cgi_content);
-		bool		methodNotAllowed() const;
-		void		httpRedir();
-		void		findRightCodeError();
-		std::string	findRightError();
-		void		sendContentTypeError();
-		std::string	contentFile(const std::string &path_file);
-
+		void						sendHeader(std::string path);
+		void						sendPage(std::string path, const std::string &cgi_content);
+		void						httpRedir();
+		void						findRightCodeError();
+		bool						rightPath();
+		bool						methodNotAllowed() const;
+		std::string					sendContentTypeError();
+		std::string					findRightError();
+		std::string					testAllPaths(bool *err);
+		std::string					deleteResource(std::string path);
 };
 
 

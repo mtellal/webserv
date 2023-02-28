@@ -155,7 +155,7 @@ void								Request::getErrorPage() {
 		statusCode = 500;
 
 	DefaultPage	defaultPage;
-	path = defaultPage.createDefaultErrorPage(statusCode);
+	path = defaultPage.createDefaultPage(statusCode);
 
 	Header header(path, &statusCode);
 	strHeader = header.getHeaderRequestError();
@@ -302,10 +302,10 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //										M E M B E R S   F U N C T I O N S 									  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 
 std::string						Request::extractFileName(const std::string &line)

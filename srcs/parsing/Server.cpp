@@ -1,4 +1,6 @@
 #include "Server.hpp"
+#include <sstream>
+#include <arpa/inet.h>
 
 Server::Server() :
 Directives(),  _host("0.0.0.0"),
@@ -15,6 +17,7 @@ _serverNameSet(false), _errorServer(false), _blockClose(false)
 	this->functPtr[7] = &Directives::setHttpRedir;
 	this->functPtr[8] = &Directives::setHttpMethods;
 	this->functPtr[9] = &Directives::setCgi;
+	this->functPtr[10] = &Directives::setUpload;
 
 }
 
@@ -129,7 +132,7 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 		if (splitPort.size() == 2)
 		{
 			if (!this->checkHost(splitPort[0]))
-				error_msg(*i, "directive listen, wrong syntaxe");
+				error_msg(*i, "directive listen, wrong syntaxe or unable to resolve host name");
 
 			this->_hostSet = true;
 			this->_host = splitPort[0];
@@ -149,7 +152,6 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 					error_msg(*i, "directive listen, wrong syntaxe");
 				else
 				{
-					this->_hostSet = true;
 					this->_host = "0.0.0.0";
 					this->setPort(host[1], i);
 				}
@@ -158,24 +160,28 @@ void	Server::setHost(std::vector<std::string> host, int *i) {
 	}
 }
 
+std::string	Server::getIPFromHostName(const std::string& hostName) {
+	struct hostent* host = gethostbyname(hostName.c_str());
+	if (!host)
+		return "";
+
+	std::stringstream ss;
+	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
+	return ss.str();
+}
+
 bool	Server::checkHost(std::string host) {
 	std::vector<std::string> splitHost;
-	bool	err;
-	int		nb;
 
-	if (host == "localhost")
-		host = "127.0.0.1";
 	splitHost = ft_split(host.c_str(), ".");
-	if (splitHost.size() != 4)
-		return false;
-	for (int j = 0; j < 4; j++)
-	{
-		err = false;
-		nb = ft_stoi(splitHost[j], &err);
-		if (err or nb < 0 or nb > 255)
-			return false;
-	}
-	return true;
+	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
+		host == "0.0.0.0")
+		return true;
+
+	splitHost = ft_split(getIPFromHostName(host), ".");
+	if (splitHost.size() == 4 && splitHost[0] == "127")
+		return true;
+	return false;
 }
 
 void	Server::setPort(std::string port, int *line)
@@ -219,8 +225,8 @@ void	Server::setServerName(std::vector<std::string> serverName, int *i) {
 void	Server::readServBlock(std::ifstream &file, int *i) {
 	int j;
 	std::string line;
-	std::string words[10] = { "listen", "server_name", "error_page", "client_max_body_size",
-						 "root", "autoindex", "index", "return", "http_methods", "cgi" };
+	std::string words[11] = { "listen", "server_name", "error_page", "client_max_body_size",
+						 "root", "autoindex", "index", "return", "http_methods", "cgi", "upload" };
 
 	*i += 1;
 	while (std::getline(file, line))
@@ -250,7 +256,7 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 			}
 			else
 			{
-				while (j < 10)
+				while (j < 11)
 				{
 					if (tmp[0] == words[j])
 					{
@@ -265,7 +271,7 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 					}
 					j++;
 				}
-				if (j == 10)
+				if (j == 11)
 					error_msg(*i, "incorrect directive");
 				if (this->_errorServer or this->_errorDirectives)
 					return ;
