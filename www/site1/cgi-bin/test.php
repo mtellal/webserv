@@ -9,14 +9,10 @@
 <body>
 	<h1>TEST CGI</h1>
 	
-	<?php 
-		echo "<h1>APPEAR WHEN CGI EXECUTED</h1></br>";
-		echo "<h1> The current user is: ";
-		#phpinfo();
-		echo $_ENV["USER"]; 
-		echo "</br>";
-		echo $_SERVER["PATH"];
-		echo "</h1>" ;
+	<?php
+		$filename = "../uploads/mario.webp";
+		echo '<img src="mario.webp">';
+
 	?>
 
 </body>

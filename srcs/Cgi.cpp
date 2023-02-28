@@ -75,7 +75,7 @@ int     Cgi::isCgiRequest(const std::string &path_file)
         extension += it->first;
         if ((index = path_file.find(extension)) != (size_t)-1 && !path_file[index + extension.length()])
         {
-            this->_path_cgi = "." + it->second;            
+            this->_path_cgi = it->second;            
             return (1);
         }
         it++;
@@ -289,7 +289,7 @@ void                child(int fdin, int pipe[2], const std::string &path_script,
 std::string        parent(int pipe[2])
 {
     std::string response;
-    int         len = 100;
+    int         len = 4096;
     char        buff[len];
     int         bytes;
 
@@ -297,7 +297,7 @@ std::string        parent(int pipe[2])
     bytes = read(pipe[0], buff, len - 1);
     buff[bytes] = '\0';
     response.append(buff);
-
+//std::cout << response << std::endl;
     while (bytes > 0)
     {
         bytes = read(pipe[0], buff, len - 1);
@@ -315,7 +315,7 @@ std::string        parent(int pipe[2])
     POST: redirect recv bytes in stdin cgi process
 */
 
-int           Cgi::execute(int fdin, const std::string &path_file, std::string &body)
+int           Cgi::execute(const std::string &path_file, std::string &body)
 {
     int             p[2];
     pid_t           f;
@@ -326,16 +326,29 @@ int           Cgi::execute(int fdin, const std::string &path_file, std::string &
     std::string     response;
     std::string     header;
     size_t          index;
-
+    
+    int             in;
+    
+    in = STDIN_FILENO;
+    std::cout << "path_file = " << path_file << std::endl;
     env = mapToTab();
     args = exec_args(path_file);
 
-    std::cout << "this->_path_cgi = " << this->_path_cgi << std::endl;
-
+    std::cout << "Cgi: path script " << this->_path_cgi << std::endl; 
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
         return (500);
+    }
+
+    if (this->_req.getMethod() == "POST")
+    {
+        std::cout << "stdin from cgi is a file" << std::endl;
+        if ((in = open(path_file.c_str(), 0)) == -1)
+        {
+            perror("cgi.execute failed can't open path_file");
+            return (500);
+        }
     }
 
     f = fork();
@@ -345,14 +358,12 @@ int           Cgi::execute(int fdin, const std::string &path_file, std::string &
         return (500);
     }
     if (f == 0)
-    {
-        // child
-        child(fdin, p, this->_path_cgi, args, env);
-    }
+        child(in, p, this->_path_cgi, args, env);
     else
     {
         // pere
-        
+        if (in != STDIN_FILENO)
+            close(in);
         int status;
 
         wait(&status);
@@ -364,6 +375,11 @@ int           Cgi::execute(int fdin, const std::string &path_file, std::string &
             std::cout << response << std::endl;
             return (500);
         }
+
+        std::cout << "//////////////////////" << std::endl;
+        std::cout << response << std::endl;
+        std::cout << "//////////////////////" << std::endl;
+
         index = response.find("\n\r");
 
         if (index == (size_t)-1)
@@ -372,10 +388,11 @@ int           Cgi::execute(int fdin, const std::string &path_file, std::string &
             return (502);
         }
 
-        header = response.substr(0, response.find("\n\r"));
-        body = response.substr(response.find("\n\r") + 2, response.length());
+        header = response.substr(0, index);
+        body = response.substr(index + 2, response.length());
 
-        std::cout << header << std::endl;
+        std::cout << "///// CGI HEADER  /////" << header << std::endl;
+        std::cout << "///// CGI BODY  /////" << body << std::endl;
 
         extractFields(header);
 

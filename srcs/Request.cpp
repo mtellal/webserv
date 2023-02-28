@@ -91,13 +91,29 @@ void		Request::setErrorRequest(bool v)
 //												G E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-size_t								Request::getBytesRecievd() const { return (this->_bytesRecieved); }
-
-int									Request::getFd() const { return this->_fd; }
-
 bool								Request::getErrRequest() const { return this->_errRequest; }
 
 bool								Request::getcloseConnection() const { return this->_closeConnection; }
+
+bool								Request::getCgi() const { return (this->_cgi); }
+
+bool								Request::getConnectionSet() const { return this->_connectionSet; }
+
+bool								Request::getAcceptSet() const { return this->_acceptSet; }
+
+bool								Request::getRefererSet() const { return this->_refererSet; }
+
+bool								Request::getAgentSet() const { return this->_agentSet; }
+
+bool								Request::getBadRequest() const { return this->_badRequest; }
+
+bool								Request::getAwaitingRequest() const { return this->_awaitingRequest; }
+
+bool								Request::getEndAwaitingRequest() const { return this->_endAwaitingRequest; }
+
+int									Request::getFd() const { return this->_fd; }
+
+size_t								Request::getBytesRecievd() const { return (this->_bytesRecieved); }
 
 std::string							Request::getMethod() const { return this->_method; }
 
@@ -126,20 +142,6 @@ std::string							Request::getContentType() const { return this->_contentType; }
 std::string							Request::getAccept() const { return this->_accept; }
 
 std::map<std::string, std::string>	Request::getQueryString() const { return this->_queryString; }
-
-bool								Request::getConnectionSet() const { return this->_connectionSet; }
-
-bool								Request::getAcceptSet() const { return this->_acceptSet; }
-
-bool								Request::getRefererSet() const { return this->_refererSet; }
-
-bool								Request::getAgentSet() const { return this->_agentSet; }
-
-bool								Request::getBadRequest() const { return this->_badRequest; }
-
-bool								Request::getAwaitingRequest() const { return this->_awaitingRequest; }
-
-bool								Request::getEndAwaitingRequest() const { return this->_endAwaitingRequest; }
 
 void								Request::getErrorPage() {
 	std::string	path;
@@ -608,8 +610,9 @@ void						Request::parsRequest(int fd)
 			else if (oct == -1)
 			{
 				perror("recv call failed");
-				return (this->quitRequest());
+				this->quitRequest();
 			}
+			return ;
 		}
 
 		buff[oct] = '\0';

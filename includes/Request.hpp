@@ -29,6 +29,7 @@ class Request {
 		bool								getcloseConnection() const;
 		bool								getAwaitingRequest() const;
 		bool								getEndAwaitingRequest() const; 
+		bool								getCgi() const;
 		bool								getConnectionSet() const;
 		bool								getAcceptSet() const;
 		bool								getRefererSet() const;

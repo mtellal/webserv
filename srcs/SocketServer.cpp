@@ -395,7 +395,7 @@ int		SocketServer::epollWait() {
 			printRequest();
 
 			Request		req(event[j].data.fd);
-			// std::cout << "////////////////// END REQUEST  ///////////////////" << std::endl;
+
 
 			if ((idx_wreq = isAwaitingRequest(event[j].data.fd)) != (size_t)-1)
 				req = this->_awaitingRequest[idx_wreq];

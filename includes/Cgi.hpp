@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <cstdlib>
 #include <string.h>
+#include <fcntl.h>
 
 #include "Request.hpp"
 #include "Server.hpp"
@@ -41,7 +42,7 @@ class Cgi
         int             isCgiRequest(const std::string &path_file);
         void            initEnv();
         void            printEnv();
-        int             execute(int fdin, const std::string &path_file, std::string &body);
+        int             execute(const std::string &path_file, std::string &body);
 
         Header          getHeader() const;
 

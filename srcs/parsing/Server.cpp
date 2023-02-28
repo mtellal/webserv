@@ -18,7 +18,6 @@ _serverNameSet(false), _errorServer(false), _blockClose(false)
 	this->functPtr[8] = &Directives::setHttpMethods;
 	this->functPtr[9] = &Directives::setCgi;
 	this->functPtr[10] = &Directives::setUpload;
-
 }
 
 Server::Server(Server const &src) : Directives(src) {
