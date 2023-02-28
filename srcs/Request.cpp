@@ -14,7 +14,8 @@ _closeConnection(false), _connectionSet(false), _acceptSet(false),
 _refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
 _methodSet(false), _hostSet(false), _tooLarge(false),
 _badRequest(false), _awaitingRequest(false), _endAwaitingRequest(false),
-_bytesRecieved(0), _bodyFileExists(false), _bodyFilePath("./uploads/bodyfile")
+_bytesRecieved(0), _bodyFileExists(false), _bodyFilePath("./uploads/bodyfile"),
+_cgi(false), _cgiInputFile("./uploads/cgi")
 {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
@@ -76,13 +77,9 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_bytesRecieved = rhs._bytesRecieved;
 		this->_bodyFileExists = rhs._bodyFileExists;
 		this->_bodyFilePath = rhs._bodyFilePath;
+		this->_cgi = rhs._cgi;
 	}
 	return *this;
-}
-
-size_t		Request::getBytesRecievd() const
-{
-	return (this->_bytesRecieved);
 }
 
 void		Request::setErrorRequest(bool v)
@@ -90,102 +87,91 @@ void		Request::setErrorRequest(bool v)
 	this->_errRequest = v;
 }
 
-int			Request::getFd() const {
-	return this->_fd;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												G E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+size_t								Request::getBytesRecievd() const { return (this->_bytesRecieved); }
+
+int									Request::getFd() const { return this->_fd; }
+
+bool								Request::getErrRequest() const { return this->_errRequest; }
+
+bool								Request::getcloseConnection() const { return this->_closeConnection; }
+
+std::string							Request::getMethod() const { return this->_method; }
+
+std::string							Request::getPath() const { return this->_path;}
+
+std::string							Request::getHttpVersion() const { return this->_httpVersion; }
+
+std::string							Request::getHost() const { return this->_host; }
+
+std::string							Request::getPort() const { return this->_port; }
+
+std::string							Request::getConnection() const { return this->_connection; }
+
+std::string							Request::getReferer() const { return this->_referer; }
+
+std::string							Request::getAgent() const { return this->_agent; }
+
+std::string							Request::getServerName() const { return this->_serverName; }
+
+std::string							Request::getAuthentification() const { return this->_authentification;}
+
+std::string							Request::getContentLength() const { return this->_contentLength; }
+
+std::string							Request::getContentType() const { return this->_contentType; }
+
+std::string							Request::getAccept() const { return this->_accept; }
+
+std::map<std::string, std::string>	Request::getQueryString() const { return this->_queryString; }
+
+bool								Request::getConnectionSet() const { return this->_connectionSet; }
+
+bool								Request::getAcceptSet() const { return this->_acceptSet; }
+
+bool								Request::getRefererSet() const { return this->_refererSet; }
+
+bool								Request::getAgentSet() const { return this->_agentSet; }
+
+bool								Request::getBadRequest() const { return this->_badRequest; }
+
+bool								Request::getAwaitingRequest() const { return this->_awaitingRequest; }
+
+bool								Request::getEndAwaitingRequest() const { return this->_endAwaitingRequest; }
+
+void								Request::getErrorPage() {
+	std::string	path;
+	std::string	strHeader;
+	std::string	page;
+	int			statusCode;
+
+	if (this->_tooLarge)
+		statusCode = 413;
+	if (!this->_methodSet)
+		statusCode = 400;
+	else
+		statusCode = 500;
+
+	DefaultPage	defaultPage;
+	path = defaultPage.createDefaultErrorPage(statusCode);
+
+	Header header(path, &statusCode);
+	strHeader = header.getHeaderRequestError();
+	send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL);
+
+	page = fileToStr(path);
+	send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL);
+	this->_closeConnection = true;
 }
 
-bool		Request::getErrRequest() const {
-	return this->_errRequest;
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												S E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool		Request::getcloseConnection() const {
-	return this->_closeConnection;
-}
 
-std::string	Request::getMethod() const {
-	return this->_method;
-}
-
-std::string	Request::getPath() const {
-	return this->_path;
-}
-
-std::string	Request::getHttpVersion() const {
-	return this->_httpVersion;
-}
-
-std::string	Request::getHost() const {
-	return this->_host;
-}
-
-std::string	Request::getPort() const {
-	return this->_port;
-}
-
-std::string	Request::getConnection() const {
-	return this->_connection;
-}
-
-std::string	Request::getReferer() const {
-	return this->_referer;
-}
-
-std::string	Request::getAgent() const {
-	return this->_agent;
-}
-
-std::string	Request::getServerName() const {
-	return this->_serverName;
-}
-
-std::string	Request::getAuthentification() const {
-	return this->_authentification;
-}
-std::string	Request::getContentLength() const {
-	return this->_contentLength;
-}
-
-std::string	Request::getContentType() const {
-	return this->_contentType;
-}
-
-std::string	Request::getAccept() const {
-	return this->_accept;
-}
-
-std::map<std::string, std::string>	Request::getQueryString() const {
-	return this->_queryString;
-}
-
-bool		Request::getConnectionSet() const {
-	return this->_connectionSet;
-}
-
-bool		Request::getAcceptSet() const {
-	return this->_acceptSet;
-}
-
-bool		Request::getRefererSet() const {
-	return this->_refererSet;
-}
-
-bool		Request::getAgentSet() const {
-	return this->_agentSet;
-}
-
-bool		Request::getBadRequest() const {
-	return this->_badRequest;
-}
-
-bool		Request::getAwaitingRequest() const {
-	return this->_awaitingRequest;
-}
-
-bool		Request::getEndAwaitingRequest() const {
-	return this->_endAwaitingRequest;
-}
-
-void	Request::parsArgs(std::string arg) {
+void							Request::parsArgs(std::string arg) {
 	std::vector<std::string>	args;
 	std::vector<std::string>	keyValue;
 
@@ -201,7 +187,7 @@ void	Request::parsArgs(std::string arg) {
 	}
 }
 
-void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
+void							Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 	std::vector<std::string>	splitBis;
 
 		if (strSplit.size() != 3)
@@ -216,33 +202,35 @@ void	Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 			if (strSplit.size() == 2)
 				this->parsArgs(strSplit[1]);
 			this->_path = strSplit[0];
+			if (this->_path.length() && !memcmp(this->_path.c_str(), "/cgi-bin/", 9))
+				this->_cgi = true;
 			this->_methodSet = true;
 		}
 }
 
-void	Request::setHostPort(std::vector<std::string> strSplit) {
+void							Request::setHostPort(std::vector<std::string> strSplit) {
 	strSplit = ft_split(strSplit[1].c_str(), ":");
 	this->_host = strSplit[0];
 	this->_port = strSplit[1];
 	this->_hostSet = true;
 }
 
-void	Request::setConnection(std::vector<std::string> strSplit) {
+void							Request::setConnection(std::vector<std::string> strSplit) {
 	this->_connection = strSplit[1];
 	this->_connectionSet = true;
 }
 
-void	Request::setAccept(std::vector<std::string> strSplit) {
+void							Request::setAccept(std::vector<std::string> strSplit) {
 	this->_accept = strSplit[1];
 	this->_acceptSet = true;
 }
 
-void	Request::setReferer(std::vector<std::string> strSplit) {
+void							Request::setReferer(std::vector<std::string> strSplit) {
 	this->_referer = strSplit[1];
 	this->_refererSet = true;
 }
 
-void	Request::setAgent(std::vector<std::string> strSplit) {
+void							Request::setAgent(std::vector<std::string> strSplit) {
 	// for (size_t i = 1; i < strSplit.size(); i++)
 		// std::cout << strSplit[i] << std::endl;
 	// std::cout << std::endl;
@@ -256,7 +244,7 @@ void	Request::setAgent(std::vector<std::string> strSplit) {
 	this->_agentSet = true;
 }
 
-void	Request::setAuthentification(std::vector<std::string> strSplit) {
+void							Request::setAuthentification(std::vector<std::string> strSplit) {
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
@@ -265,11 +253,11 @@ void	Request::setAuthentification(std::vector<std::string> strSplit) {
 	}
 }
 
-void	Request::setContentLength(std::vector<std::string> strSplit) {
+void							Request::setContentLength(std::vector<std::string> strSplit) {
 	this->_contentLength = strSplit[1];
 }
 
-void	Request::setContentType(std::vector<std::string> strSplit) {
+void							Request::setContentType(std::vector<std::string> strSplit) {
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
@@ -286,7 +274,7 @@ void	Request::setContentType(std::vector<std::string> strSplit) {
 	}
 }
 
-void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
+void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	std::vector<std::string>	strSplit;
 	std::string					endBoundary = this->_boundary + "--";
 	std::string					name;
@@ -314,7 +302,13 @@ void	Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
-std::string	Request::extractFileName(const std::string &line)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//										M E M B E R S   F U N C T I O N S 									  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+std::string						Request::extractFileName(const std::string &line)
 {
 	std::string 				tmp(line);
 	std::vector<std::string>	v;
@@ -337,7 +331,7 @@ std::string	Request::extractFileName(const std::string &line)
 	return ("");
 }
 
-void	Request::quitAwaitingRequest()
+void							Request::quitAwaitingRequest()
 {
 	remove(this->_bodyFilePath.c_str());
 	this->_endAwaitingRequest = true;
@@ -349,7 +343,7 @@ void	Request::quitAwaitingRequest()
 	then parse and save it with the proper file name
 */
 
-void	Request::parseBoundaryData(const std::string &bound_data)
+void							Request::parseBoundaryData(const std::string &bound_data)
 {
 	bool						contentType;
 	size_t						index;
@@ -370,11 +364,11 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 	}
 
 	fields = ft_split(bound_data.substr(0, index), "\r\n");
-	if (fields.size() >= 2)
+	for (size_t i = 0; i < fields.size(); i++)
 	{
-		if (!memcmp(fields[0].c_str(), "Content-Disposition:", 20))
-			fileName += this->extractFileName(fields[0]);
-		if (!memcmp(fields[1].c_str(), "Content-Type:", 13))
+		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
+			fileName += this->extractFileName(fields[i]);
+		if (!memcmp(fields[i].c_str(), "Content-Type:", 13))
 			contentType = true;
 	}
 
@@ -399,7 +393,7 @@ void	Request::parseBoundaryData(const std::string &bound_data)
 	Extract and save the datas/files between boundarys
 */
 
-void	Request::parseBodyFile()
+void							Request::parseBodyFile()
 {
 	std::string					request;
 	std::vector<std::string>	bounds;
@@ -416,7 +410,7 @@ void	Request::parseBodyFile()
 	Save request data in bodyFile,
 	and verify if it is the last request
 */
-int	Request::awaitingRequest(int fd)
+int								Request::awaitingRequest(int fd)
 {
 	int							bytes = 0;
 	size_t						total_bytes = 0;
@@ -463,15 +457,26 @@ int	Request::awaitingRequest(int fd)
 
 	if ((int)this->_bytesRecieved == ft_stoi(this->_contentLength, NULL))
 	{		
-		this->parseBodyFile();
-		this->quitAwaitingRequest();
+		if (this->_cgi)
+		{
+			std::cout << "Request: body file renamed" << std::endl;
+			std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
+		}
+		else
+		{
+			this->parseBodyFile();
+			remove(this->_bodyFilePath.c_str());
+		}
+
+		this->_endAwaitingRequest = true;
+		this->_awaitingRequest = false;
 		this->_bodyFileExists = false;
 	}
 
 	return (0);
 }
 
-void	Request::quitRequest()
+void						Request::quitRequest()
 {
 	this->getErrorPage();
 	return ;
@@ -482,7 +487,7 @@ void	Request::quitRequest()
 	or need others request
 */
 
-bool		Request::postRequest(size_t body_bytes)
+bool						Request::postRequest(size_t body_bytes)
 {
 	if (this->_methodSet && this->_method == "POST")
 	{
@@ -493,9 +498,17 @@ bool		Request::postRequest(size_t body_bytes)
 		}
 		else
 		{
-			this->parseBodyFile();
-			remove(this->_bodyFilePath.c_str());
-			this->_bodyFileExists = false;
+			if (this->_cgi)
+			{
+				std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
+			}
+			else
+			{
+				this->parseBodyFile();
+				remove(this->_bodyFilePath.c_str());
+			}
+
+			this->_awaitingRequest = false;
 		}			
 		return (true);
 	}
@@ -544,7 +557,7 @@ void	Request::bodyRequest(int fd, char buff[BUFFLEN + 1],
 	Extract and set HTTP fields
 */
 
-void		Request::setHTTPFields(const std::string &header)
+void						Request::setHTTPFields(const std::string &header)
 {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
@@ -572,7 +585,7 @@ void		Request::setHTTPFields(const std::string &header)
 		}
 }
 
-void		Request::parsRequest(int fd)
+void						Request::parsRequest(int fd)
 {
 	char			buff[BUFFLEN + 1];
 	int				oct;
@@ -622,31 +635,6 @@ void		Request::parsRequest(int fd)
 		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 			this->getErrorPage();
 	}
-}
-
-void	Request::getErrorPage() {
-	std::string	path;
-	std::string	strHeader;
-	std::string	page;
-	int			statusCode;
-
-	if (this->_tooLarge)
-		statusCode = 413;
-	if (!this->_methodSet)
-		statusCode = 400;
-	else
-		statusCode = 500;
-
-	DefaultPage	defaultPage;
-	path = defaultPage.createDefaultErrorPage(statusCode);
-
-	Header header(path, &statusCode);
-	strHeader = header.getHeaderRequestError();
-	send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL);
-
-	page = fileToStr(path);
-	send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL);
-	this->_closeConnection = true;
 }
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {

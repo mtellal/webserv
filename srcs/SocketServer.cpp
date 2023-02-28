@@ -272,7 +272,7 @@ int		SocketServer::epollWait() {
 
 			req.parsRequest(event[j].data.fd);
 
-			if (req.getEndAwaitingRequest())
+			if (req.getEndAwaitingRequest() && this->_awaitingRequest.size())
 					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);
 
 			if (req.getcloseConnection())

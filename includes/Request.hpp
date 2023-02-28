@@ -7,6 +7,7 @@
 # include <vector>
 # include <map>
 # include <fstream>
+#include <cstring>
 
 # define BUFFLEN 4096
 
@@ -88,6 +89,9 @@ class Request {
 		size_t								_bytesRecieved;
 		bool								_bodyFileExists;
 		std::string							_bodyFilePath;
+
+		bool								_cgi;
+		std::string							_cgiInputFile;
 
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
