@@ -8,7 +8,7 @@ class Location : public Directives {
 	public:
 
 		Location();
-		Location(int *i, std::vector<std::string> loc);
+		Location(int &i, std::vector<std::string> loc);
 		Location(Location const &src);
 		virtual ~Location();
 
@@ -16,11 +16,8 @@ class Location : public Directives {
 
 		std::string						getPath();
 		bool							getErrorLoc();
-		bool							getHttpMethodsSet() const;
 
-		void							showHttpMethods(std::ostream &o);
-
-		void							readLocationBlock(std::ifstream &file, int *i);
+		void							readLocationBlock(std::ifstream &file, int &i);
 
 		protected:
 		std::string					_path;
@@ -29,9 +26,9 @@ class Location : public Directives {
 
 	private:
 
-		void	(Location::*functPtr[9])(std::vector<std::string>, int *i);
+		void	(Location::*functPtr[9])(std::vector<std::string>, int &i);
 
-		void	setPath(int *i, std::string loc);
+		void	setPath(int &i, std::string loc);
 		void	error_line(const int &n_line, const std::string &err_msg);
 };
 

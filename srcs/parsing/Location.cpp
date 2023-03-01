@@ -2,7 +2,7 @@
 
 Location::Location() {}
 
-Location::Location(int *i, std::vector<std::string> loc) : _errorLoc(false) {
+Location::Location(int &i, std::vector<std::string> loc) : _errorLoc(false) {
 	this->functPtr[0] = &Directives::setHttpMethods;
 	this->functPtr[1] = &Directives::setErrorPage;
 	this->functPtr[2] = &Directives::setClientMaxBodySize;
@@ -12,7 +12,6 @@ Location::Location(int *i, std::vector<std::string> loc) : _errorLoc(false) {
 	this->functPtr[6] = &Directives::setHttpRedir;
 	this->functPtr[7] = &Location::setCgi;
 	this->functPtr[8] = &Location::setUpload;
-
 	this->setPath(i, loc[1]);
 }
 
@@ -33,16 +32,22 @@ Location	&Location::operator=(Location const &rhs) {
 	return *this;
 }
 
-std::string	Location::getPath() {
-	return this->_path;
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												G E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool	Location::getErrorLoc() {
-	return this->_errorLoc;
-}
+std::string	Location::getPath() { return this->_path; }
 
-bool	Location::getHttpMethodsSet() const {
-	return this->_httpMethodsSet;
+bool	Location::getErrorLoc() { return this->_errorLoc; }
+
+void	Location::setPath(int &i, std::string loc) {
+	for (size_t j = 0; j < loc.size(); j++)
+	{
+		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and loc[j] != '/'
+			and !isdigit(loc[j]))
+			return (error_line(i, " wrong syntax of location block"));
+	}
+	this->_path = loc;
 }
 
 void	Location::error_line(const int &n_line, const std::string &err_msg)
@@ -51,24 +56,14 @@ void	Location::error_line(const int &n_line, const std::string &err_msg)
 	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
 }
 
-void	Location::setPath(int *i, std::string loc) {
-	for (size_t j = 0; j < loc.size(); j++)
-	{
-		if (!std::islower(loc[j]) and !std::isupper(loc[j]) and loc[j] != '/'
-			and (loc[j] < '0' or loc[j] > '9'))
-		return (error_line(*i, " wrong syntax of location block"));
-	}
-	this->_path = loc;
-}
-
-void	Location::readLocationBlock(std::ifstream &file, int *i) {
+void	Location::readLocationBlock(std::ifstream &file, int &i) {
 	int j;
 	std::string line;
-	std::string key[9] = { "http_methods", "error_page", "client_max_body_size",
+	std::string directives[9] = { "http_methods", "error_page", "client_max_body_size",
 						 "root", "autoindex", "index", "return", "cgi", "upload" };
 
-	*i += 1;
-	while (getline(file, line))
+	i += 1;
+	while (std::getline(file, line))
 	{
 		j = 0;
 		if (!only_space_or_empty(line))
@@ -79,7 +74,7 @@ void	Location::readLocationBlock(std::ifstream &file, int *i) {
 				return ;
 			while (j < 9)
 			{
-				if (tmp[0] == key[j])
+				if (tmp[0] == directives[j])
 				{
 					if (!this->checkFormatDir(tmp, i))
 					{
@@ -93,24 +88,13 @@ void	Location::readLocationBlock(std::ifstream &file, int *i) {
 				j++;
 			}
 			if (j == 9)
-				error_line(*i, " incorrect directive");
+				error_line(i, " incorrect directive");
 			if (this->_errorLoc or this->_errorDirectives)
 			{
 				this->_errorLoc = true;
 				return ;
 			}
 		}
-		*i += 1;
+		i += 1;
 	}
-}
-
-void	Location::showHttpMethods(std::ostream &o) {
-	o << "\t\tMethods\t: ";
-	for (size_t i = 0; i < this->_httpMethods.size(); i++)
-	{
-		o << this->_httpMethods[i];
-		if (i + 1 != this->_httpMethods.size())
-			o << " ";
-	}
-	o << std::endl;
 }

@@ -26,6 +26,9 @@ int main(int argc, char **argv, char **envp)
 }
 
 /*
+	Penser a return dans la request si la valeur de retour de recv est 0 en + de
+	mettre closeConnection a true.
+
 	Pour get et post, checker le format des args envoyes
 	Voir 4096
 

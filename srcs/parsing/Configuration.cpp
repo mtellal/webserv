@@ -21,15 +21,9 @@ Configuration &Configuration::operator=(Configuration const &rhs) {
 	return *this;
 }
 
-std::vector<Server>	Configuration::getVctServer() const
-{
-	return this->_servers;
-}
+std::vector<Server>	Configuration::getVctServer() const { return this->_servers; }
 
-bool	Configuration::getErrorConf()
-{
-	return this->_errorConf;
-}
+bool	Configuration::getErrorConf(){ return this->_errorConf; }
 
 void	Configuration::error_msg(const std::string &msg = "", const int &n_line = -1)
 {
@@ -59,7 +53,7 @@ void	Configuration::open_and_check_file(std::string path_file) {
 		{
 			Server servPars;
 
-			servPars.readServBlock(file, &n_line);
+			servPars.readServBlock(file, n_line);
 
 			if (servPars.getErrorServer() or servPars.getErrorDirectives())
 			{

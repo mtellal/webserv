@@ -32,8 +32,13 @@ Server	&Server::operator=(Server const &rhs) {
 
 	if (this != &rhs)
 	{
+		this->_server_fd = rhs._server_fd;
+		this->_clients_fd = rhs._clients_fd;
+		this->_clients = rhs._clients;
 		this->_vctLocation = rhs._vctLocation;
 		this->_host = rhs._host;
+		this->_domain = rhs._domain;
+		this->_address = rhs._address;
 		this->_port = rhs._port;
 		this->_serverName = rhs._serverName;
 		this->_hostSet = rhs._hostSet;
@@ -46,7 +51,9 @@ Server	&Server::operator=(Server const &rhs) {
 	return *this;
 }
 
-// GETTER 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												G E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string					Server::getHost() const { return this->_host; }
 
@@ -70,13 +77,84 @@ std::string					Server::getAddress() const { return (this->_address); }
 
 std::string					Server::getDomain() const { return (this->_domain); }
 
-// SETTER 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												S E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void						Server::setSocket(size_t fd) { this->_server_fd = fd; }
+void	Server::setSocket(size_t fd) { this->_server_fd = fd; }
 
-void						Server::setAddress(std::string a) { this->_address = a; }
+void	Server::setAddress(std::string a) { this->_address = a; }
 
-void						Server::setDomain(std::string d) { this->_domain = d; }
+void	Server::setDomain(std::string d) { this->_domain = d; }
+
+void	Server::setServerName(std::vector<std::string> serverName, int &i) {
+	this->_serverNameSet = true;
+	if (serverName.size() < 2)
+		return (error_msg(i, " directive server_name, wrong format"));
+	for (size_t i = 1; i < serverName.size(); i++)
+		this->_serverName.push_back(serverName[i]);
+}
+
+void	Server::setHost(std::vector<std::string> host, int &i) {
+	std::vector<std::string>	splitPort;
+	bool						err = false;
+
+	if (host.size() != 2)
+		return (error_msg(i, "directive listen, wrong format"));
+	if (!this->checkFormatHost(host[1]))
+		error_msg(i, "directive listen, host and port must be split by one ':'");
+	else
+	{
+		splitPort = ft_split(host[1].c_str(), ":");
+
+		if (splitPort.size() == 2)
+		{
+			if (!this->checkHost(splitPort[0]))
+				error_msg(i, "directive listen, wrong syntaxe or unable to resolve host name");
+
+			this->_hostSet = true;
+			this->_host = splitPort[0];
+			this->setPort(splitPort[1], i);
+		}
+		else
+		{
+			if (checkHost(host[1]))
+			{
+				this->_hostSet = true;
+				this->_host = host[1];
+			}
+			else
+			{
+				ft_stoi(host[1], &err);
+				if (err)
+					error_msg(i, "directive listen, wrong syntaxe");
+				else
+				{
+					this->_host = "0.0.0.0";
+					this->setPort(host[1], i);
+				}
+			}
+		}
+	}
+}
+
+void	Server::setPort(std::string port, int &line)
+{
+	if (this->_portSet)
+		error_msg(line, "listen is already set");
+
+	for (size_t i = 0; i < port.length(); i++)
+	{
+		if (port[i] < '0' || port[i] > '9')
+			error_msg(line, "directive listen, port must be contains only numeric values");
+	}
+	this->_portSet = true;
+	this->_port = port;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//										M E M B E R S   F U N C T I O N S 									  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool	Server::checkFormatHost(std::string host) {
 	int i = 0;
@@ -117,51 +195,11 @@ void	Server::error_msg(const int &n_line, const std::string &err_msg)
 	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
 }
 
-void	Server::setHost(std::vector<std::string> host, int *i) {
-	std::vector<std::string>	splitPort;
-	bool						err = false;
 
-	if (host.size() != 2)
-		return (error_msg(*i, "directive listen, wrong format"));
-	if (!this->checkFormatHost(host[1]))
-		error_msg(*i, "directive listen, host and port must be split by one ':'");
-	else
-	{
-		splitPort = ft_split(host[1].c_str(), ":");
-
-		if (splitPort.size() == 2)
-		{
-			if (!this->checkHost(splitPort[0]))
-				error_msg(*i, "directive listen, wrong syntaxe or unable to resolve host name");
-
-			this->_hostSet = true;
-			this->_host = splitPort[0];
-			this->setPort(splitPort[1], i);
-		}
-		else
-		{
-			if (checkHost(host[1]))
-			{
-				this->_hostSet = true;
-				this->_host = host[1];
-			}
-			else
-			{
-				ft_stoi(host[1], &err);
-				if (err)
-					error_msg(*i, "directive listen, wrong syntaxe");
-				else
-				{
-					this->_host = "0.0.0.0";
-					this->setPort(host[1], i);
-				}
-			}
-		}
-	}
-}
 
 std::string	Server::getIPFromHostName(const std::string& hostName) {
 	struct hostent* host = gethostbyname(hostName.c_str());
+
 	if (!host)
 		return "";
 
@@ -184,51 +222,13 @@ bool	Server::checkHost(std::string host) {
 	return false;
 }
 
-void	Server::setPort(std::string port, int *line)
-{
-	if (this->_portSet)
-		error_msg(*line, "listen is already set");
-
-	for (size_t i = 0; i < port.length(); i++)
-	{
-		if (port[i] < '0' || port[i] > '9')
-			error_msg(*line, "directive listen, port must be contains only numeric values");
-	}
-	this->_portSet = true;
-	this->_port = port;
-}
-
-/* void	Server::setPort(std::string strPort, int *i) {
-	// Verifier le port ?
-	bool err = false;
-	int port = ft_stoi(strPort, &err);
-
-	if (err)
-		error_msg(*i, "directive listen, port must be contains only numeric values");
-	else if (this->_portSet)
-		error_msg(*i, "listen is already set");
-	else
-	{
-		this->_portSet = true;
-		this->_port = port;
-	}
-} */
-
-void	Server::setServerName(std::vector<std::string> serverName, int *i) {
-	this->_serverNameSet = true;
-	if (serverName.size() < 2)
-		return (error_msg(*i, " directive server_name, wrong format"));
-	for (size_t i = 1; i < serverName.size(); i++)
-		this->_serverName.push_back(serverName[i]);
-}
-
-void	Server::readServBlock(std::ifstream &file, int *i) {
+void	Server::readServBlock(std::ifstream &file, int &i) {
 	int j;
 	std::string line;
-	std::string words[11] = { "listen", "server_name", "error_page", "client_max_body_size",
+	std::string directives[11] = { "listen", "server_name", "error_page", "client_max_body_size",
 						 "root", "autoindex", "index", "return", "http_methods", "cgi", "upload" };
 
-	*i += 1;
+	i += 1;
 	while (std::getline(file, line))
 	{
 		j = 0;
@@ -258,7 +258,7 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 			{
 				while (j < 11)
 				{
-					if (tmp[0] == words[j])
+					if (tmp[0] == directives[j])
 					{
 						if (!this->checkFormatDir(tmp, i))
 						{
@@ -272,12 +272,12 @@ void	Server::readServBlock(std::ifstream &file, int *i) {
 					j++;
 				}
 				if (j == 11)
-					error_msg(*i, "incorrect directive");
+					error_msg(i, "incorrect directive");
 				if (this->_errorServer or this->_errorDirectives)
 					return ;
 			}
 		}
-		*i += 1;
+		i += 1;
 	}
 }
 
@@ -308,8 +308,8 @@ void	Server::showLocation(std::ostream & o, int i, Server const &rhs) const {
 
 		o << std::endl;
 		o << "\t\tLocation: " << tmp[i].getPath() << std::endl;
-		if (tmp[i].getHttpMethodsSet())
-			tmp[i].showHttpMethods(o);
+		// if (tmp[i].getHttpMethodsSet())
+			// tmp[i].showHttpMethods(o);
 		// if (tmp[i].getCgiSet())
 			// o << "\t\tCgi\t\t: " << tmp[i].getCgi() << std::endl;
 		// if (tmp[i].getErrorPageSet())

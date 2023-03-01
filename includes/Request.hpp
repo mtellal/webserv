@@ -9,7 +9,7 @@
 # include <fstream>
 #include <cstring>
 
-# define BUFFLEN 4096
+# define BUFFLEN 8000000
 
 class Request {
 

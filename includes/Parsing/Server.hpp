@@ -37,7 +37,7 @@ class Server : public Directives {
 		void						showLocation(std::ostream & o, int i, Server const &rhs) const;
 		void						showAutoindexBis(std::ostream & o, int i, Server const &rhs) const;
 		void						showIndexBis(std::ostream & o, int i, std::vector<Location> tmp) const;
-		void						readServBlock(std::ifstream &file, int *i);
+		void						readServBlock(std::ifstream &file, int &i);
 
 		void						addClient(const Client &c);
 		int							eraseClient(int fd);
@@ -50,7 +50,7 @@ class Server : public Directives {
 		std::vector<Location>		_vctLocation;
 		std::string					_host;
 		std::string					_domain;
-		std::string					_address;	// ipv4
+		std::string					_address;
 		std::string					_port;
 		std::vector<std::string>	_serverName;
 		bool						_hostSet;
@@ -58,12 +58,12 @@ class Server : public Directives {
 		bool						_serverNameSet;
 		bool						_errorServer;
 		bool						_blockClose;
-		void						(Server::*functPtr[11])(std::vector<std::string>, int *i);
+		void						(Server::*functPtr[11])(std::vector<std::string>, int &i);
 
-		void						setHost(std::vector<std::string> host, int *i);
+		void						setHost(std::vector<std::string> host, int &i);
 		bool						checkFormatHost(std::string host);
-		void						setPort(std::string strPort, int *i);
-		void						setServerName(std::vector<std::string> serverName, int *i);
+		void						setPort(std::string strPort, int &i);
+		void						setServerName(std::vector<std::string> serverName, int &i);
 
 		bool						isLocationBlock(std::vector<std::string> splitLine);
 		bool						checkHost(std::string host);
