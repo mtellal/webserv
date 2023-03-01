@@ -396,7 +396,6 @@ int		SocketServer::epollWait() {
 
 			Request		req(event[j].data.fd);
 
-
 			if ((idx_wreq = isAwaitingRequest(event[j].data.fd)) != (size_t)-1)
 				req = this->_awaitingRequest[idx_wreq];
 
@@ -412,7 +411,7 @@ int		SocketServer::epollWait() {
 				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
 					this->_awaitingRequest.push_back(req);
 				else
-					this->_awaitingRequest[idx_wreq] = req;
+					this->_awaitingRequest[idx_wreq].setBytesRecieved(req.getBytesRecievd());
 			}
 			else
 			{

@@ -304,6 +304,8 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
+void							Request::setBytesRecieved(size_t bytes) { this->_bytesRecieved = bytes; }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //										M E M B E R S   F U N C T I O N S 									  //
@@ -412,11 +414,12 @@ void							Request::parseBodyFile()
 	Save request data in bodyFile,
 	and verify if it is the last request
 */
+
 int								Request::awaitingRequest(int fd)
 {
 	int							bytes = 0;
 	size_t						total_bytes = 0;
-	char						buff[BUFFLEN + 1];
+	char						buff[BUFFLEN_FILE + 1];
 	std::ofstream 				out;
 
 	if (this->_bodyFileExists)
@@ -436,21 +439,22 @@ int								Request::awaitingRequest(int fd)
 		return (0);
 	}
 
-	while ((bytes = recv(fd, buff, BUFFLEN, 0)) > 0)
+	bytes = recv(fd, buff, BUFFLEN_FILE, 0);
+	
+	if (bytes < 0)
 	{
-		total_bytes += bytes;
-		buff[bytes] = '\0';
-		out.write(buff, bytes);
-		if (bytes < (int)BUFFLEN)
-			break ;
-	}
-
-	if (!bytes)
-	{
+		out.close();
+		if (bytes == -1)
+			this->getErrorPage();
+		if (!bytes)
+			this->_closeConnection = true;
 		this->quitAwaitingRequest();
-		this->_closeConnection = true;
 		return (0);
 	}
+
+	total_bytes += bytes;
+	buff[bytes] = '\0';
+	out.write(buff, bytes);
 
 	out.close();
 	this->_bytesRecieved += total_bytes;
@@ -614,9 +618,25 @@ void						Request::parsRequest(int fd)
 			}
 			return ;
 		}
-
+		
 		buff[oct] = '\0';
 		request.append(buff);
+
+		if (request.length() < 4 && memcmp(request.substr(request.length() - 4, request.length()).c_str(), "\r\n\r\n", 4))
+		{
+			
+		}
+
+		std::cout << "Request: request.length() " << request.length() << std::endl;
+		std::cout << "Request: oct " << oct << std::endl;
+		
+
+		std::cout << oct << " bytes read" << std::endl;
+		buff[oct] = '\0';
+		request.append(buff);
+
+		//std::cout << request << std::endl;
+
 		index = request.find("\r\n\r\n");
 
 		if (index == -(size_t)1)

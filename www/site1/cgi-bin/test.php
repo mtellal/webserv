@@ -10,9 +10,7 @@
 	<h1>TEST CGI</h1>
 	
 	<?php
-		$filename = "../uploads/mario.webp";
-		echo '<img src="mario.webp">';
-
+		echo 'Bonjour ' . htmlspecialchars($_POST["name"]) . '!';
 	?>
 
 </body>

@@ -392,8 +392,10 @@ void	Response::sendHeader(std::string path)
 		if (this->_req.getCgi() && cgi.isCgiRequest(path))
 		{
 			std::cout << "cgi found" << std::endl;
+			std::cout << "Response: path send to execute" << std::endl;
 			int	status = cgi.execute(path, body);
 
+			std::cout << "Response: status cgi.execute " << status << std::endl;
 			header.setStatus(status);
 
 			header = cgi.getHeader();

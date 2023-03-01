@@ -10,6 +10,7 @@
 #include <cstring>
 
 # define BUFFLEN 4096
+# define BUFFLEN_FILE 65536
 
 class Request {
 
@@ -51,7 +52,7 @@ class Request {
 		std::string							getContentLength() const;
 		std::string							getContentType() const;
 		std::map<std::string, std::string>	getQueryString() const;
-
+		void								setBytesRecieved(size_t bytes);
 
 
 	private:
