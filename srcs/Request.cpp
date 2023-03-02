@@ -308,27 +308,36 @@ void							Request::setBytesRecieved(size_t bytes) { this->_bodyBytesRecieved = 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-std::string						Request::extractFileName(const std::string &line)
+void						Request::extractContentDisposition(const std::string &line, std::string &name, std::string &filename)
 {
 	std::string 				tmp(line);
 	std::vector<std::string>	v;
 	std::vector<std::string>	keys;
 
 	v = ft_split(tmp, " ");
+
 	for (size_t i = 0; i < v.size(); i++)
 	{
-		if (v[i].find("=") != (size_t)-1)
+		if (!memcmp(v[i].c_str(), "filename", 8))
 		{
-			keys = ft_split(v[i], "=");
-			if (keys[0] == "filename")
-			{
-				keys = ft_split(keys[1], "\"");
-				if (keys.size())
-					return (keys[0]); 
-			}
+			filename = strtrim_char(v[i].substr(9, v[i].length()), ';');
+			filename = strtrim_char(filename, '"');
+		}
+		else if (!memcmp(v[i].c_str(), "name", 4))
+		{
+			name = strtrim_char(v[i].substr(5, v[i].length()), ';');
+			name = strtrim_char(name, '"');
 		}
 	}
-	return ("");
+}
+
+void							Request::extractContentType(const std::string &line, std::string &contentType)
+{
+	std::vector<std::string>	v;
+
+	v = ft_split(line, " ");
+	if (v.size() > 1)
+		contentType = v[1];
 }
 
 void							Request::quitAwaitingRequest()
@@ -345,20 +354,20 @@ void							Request::quitAwaitingRequest()
 
 void							Request::parseBoundaryData(const std::string &bound_data)
 {
-	bool						contentType;
 	size_t						index;
+	std::string					contentType;
 	std::string					fileName;
-	std::vector<std::string>	fields;
+	std::string					name;
 	std::ofstream				outfile;
+	std::vector<std::string>	fields;
 
 
-	fileName = "./uploads/";
-	contentType = false;
 	index = bound_data.find("\r\n\r\n");
 
 	if (index == (size_t)-1)
 	{
 		std::cerr << "Request: error: no \"\\r\\n\\r\\n\" in boundary data" << std::endl;
+		std::cerr << bound_data.size() << std::endl;
 		this->getErrorPage();
 		return ;
 	}
@@ -367,13 +376,14 @@ void							Request::parseBoundaryData(const std::string &bound_data)
 	for (size_t i = 0; i < fields.size(); i++)
 	{
 		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
-			fileName += this->extractFileName(fields[i]);
+			this->extractContentDisposition(fields[i], name, fileName);
 		if (!memcmp(fields[i].c_str(), "Content-Type:", 13))
-			contentType = true;
+			extractContentType(fields[i], contentType);
 	}
 
-	if (contentType && fileName != "./uploads/")
+	if (fileName.length())
 	{
+		fileName = "./uploads/" + fileName;
 		outfile.open(fileName.c_str(),
 			std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
@@ -390,7 +400,10 @@ void							Request::parseBoundaryData(const std::string &bound_data)
 	else
 	{
 		std::cout << "data from post args" << std::endl;
-		this->_queryString += bound_data;
+		std::cout << "name " << name << std::endl;
+		std::cout << "bound_data " << bound_data.c_str() + index + 4 << std::endl;
+
+		this->_queryString.insert(std::make_pair(name, bound_data.c_str() + index + 4));
 	}
 }
 
@@ -407,6 +420,7 @@ void							Request::parseBodyFile()
 	if (!request.length())
 		return ;
 	bounds = ft_split_str(request, this->_boundary);
+	std::cout << bounds.size() << " bounds size" << std::endl;
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
 		this->parseBoundaryData(bounds[i]);
 }
@@ -462,6 +476,28 @@ int								Request::openBodyFile(std::ofstream &out)
 	return (0);
 }
 
+void							Request::checkBodyBytesRecieved()
+{
+
+	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
+		this->_awaitingBody = true;
+	else
+	{		
+		if (this->_cgi)
+		{
+			std::cout << "Request: body file renamed" << std::endl;
+			std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
+		}
+		else
+		{
+			this->parseBodyFile();
+			//remove(this->_bodyFilePath.c_str());
+		}
+		this->_awaitingBody = false;
+		this->_bodyFileExists = false;
+	}
+}
+
 /*
 	Save request data in bodyFile,
 	and verify if it is the last request
@@ -477,47 +513,9 @@ void							Request::awaitingBody(int fd)
 	if (recvToBodyFile(fd, out) == -1)
 		return ;
 
-	if ((int)this->_bodyBytesRecieved == ft_stoi(this->_contentLength, NULL))
-	{		
-		if (this->_cgi)
-		{
-			std::cout << "Request: body file renamed" << std::endl;
-			std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
-		}
-		else
-		{
-			this->parseBodyFile();
-			remove(this->_bodyFilePath.c_str());
-		}
-		this->_awaitingBody = false;
-		this->_bodyFileExists = false;
-	}
+	this->checkBodyBytesRecieved();
 
 	return ;
-}
-
-/*
-	Verify if the integrality of the body is transmitted, 
-	or need others request
-*/
-
-void					Request::postRequest()
-{
-	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
-		this->_awaitingBody = true;
-	else
-	{
-		if (this->_cgi)
-		{
-			std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
-		}
-		else
-		{
-			this->parseBodyFile();
-			remove(this->_bodyFilePath.c_str());
-		}
-		this->_awaitingBody = false;
-	}			
 }
 
 /*
@@ -636,11 +634,13 @@ void						Request::request(int fd)
 
 		this->setHTTPFields(header);
 
-		if (body.length())
-			this->bodyRequest(index);
-
 		if (this->_methodSet && this->_method == "POST")
-			this->postRequest();
+		{
+			if (body.length())
+				this->bodyRequest(index);
+
+			this->checkBodyBytesRecieved();
+		}
 
 		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 			this->getErrorPage();

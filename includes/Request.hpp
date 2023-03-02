@@ -9,12 +9,8 @@
 # include <fstream>
 #include <cstring>
 
-<<<<<<< HEAD
-# define BUFFLEN 8000000
-=======
 # define BUFFLEN 4096
 # define BUFFLEN_FILE 65536
->>>>>>> mtellal
 
 class Request {
 
@@ -124,12 +120,15 @@ class Request {
 		void			quitRequest();
 		void			getErrorPage();
 
-		void			postRequest();
 		int				awaitingHeader(int fd);
 		void			awaitingBody(int fd);
-		std::string		extractFileName(const std::string &line);
+		void			extractContentDisposition(const std::string &line, std::string &name, std::string &filename);
+		void			extractContentType(const std::string &line, std::string &contentType);
+
 		int				recvToBodyFile(int fd, std::ofstream &out);
 		int				openBodyFile(std::ofstream &out);
+		void			checkBodyBytesRecieved();
+
 
 
 };

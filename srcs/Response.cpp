@@ -392,6 +392,15 @@ void	Response::sendHeader(std::string path)
 		if (this->_req.getCgi() && cgi.isCgiRequest(path))
 		{
 			std::cout << "cgi found" << std::endl;
+
+			std::map<std::string, std::string> map = this->_req.getQueryString();
+
+			std::cout << "Response: map.size() " << map.size() << std::endl;
+			for (std::map<std::string, std::string>::iterator it = map.begin(); it != map.end(); it++)
+			{
+				std::cout << it->first << " " << it->second << std::endl;
+			}
+			
 			std::cout << "Response: path send to execute" << std::endl;
 			int	status = cgi.execute(path, body);
 

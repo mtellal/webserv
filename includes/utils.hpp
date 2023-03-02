@@ -11,5 +11,7 @@ std::vector<std::string>	ft_split_str(const std::string &s, const std::string &c
 std::string					ft_itos(int nbr);
 std::string					getHttpStatusCodeMessage(int statusCode);
 std::string					fileToStr(std::string path);
+std::string 	            strtrim_char(std::string s, char c);
+
 
 #endif

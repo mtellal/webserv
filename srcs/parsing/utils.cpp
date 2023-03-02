@@ -155,3 +155,18 @@ std::string	fileToStr(std::string path) {
 	}
 	return page;
 }
+
+std::string 	strtrim_char(std::string s, char c)
+{
+	std::string str;
+	size_t		i;
+
+	i = 0;
+	while (i < s.length())
+	{
+		if (s[i] != c)
+			str += s[i];
+		i++;
+	}
+	return (str);
+}

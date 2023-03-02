@@ -332,6 +332,7 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     in = STDIN_FILENO;
     std::cout << "path_file = " << path_file << std::endl;
     env = mapToTab();
+    std::cout << "ici" << std::endl;
     args = exec_args(path_file);
 
     std::cout << "Cgi: path script " << this->_path_cgi << std::endl; 
@@ -391,8 +392,8 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
         header = response.substr(0, index);
         body = response.substr(index + 2, response.length());
 
-        std::cout << "///// CGI HEADER  /////" << header << std::endl;
-        std::cout << "///// CGI BODY  /////" << body << std::endl;
+       /*  std::cout << "///// CGI HEADER  /////" << header << std::endl;
+        std::cout << "///// CGI BODY  /////" << body << std::endl; */
 
         extractFields(header);
 

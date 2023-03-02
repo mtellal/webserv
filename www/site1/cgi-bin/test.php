@@ -8,9 +8,11 @@
 </head>
 <body>
 	<h1>TEST CGI</h1>
-	
+
 	<?php
-		echo 'Bonjour ' . htmlspecialchars($_POST["name"]) . '!';
+
+		phpinfo();
+
 	?>
 
 </body>
