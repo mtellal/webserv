@@ -391,29 +391,28 @@ void	Response::sendHeader(std::string path)
 	{
 		if (this->_req.getCgi() && cgi.isCgiRequest(path))
 		{
+			std::cout << "\n////////////	CGI		////////////\n" << std::endl;
 			std::cout << "cgi found" << std::endl;
 
-			std::map<std::string, std::string> map = this->_req.getQueryString();
-
-			std::cout << "Response: map.size() " << map.size() << std::endl;
-			for (std::map<std::string, std::string>::iterator it = map.begin(); it != map.end(); it++)
-			{
-				std::cout << it->first << " " << it->second << std::endl;
-			}
+			std::cout << "queryString: " << this->_req.getQueryString() << std::endl;
 			
-			std::cout << "Response: path send to execute" << std::endl;
+			std::cout << "Response: path send to execute" << path << std::endl;
+
 			int	status = cgi.execute(path, body);
 
 			std::cout << "Response: status cgi.execute " << status << std::endl;
 			header.setStatus(status);
 
 			header = cgi.getHeader();
+
+			std::cout << "\n////////////	CGI		////////////\n" << std::endl;
+
 		}
 
 		res = header.getHeader();
 
 		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
+		std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
 
 		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
 

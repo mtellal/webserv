@@ -14,12 +14,13 @@
 #include "utils.hpp"
 
 Cgi::Cgi(const Cgi &src) :
-_serv(src._serv), _req(src._req), _header(src._header), _raw_env(src._raw_env), _map_cgi(src._map_cgi), _status(0),
+_serv(src._serv), _req(src._req), _header(src._header), 
+_raw_env(src._raw_env), _map_cgi(src._map_cgi), _status(0),
 _post(false), _get(false) {}
 
 Cgi::Cgi(const Server &serv, const Request &req, Header &header, char **env):
-_serv(serv), _req(req), _header(header), _raw_env(env), _map_cgi(serv.getCgi()), _status(0), 
-_post(false), _get(false)
+_serv(serv), _req(req), _header(header), _raw_env(env), 
+_map_cgi(serv.getCgi()), _status(0), _post(false), _get(false)
 {
     initEnv();
 }
@@ -44,15 +45,6 @@ Cgi     &Cgi::operator=(const Cgi &src)
 }
 
 Header          Cgi::getHeader() const { return (this->_header); }
-
-size_t    tab_len(char **env)
-{
-    size_t  i = 0;
-    
-    while (env && env[i])
-        i++;
-    return (i);
-}
 
 /*
     Verify if cgi params if set and if the ressource and if the correct extension, 
@@ -121,23 +113,30 @@ void    Cgi::initEnv()
 {
     Request &req = this->_req;
 
-    _env["REDIRECT_STATUS"]     =   "200";
+    _env["REDIRECT_STATUS"]     =   200;
     _env["AUTH_TYPE"]           =   req.getAuthentification();
-    _env["CONTENT_LENGTH"]      =   req.getContentLength();
-    _env["CONTENT_TYPE"]        =   req.getContentType();
+    if (req.getMethod() == "POST")
+    {
+        _env["CONTENT_LENGTH"] = "618";
+        if (req.getContentType().length())
+        {
+            std::cout << "content type set" << std::endl;
+            _env["CONTENT_TYPE"] = "multipart/form-data;boundary=------WebKitFormBoundary3IMBGwkS5BuesHoI";
+        }
+    }
+    else
+        _env["QUERY_STRING"]        =   req.getQueryString();
     _env["GATEWAY_INTERFACE"]   =   "Cgi/1.1";
     _env["PATH_INFO"]           =   req.getPath();
     _env["PATH_TRANSLATED"]     =   req.getPath();
-    _env["QUERY_STRING"]        =   "";
     _env["REMOTE_ADDR"]         =   ""; // need to be set
     _env["REMOTE_HOST"]         =   ""; // NULL
     _env["REMOTE_IDENT"]        =   ""; // NULL
     _env["REMOTE_USER"]         =   ""; // NULL
-    _env["REMOTE_METHOD"]       =   req.getMethod();
-    std::cout << "path = " << _serv.getRoot() << req.getPath() << std::endl;
+    _env["REQUEST_METHOD"]       =   req.getMethod();
     _env["SCRIPT_NAME"]         =  "." + _serv.getRoot() + req.getPath();
     _env["SCRIPT_FILENAME"]     =   "." + _serv.getRoot() + req.getPath();
-    _env["SERVER_NAME"]         =   "";
+    _env["SERVER_NAME"]         =   req.getServerName();
     _env["SERVER_PORT"]         =   req.getPort();
     _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
     _env["SERVER_SOFTWARE"]     =   req.getServerName();
@@ -267,19 +266,23 @@ void                Cgi::extractFields(const std::string &cgi_response)
 
 void                child(int fdin, int pipe[2], const std::string &path_script, char **args, char **env)
 {
-    if (dup2(fdin, 0) == -1)
+    if (fdin != STDIN_FILENO && dup2(fdin, 0) == -1)
     {
         perror("dup2 call failed");
         exit(1);
     }
+
     if (dup2(pipe[1], 1) == -1)
     {
         perror("dup2 call failed");
         exit(1);
     }
 
+    close(pipe[0]);
+
     if (execve(path_script.c_str(), args, env) == -1)
     {
+        std::cerr << "execve failed" << std::endl;
         perror("execve call failed");
         close(pipe[1]);
         exit(1);
@@ -297,7 +300,7 @@ std::string        parent(int pipe[2])
     bytes = read(pipe[0], buff, len - 1);
     buff[bytes] = '\0';
     response.append(buff);
-//std::cout << response << std::endl;
+
     while (bytes > 0)
     {
         bytes = read(pipe[0], buff, len - 1);
@@ -330,12 +333,18 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     int             in;
     
     in = STDIN_FILENO;
-    std::cout << "path_file = " << path_file << std::endl;
     env = mapToTab();
-    std::cout << "ici" << std::endl;
     args = exec_args(path_file);
 
     std::cout << "Cgi: path script " << this->_path_cgi << std::endl; 
+
+    std::cout << "///////////// C G I    E X E C U T E   C A L L E D ///////////////" << std::endl;
+
+
+    //Content-Length: 618
+    //Content-Type: multipart/form-data; boundary=----WebKitFormBoundary3IMBGwkS5BuesHoI    
+
+
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
@@ -345,12 +354,19 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     if (this->_req.getMethod() == "POST")
     {
         std::cout << "stdin from cgi is a file" << std::endl;
-        if ((in = open(path_file.c_str(), 0)) == -1)
+        if ((in = open("./uploads/inputCGI", 0)) == -1)
         {
             perror("cgi.execute failed can't open path_file");
             return (500);
         }
     }
+
+    std::cout << "path_file: " << path_file << std::endl;
+    std::cout << "in: " << in << std::endl;
+    std::cout << "method: " << _req.getMethod() << std::endl;
+    std::cout << "path: " << path_file << std::endl;
+
+
 
     f = fork();
     if (f == -1)
@@ -367,18 +383,19 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
             close(in);
         int status;
 
-        wait(&status);
+        waitpid(f, &status, -1);
 
         response = parent(p);
 
+
          if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
         {
-            std::cout << response << std::endl;
+            //std::cout << response << std::endl;
             return (500);
         }
 
         std::cout << "//////////////////////" << std::endl;
-        std::cout << response << std::endl;
+        std::cout << response.substr(0, 100) << std::endl;
         std::cout << "//////////////////////" << std::endl;
 
         index = response.find("\n\r");

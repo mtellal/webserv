@@ -15,7 +15,7 @@ _refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
 _methodSet(false), _hostSet(false), _tooLarge(false),
 _badRequest(false),
 _bodyBytesRecieved(0), _bodyFileExists(false), _bodyFilePath("./uploads/bodyfile"),
-_cgi(false), _cgiInputFile("./uploads/cgi"), _awaitingHeader(false), _awaitingBody(false)
+_awaitingHeader(false), _awaitingBody(false)
 {
 	this->functPtr[0] = &Request::setMethodVersionPath;
 	this->functPtr[1] = &Request::setMethodVersionPath;
@@ -75,7 +75,6 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
 		this->_bodyFileExists = rhs._bodyFileExists;
 		this->_bodyFilePath = rhs._bodyFilePath;
-		this->_cgi = rhs._cgi;
 
 		this->_request = rhs._request;
 		this->_awaitingHeader = rhs._awaitingHeader;
@@ -97,8 +96,6 @@ bool								Request::getErrRequest() const { return this->_errRequest; }
 
 bool								Request::getcloseConnection() const { return this->_closeConnection; }
 
-bool								Request::getCgi() const { return (this->_cgi); }
-
 bool								Request::getConnectionSet() const { return this->_connectionSet; }
 
 bool								Request::getAcceptSet() const { return this->_acceptSet; }
@@ -110,6 +107,8 @@ bool								Request::getAgentSet() const { return this->_agentSet; }
 bool								Request::getBadRequest() const { return this->_badRequest; }
 
 bool								Request::getAwaitingRequest() const { return (this->_awaitingHeader || this->_awaitingBody); }
+
+bool								Request::getBodyFileExists() const { return (this->_bodyFileExists); }
 
 int									Request::getFd() const { return this->_fd; }
 
@@ -141,7 +140,7 @@ std::string							Request::getContentType() const { return this->_contentType; }
 
 std::string							Request::getAccept() const { return this->_accept; }
 
-std::map<std::string, std::string>	Request::getQueryString() const { return this->_queryString; }
+std::string							Request::getQueryString() const { return this->_queryString; }
 
 void								Request::getErrorPage() {
 	std::string	path;
@@ -172,6 +171,13 @@ void								Request::getErrorPage() {
 //												S E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void							Request::addQueryString(const std::string &key, const std::string &value)
+{
+	if (this->_queryString.length())
+		this->_queryString += "&" + key + "=" + value;
+	else
+		this->_queryString +=  key + "=" + value;
+}
 
 void							Request::parsArgs(std::string arg) {
 	std::vector<std::string>	args;
@@ -183,9 +189,9 @@ void							Request::parsArgs(std::string arg) {
 	{
 		keyValue = ft_split(args[i].c_str(), "=");
 		if (keyValue.size() == 1)
-			this->_queryString.insert(std::make_pair(keyValue[0], ""));
+			this->addQueryString(keyValue[0], "");
 		else
-			this->_queryString.insert(std::make_pair(keyValue[0], keyValue[1]));
+			this->addQueryString(keyValue[0], keyValue[1]);
 	}
 }
 
@@ -204,8 +210,6 @@ void							Request::setMethodVersionPath(std::vector<std::string> strSplit) {
 			if (strSplit.size() == 2)
 				this->parsArgs(strSplit[1]);
 			this->_path = strSplit[0];
-			if (this->_path.length() && !memcmp(this->_path.c_str(), "/cgi-bin/", 9))
-				this->_cgi = true;
 			this->_methodSet = true;
 		}
 }
@@ -294,7 +298,7 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 			}
 			*i += 2;
 			value = vct[*i];
-			this->_queryString.insert(std::make_pair(name, value));
+			this->addQueryString(name, value);
 		}
 		*i += 1;
 	}
@@ -331,18 +335,10 @@ void						Request::extractContentDisposition(const std::string &line, std::strin
 	}
 }
 
-void							Request::extractContentType(const std::string &line, std::string &contentType)
-{
-	std::vector<std::string>	v;
-
-	v = ft_split(line, " ");
-	if (v.size() > 1)
-		contentType = v[1];
-}
-
 void							Request::quitAwaitingRequest()
 {
 	remove(this->_bodyFilePath.c_str());
+	this->_bodyFileExists = false;
 	this->_awaitingBody = false;
 	this->_awaitingHeader = false;
 }
@@ -352,7 +348,7 @@ void							Request::quitAwaitingRequest()
 	then parse and save it with the proper file name
 */
 
-void							Request::parseBoundaryData(const std::string &bound_data)
+void							Request::extractFile(const std::string &bound_data)
 {
 	size_t						index;
 	std::string					contentType;
@@ -365,20 +361,13 @@ void							Request::parseBoundaryData(const std::string &bound_data)
 	index = bound_data.find("\r\n\r\n");
 
 	if (index == (size_t)-1)
-	{
-		std::cerr << "Request: error: no \"\\r\\n\\r\\n\" in boundary data" << std::endl;
-		std::cerr << bound_data.size() << std::endl;
-		this->getErrorPage();
 		return ;
-	}
 
 	fields = ft_split(bound_data.substr(0, index), "\r\n");
 	for (size_t i = 0; i < fields.size(); i++)
 	{
 		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
 			this->extractContentDisposition(fields[i], name, fileName);
-		if (!memcmp(fields[i].c_str(), "Content-Type:", 13))
-			extractContentType(fields[i], contentType);
 	}
 
 	if (fileName.length())
@@ -397,21 +386,13 @@ void							Request::parseBoundaryData(const std::string &bound_data)
 		outfile.write(bound_data.c_str() + index + 4, bound_data.length() - index - 4 - 2);
 		outfile.close();
 	}
-	else
-	{
-		std::cout << "data from post args" << std::endl;
-		std::cout << "name " << name << std::endl;
-		std::cout << "bound_data " << bound_data.c_str() + index + 4 << std::endl;
-
-		this->_queryString.insert(std::make_pair(name, bound_data.c_str() + index + 4));
-	}
 }
 
 /*
 	Extract and save the datas/files between boundarys
 */
 
-void							Request::parseBodyFile()
+void							Request::verifyFiles()
 {
 	std::string					request;
 	std::vector<std::string>	bounds;
@@ -420,9 +401,8 @@ void							Request::parseBodyFile()
 	if (!request.length())
 		return ;
 	bounds = ft_split_str(request, this->_boundary);
-	std::cout << bounds.size() << " bounds size" << std::endl;
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
-		this->parseBoundaryData(bounds[i]);
+		this->extractFile(bounds[i]);
 }
 
 int							Request::recvToBodyFile(int fd, std::ofstream &out)
@@ -467,7 +447,6 @@ int								Request::openBodyFile(std::ofstream &out)
 
 	if (!out.is_open())
 	{
-		out.close();
 		this->quitAwaitingRequest();
 		this->getErrorPage();
 		return (-1);
@@ -478,23 +457,12 @@ int								Request::openBodyFile(std::ofstream &out)
 
 void							Request::checkBodyBytesRecieved()
 {
-
 	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
 		this->_awaitingBody = true;
 	else
 	{		
-		if (this->_cgi)
-		{
-			std::cout << "Request: body file renamed" << std::endl;
-			std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
-		}
-		else
-		{
-			this->parseBodyFile();
-			//remove(this->_bodyFilePath.c_str());
-		}
+		this->verifyFiles();
 		this->_awaitingBody = false;
-		this->_bodyFileExists = false;
 	}
 }
 
@@ -625,8 +593,10 @@ void						Request::request(int fd)
 	{
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
+
 		if (header.length() >= index + 4)
 			body = this->_request.substr(index + 4, this->_request.length());
+
 		this->_bodyBytesRecieved = oct - (header.length() + 4);
 
 		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;

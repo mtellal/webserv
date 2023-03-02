@@ -170,3 +170,23 @@ std::string 	strtrim_char(std::string s, char c)
 	}
 	return (str);
 }
+
+size_t    tab_len(char **env)
+{
+    size_t  i = 0;
+    
+    while (env && env[i])
+        i++;
+    return (i);
+}
+
+bool	infileExists(const std::string &file)
+{
+	std::ifstream in(file.c_str(), std::ifstream::in | std::ifstream::binary);
+
+	if (!in.is_open())
+		return (false);
+		
+	in.close();
+	return (true);
+}
