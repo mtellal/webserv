@@ -115,12 +115,12 @@ class Request {
 		void			setHTTPFields(const std::string &header);
 		void			parseBoundaryData(const std::string &bound_data);
 		void			bodyRequest(const std::string &body, size_t &total);
-		void			bodyRequest(int fd, size_t index);
+		void			bodyRequest(size_t index);
 		void			quitAwaitingRequest();
 		void			quitRequest();
 		void			getErrorPage();
 
-		bool			postRequest();
+		void			postRequest();
 		int				awaitingHeader(int fd);
 		void			awaitingBody(int fd);
 		std::string		extractFileName(const std::string &line);

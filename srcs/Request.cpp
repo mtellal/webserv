@@ -233,16 +233,12 @@ void							Request::setReferer(std::vector<std::string> strSplit) {
 }
 
 void							Request::setAgent(std::vector<std::string> strSplit) {
-	// for (size_t i = 1; i < strSplit.size(); i++)
-		// std::cout << strSplit[i] << std::endl;
-	// std::cout << std::endl;
 	for (size_t i = 1; i < strSplit.size(); i++)
 	{
 		if (i != 1)
 			this->_agent += " ";
 		this->_agent += strSplit[i];
 	}
-	// std::cout << this->_agent << std::endl;
 	this->_agentSet = true;
 }
 
@@ -391,6 +387,11 @@ void							Request::parseBoundaryData(const std::string &bound_data)
 		outfile.write(bound_data.c_str() + index + 4, bound_data.length() - index - 4 - 2);
 		outfile.close();
 	}
+	else
+	{
+		std::cout << "data from post args" << std::endl;
+		this->_queryString += bound_data;
+	}
 }
 
 /*
@@ -500,37 +501,30 @@ void							Request::awaitingBody(int fd)
 	or need others request
 */
 
-bool						Request::postRequest()
+void					Request::postRequest()
 {
-	if (this->_methodSet && this->_method == "POST")
+	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
+		this->_awaitingBody = true;
+	else
 	{
-		if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
+		if (this->_cgi)
 		{
-			this->_awaitingBody = true;
+			std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
 		}
 		else
 		{
-			if (this->_cgi)
-			{
-				std::rename(this->_bodyFilePath.c_str(), "./uploads/cgi");
-			}
-			else
-			{
-				this->parseBodyFile();
-				remove(this->_bodyFilePath.c_str());
-			}
-			this->_awaitingBody = false;
-		}			
-		return (true);
-	}
-	return (false);
+			this->parseBodyFile();
+			remove(this->_bodyFilePath.c_str());
+		}
+		this->_awaitingBody = false;
+	}			
 }
 
 /*
 	Save first part body of a POST request 
 */
 
-void	Request::bodyRequest(int fd, size_t index)
+void	Request::bodyRequest(size_t index)
 {
 	std::ofstream 	out;
 
@@ -539,9 +533,7 @@ void	Request::bodyRequest(int fd, size_t index)
 
 	out.write(this->_request.c_str() + index + 4,  this->_bodyBytesRecieved);
 
-	if (recvToBodyFile(fd, out) == -1)
-		return ;
-
+	out.close();
 }
 
 /*
@@ -602,7 +594,6 @@ int						Request::awaitingHeader(int fd)
 	std::cout << this->_request << std::endl;
 	if ((index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
-		std::cout << " \\r\\n\\r\\n found" << std::endl;
 		this->_awaitingHeader = false;
 		return (bytes);
 	}
@@ -627,7 +618,7 @@ void						Request::request(int fd)
 	std::string		body;
 
 	oct = 0;
-	//printRequest();
+	printRequest();
 	if (this->_awaitingBody)
 	{
 		this->awaitingBody(fd);
@@ -644,9 +635,12 @@ void						Request::request(int fd)
 		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
 		this->setHTTPFields(header);
+
 		if (body.length())
-			this->bodyRequest(fd, index);
-		this->postRequest();
+			this->bodyRequest(index);
+
+		if (this->_methodSet && this->_method == "POST")
+			this->postRequest();
 
 		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 			this->getErrorPage();
