@@ -38,7 +38,7 @@ Directives	&Directives::operator=(Directives const &rhs) {
 		this->_httpMethodsSet = rhs._httpMethodsSet;
 		this->_upload = rhs._upload;
 		this->_uploadSet = rhs._uploadSet;
-
+		this->_cgi = rhs._cgi;
 	}
 	return *this;
 }

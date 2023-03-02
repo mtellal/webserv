@@ -9,7 +9,12 @@
 # include <fstream>
 #include <cstring>
 
+<<<<<<< HEAD
 # define BUFFLEN 8000000
+=======
+# define BUFFLEN 4096
+# define BUFFLEN_FILE 65536
+>>>>>>> mtellal
 
 class Request {
 
@@ -22,13 +27,13 @@ class Request {
 
 		Request	&operator=(Request const &rhs);
 
-		void								parsRequest(int fd);
+		void								request(int fd);
 		void								setErrorRequest(bool);
 
 		bool								getErrRequest() const;
 		bool								getcloseConnection() const;
 		bool								getAwaitingRequest() const;
-		bool								getEndAwaitingRequest() const; 
+		bool								getCgi() const;
 		bool								getConnectionSet() const;
 		bool								getAcceptSet() const;
 		bool								getRefererSet() const;
@@ -50,7 +55,7 @@ class Request {
 		std::string							getContentLength() const;
 		std::string							getContentType() const;
 		std::map<std::string, std::string>	getQueryString() const;
-
+		void								setBytesRecieved(size_t bytes);
 
 
 	private:
@@ -85,13 +90,17 @@ class Request {
 		bool								_badRequest;
 
 		bool								_awaitingRequest;
-		bool								_endAwaitingRequest;
-		size_t								_bytesRecieved;
+		size_t								_bodyBytesRecieved;
 		bool								_bodyFileExists;
 		std::string							_bodyFilePath;
 
 		bool								_cgi;
 		std::string							_cgiInputFile;
+
+		std::string							_request;
+
+		bool								_awaitingHeader;
+		bool								_awaitingBody;
 
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
@@ -110,15 +119,19 @@ class Request {
 		void			setHTTPFields(const std::string &header);
 		void			parseBoundaryData(const std::string &bound_data);
 		void			bodyRequest(const std::string &body, size_t &total);
-		void			bodyRequest(int fd, char buff[BUFFLEN + 1],
-										const std::string &body, size_t &body_bytes, size_t index);
+		void			bodyRequest(size_t index);
 		void			quitAwaitingRequest();
 		void			quitRequest();
 		void			getErrorPage();
 
-		bool			postRequest(size_t total);
-		int				awaitingRequest(int fd);
+		void			postRequest();
+		int				awaitingHeader(int fd);
+		void			awaitingBody(int fd);
 		std::string		extractFileName(const std::string &line);
+		int				recvToBodyFile(int fd, std::ofstream &out);
+		int				openBodyFile(std::ofstream &out);
+
+
 };
 
 std::ostream &operator<<( std::ostream & o, Request const & rhs);

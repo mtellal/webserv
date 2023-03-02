@@ -339,14 +339,6 @@ int		SocketServer::pickServBlock(const Request &req)
 	return -1;
 }
 
-void	printRequest()
-{
-	std::cout << "\n///////////////////////////////////////////////////////////" << std::endl;
-	std::cout <<         "			R E Q U E S T"		 << std::endl;
-	std::cout << "///////////////////////////////////////////////////////////" << std::endl;
-
-}
-
 void	printResponse(int end = 0)
 {
 	std::cout << "\n\n///////////////////////////////////////////////////////////" << std::endl;
@@ -373,7 +365,7 @@ int		SocketServer::epollWait() {
 	struct epoll_event	event[NB_EVENTS];
 	int			nbrFd;
 	int			index_serv;
-	size_t		idx_wreq;
+	int			index_wreq;
 	int 		srv_i;
 
 	nbrFd = epoll_wait(this->_epollFd, event, NB_EVENTS, 1000);
@@ -391,19 +383,17 @@ int		SocketServer::epollWait() {
 		if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
 			createConnection(index_serv);
 		else
-		{
-			printRequest();
-
+		{			
 			Request		req(event[j].data.fd);
-			// std::cout << "////////////////// END REQUEST  ///////////////////" << std::endl;
 
-			if ((idx_wreq = isAwaitingRequest(event[j].data.fd)) != (size_t)-1)
-				req = this->_awaitingRequest[idx_wreq];
+			if ((index_wreq = isAwaitingRequest(event[j].data.fd)) != -1)
+				req = this->_awaitingRequest[index_wreq];
 
-			req.parsRequest(event[j].data.fd);
 
-			if (req.getEndAwaitingRequest() && this->_awaitingRequest.size())
-					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + idx_wreq);
+			req.request(event[j].data.fd);
+
+			if (!req.getAwaitingRequest() && index_wreq != -1)
+					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + index_wreq);
 
 			if (req.getcloseConnection())
 				this->closeConnection(event[j].data.fd);
@@ -412,7 +402,7 @@ int		SocketServer::epollWait() {
 				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
 					this->_awaitingRequest.push_back(req);
 				else
-					this->_awaitingRequest[idx_wreq] = req;
+					this->_awaitingRequest[index_wreq] = req;
 			}
 			else
 			{

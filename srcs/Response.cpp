@@ -37,27 +37,23 @@ Response	&Response::operator=(Response const &rhs) {
 	return *this;
 }
 
-//	GETTER
-Server		Response::getServ() const {
-	return this->_serv;
-}
 
-Request		Response::getRequest() const {
-	return this->_req;
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												G E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool		Response::getCloseConnection() const { return this->_closeConnection; }
+
+bool		Response::getlocBlocSelect() const {	return this->_locBlocSelect; }
+
+Server		Response::getServ() const { return this->_serv; }
+
+Request		Response::getRequest() const { return this->_req; }
+
+Location	Response::getLocBloc() const { return this->_locBloc; }
 
 
-bool		Response::getlocBlocSelect() const {
-	return this->_locBlocSelect;
-}
 
-Location	Response::getLocBloc() const {
-	return this->_locBloc;
-}
-
-bool		Response::getCloseConnection() const {
-	return this->_closeConnection;
-}
 
 std::string	Response::rightRoot() {
 	std::string	root;
@@ -393,12 +389,13 @@ void	Response::sendHeader(std::string path)
 	}
 	else
 	{
-		if (cgi.isCgiRequest(path) != -1)
+		if (this->_req.getCgi() && cgi.isCgiRequest(path))
 		{
 			std::cout << "cgi found" << std::endl;
+			std::cout << "Response: path send to execute" << std::endl;
+			int	status = cgi.execute(path, body);
 
-			int	status = cgi.execute(STDIN_FILENO, path, body);
-
+			std::cout << "Response: status cgi.execute " << status << std::endl;
 			header.setStatus(status);
 
 			header = cgi.getHeader();
