@@ -3,7 +3,7 @@
 
 
 Directives::Directives() :  _clientMaxBodySize(1), _root("html"), _autoindex(false),
-						_errorPageSet(false), _clientMaxBodySizeSet(false),
+						_cgiSet(false), _errorPageSet(false), _clientMaxBodySizeSet(false),
 						_rootSet(false), _autoindexSet(false), _indexSet(false),
 						_httpRedirSet(false), _errorDirectives(false), _httpMethodsSet(false),
 						_uploadSet(false) {
@@ -27,6 +27,7 @@ Directives	&Directives::operator=(Directives const &rhs) {
 		this->_index = rhs._index;
 		this->_httpRedir = rhs._httpRedir;
 		this->_cgi = rhs._cgi;
+		this->_cgiSet = rhs._cgiSet;
 		this->_errorPageSet = rhs._errorPageSet;
 		this->_clientMaxBodySizeSet = rhs._clientMaxBodySizeSet;
 		this->_rootSet = rhs._rootSet;
@@ -60,6 +61,8 @@ std::vector<std::string>			Directives::getIndex() const { return this->_index; }
 std::string							Directives::getHttpRedir() const { return this->_httpRedir; }
 
 bool								Directives::getErrorDirectives() const {return this->_errorDirectives; }
+
+bool								Directives::getCgiSet() const { return this->_cgiSet; }
 
 bool								Directives::getErrorPageSet() const { return this->_errorPageSet; }
 
@@ -266,8 +269,8 @@ void	Directives::showErrorPage(std::ostream & o) const {
 		o << "Error Page\t:";
 		for (std::map<int, std::string>::const_iterator it = this->_errorPage.begin(); it != this->_errorPage.end(); it++)
 			o << " (" << it->first << " " << it->second << ")";
+		o << std::endl;
 	}
-	o << std::endl;
 }
 
 void	Directives::showAutoindex(std::ostream & o) const {
@@ -288,6 +291,26 @@ void	Directives::showIndex(std::ostream & o) const {
 		o << "Index\t\t:";
 		for (size_t i = 0; i < this->_index.size(); i++)
 			o << " " << this->_index[i];
+		o << std::endl;
+	}
+}
+
+void	Directives::showHttpMethods(std::ostream & o) const {
+	if (this->getHttpMethodsSet())
+	{
+		o << "Http methods\t:";
+		for (size_t i = 0; i < this->_httpMethods.size(); i++)
+			o << " " << this->_httpMethods[i];
+		o << std::endl;
+	}
+}
+
+void	Directives::showCgi(std::ostream & o) const {
+	if (this->getCgiSet())
+	{
+		o << "Cgi\t\t:";
+		for (std::map<std::string, std::string>::const_iterator it = this->_cgi.begin(); it != this->_cgi.end(); it++)
+			o << " (" << it->first << " " << it->second << ")";
 		o << std::endl;
 	}
 }

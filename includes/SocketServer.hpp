@@ -74,6 +74,10 @@ class SocketServer {
 		size_t						isAwaitingRequest(int fd);
 
 
+
+		void 						print_ipv4(struct sockaddr *s);
+
+
 };
 
 #endif

@@ -89,7 +89,10 @@ std::ostream &operator<<(std::ostream & o, Configuration const & rhs)
 	if (!tmp.empty())
 	{
 		for (size_t i = 0; i < tmp.size(); i++)
+		{
+			o << "Server[" << i << "]" << std::endl;
 			o << tmp[i] << std::endl;
+		}
 	}
 	return o;
 }

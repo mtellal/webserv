@@ -21,6 +21,9 @@ int main(int argc, char **argv, char **envp)
 	if (conf.getErrorConf())
 		return 1;
 
+	// std::cout << conf << std::endl;
+	// (void)envp;
+
 	SocketServer	serv(conf, envp);
 	if (serv.getErrSocket())
 		return 1;

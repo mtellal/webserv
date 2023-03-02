@@ -576,6 +576,8 @@ int						Request::awaitingHeader(int fd)
 
 	bytes = recv(fd, buff, BUFFLEN, 0);
 
+	// std::cout << "bytes = " << bytes << std::endl;
+
 	if (bytes < 1)
 	{
 		if (!bytes)
@@ -591,7 +593,7 @@ int						Request::awaitingHeader(int fd)
 	buff[bytes] = '\0';
 	this->_request.append(buff);
 
-	std::cout << this->_request << std::endl;
+	// std::cout << this->_request << std::endl;
 	if ((index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
 		this->_awaitingHeader = false;
@@ -618,7 +620,7 @@ void						Request::request(int fd)
 	std::string		body;
 
 	oct = 0;
-	printRequest();
+	// printRequest();
 	if (this->_awaitingBody)
 	{
 		this->awaitingBody(fd);
@@ -631,8 +633,8 @@ void						Request::request(int fd)
 			body = this->_request.substr(index + 4, this->_request.length());
 		this->_bodyBytesRecieved = oct - (header.length() + 4);
 
-		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
-		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
+		// std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
+		// std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
 		this->setHTTPFields(header);
 

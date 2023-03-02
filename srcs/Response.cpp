@@ -344,8 +344,8 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
-	std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
-	std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
+	// std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
+	// std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
@@ -403,8 +403,8 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
-		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
+		// std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
+		// std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
 
 		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
 

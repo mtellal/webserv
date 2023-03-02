@@ -37,6 +37,8 @@ class Server : public Directives {
 		void						showLocation(std::ostream & o, int i, Server const &rhs) const;
 		void						showAutoindexBis(std::ostream & o, int i, Server const &rhs) const;
 		void						showIndexBis(std::ostream & o, int i, std::vector<Location> tmp) const;
+		void						showErrorPageBis(std::ostream & o, int i, Server const &rhs) const;
+		void						showCgiBis(std::ostream & o, int i, Server const &rhs) const;
 		void						readServBlock(std::ifstream &file, int &i);
 
 		void						addClient(const Client &c);

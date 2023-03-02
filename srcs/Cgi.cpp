@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtellal <marvin@42.fr>                     +#+  +:+       +#+        */
+/*   By: jdubilla <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/13 09:43:33 by mtellal           #+#    #+#             */
-/*   Updated: 2023/02/13 09:43:35 by mtellal          ###   ########.fr       */
+/*   Updated: 2023/03/02 10:51:39 by jdubilla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,7 +134,7 @@ void    Cgi::initEnv()
     _env["REMOTE_IDENT"]        =   ""; // NULL
     _env["REMOTE_USER"]         =   ""; // NULL
     _env["REMOTE_METHOD"]       =   req.getMethod();
-    std::cout << "path = " << _serv.getRoot() << req.getPath() << std::endl;
+    // std::cout << "path = " << _serv.getRoot() << req.getPath() << std::endl;
     _env["SCRIPT_NAME"]         =  "." + _serv.getRoot() + req.getPath();
     _env["SCRIPT_FILENAME"]     =   "." + _serv.getRoot() + req.getPath();
     _env["SERVER_NAME"]         =   "";

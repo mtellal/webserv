@@ -298,39 +298,43 @@ void	Server::showServerName(std::ostream & o) const {
 		o << "Server Name\t:";
 		for (size_t i = 0; i < this->_serverName.size(); i++)
 			o << " " << this->_serverName[i];
+		o << std::endl;
 	}
-	o << std::endl;
 }
 
 void	Server::showLocation(std::ostream & o, int i, Server const &rhs) const {
 		std::vector<Location> tmp = rhs.getVctLocation();
 
 		o << std::endl;
-		o << "\t\tLocation: " << tmp[i].getPath() << std::endl;
-		// if (tmp[i].getHttpMethodsSet())
-			// tmp[i].showHttpMethods(o);
-		// if (tmp[i].getCgiSet())
-			// o << "\t\tCgi\t\t: " << tmp[i].getCgi() << std::endl;
-		// if (tmp[i].getErrorPageSet())
-		// 	rhs.showErrorPageBis(o, i, rhs);
+		o << "\t\tLocation\t: " << tmp[i].getPath() << std::endl;
+		if (tmp[i].getHttpMethodsSet())
+		{
+			o << "\t\t";
+			tmp[i].showHttpMethods(o);
+		}
+		if (tmp[i].getCgiSet())
+			rhs.showCgiBis(o, i, rhs);
+		if (tmp[i].getErrorPageSet())
+			rhs.showErrorPageBis(o, i, rhs);
 		if (tmp[i].getClientMaxBodySizeSet())
 			o << "\t\tclient max\t: " << rhs._vctLocation[i].getClientMaxBodySize() << std::endl;
 		if (tmp[i].getRootSet())
-			o << "\t\tRoot\t: " << rhs._vctLocation[i].getRoot() << std::endl;
+			o << "\t\tRoot\t\t: " << rhs._vctLocation[i].getRoot() << std::endl;
 		if (tmp[i].getAutoindexSet())
 			rhs.showAutoindexBis(o, i, rhs);
 		if (tmp[i].getIndexSet())
 			rhs.showIndexBis(o, i, tmp);
 		if (tmp[i].getHttpRedirSet())
 			o << "\t\tHttp redir\t: " << tmp[i].getHttpRedir() << std::endl;
-		o << std::endl;
+		if (tmp[i].getUploadSet())
+			o << "\t\tUpload\t\t: " << tmp[i].getUpload() << std::endl;
 }
 
 void	Server::showIndexBis(std::ostream & o, int i, std::vector<Location> tmp) const {
-			o << "\t\tIndex\t:";
-			for (size_t j = 0; j < tmp[i].getIndex().size(); j++)
-				o << " " << tmp[i].getIndex()[j];
-			o << std::endl;
+	o << "\t\tIndex\t\t:";
+	for (size_t j = 0; j < tmp[i].getIndex().size(); j++)
+		o << " " << tmp[i].getIndex()[j];
+	o << std::endl;
 }
 
 void	Server::showAutoindexBis(std::ostream & o, int i, Server const &rhs) const {
@@ -342,32 +346,46 @@ void	Server::showAutoindexBis(std::ostream & o, int i, Server const &rhs) const 
 	o << std::endl;
 }
 
-// void	Server::showErrorPageBis(std::ostream & o, int i, Server const &rhs) const {
-// 	o << "\t\tError Page\t:";
-// 	std::vector<Location> tmp = rhs.getVctLocation();
-// 		for (size_t j = 0; j < tmp[i].getErrorPage().size(); j++)
-// 			o << " (" << tmp[i].getErrorPage()[j].first << " " << tmp[i].getErrorPage()[j].second << ")";
-// 	o << std::endl;
-// }
+void	Server::showErrorPageBis(std::ostream & o, int i, Server const &rhs) const {
+	o << "\t\tError Page\t:";
+	std::vector<Location>		tmp = rhs.getVctLocation();
+	std::map<int, std::string>	tmpErr = tmp[i].getErrorPage();
+
+		for (std::map<int, std::string>::iterator it = tmpErr.begin(); it != tmpErr.end(); it++)
+			o << " (" << it->first << " " << it->second << ")";
+	o << std::endl;
+}
+
+void	Server::showCgiBis(std::ostream & o, int i, Server const &rhs) const {
+	o << "\t\tCgi\t\t:";
+	std::vector<Location>		tmp = rhs.getVctLocation();
+	std::map<std::string, std::string>	tmpCgi = tmp[i].getCgi();
+
+		for (std::map<std::string, std::string>::iterator it = tmpCgi.begin(); it != tmpCgi.end(); it++)
+			o << " (" << it->first << " " << it->second << ")";
+	o << std::endl;
+}
 
 std::ostream &operator<<(std::ostream & o, Server const &rhs)
 {
-	if (rhs.getServerNameSet())
-		o << "Server:" << std::endl;
-	if (rhs.getHostSet())
-		o << "Host\t\t: " << rhs.getHost() << std::endl;
+	o << "Host\t\t: " << rhs.getHost() << std::endl;
 	if (rhs.getPortSet())
 		o << "Port\t\t: " << rhs.getPort() << std::endl;
-	rhs.showServerName(o);
+	if (rhs.getServerNameSet())
+		rhs.showServerName(o);
 	rhs.showErrorPage(o);
-	if (rhs.getClientMaxBodySizeSet())
-		o << "client max\t: " << rhs.getClientMaxBodySize() << std::endl;
 	if (rhs.getRootSet())
 		o << "Root\t\t: " << rhs.getRoot() << std::endl;
+	if (rhs.getClientMaxBodySizeSet())
+		o << "Client max\t: " << rhs.getClientMaxBodySize() << std::endl;
 	rhs.showAutoindex(o);
 	rhs.showIndex(o);
 	if (rhs.getHttpRedirSet())
 		o << "Http redir\t: " << rhs.getHttpRedir() << std::endl;
+	rhs.showHttpMethods(o);
+	rhs.showCgi(o);
+	if (rhs.getUploadSet())
+		o << "Upload\t\t: " << rhs.getUpload() << std::endl;
 	for (size_t i = 0; i < rhs.getVctLocation().size(); i++)
 		rhs.showLocation(o, i, rhs);
 	return o;
