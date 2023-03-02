@@ -9,12 +9,8 @@
 # include <fstream>
 #include <cstring>
 
-<<<<<<< HEAD
-# define BUFFLEN 8000000
-=======
 # define BUFFLEN 4096
 # define BUFFLEN_FILE 65536
->>>>>>> mtellal
 
 class Request {
 

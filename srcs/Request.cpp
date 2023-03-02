@@ -390,7 +390,7 @@ void							Request::parseBoundaryData(const std::string &bound_data)
 	else
 	{
 		std::cout << "data from post args" << std::endl;
-		this->_queryString += bound_data;
+		//this->_queryString += bound_data;
 	}
 }
 
