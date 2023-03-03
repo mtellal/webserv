@@ -97,7 +97,7 @@ class Request {
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			parsArgs(std::string tmp);
-		void			setMethodVersionPath(std::vector<std::string> strSplit);
+		bool			setMethodVersionPath(const std::string &line);
 		void			setHostPort(std::vector<std::string> strSplit);
 		void			setConnection(std::vector<std::string> strSplit);
 		void			setAccept(std::vector<std::string> strSplit);

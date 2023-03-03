@@ -17,18 +17,14 @@ _badRequest(false),
 _bodyBytesRecieved(0), _bodyFileExists(false), _bodyFilePath("./uploads/bodyfile"),
 _awaitingHeader(false), _awaitingBody(false)
 {
-	this->functPtr[0] = &Request::setMethodVersionPath;
-	this->functPtr[1] = &Request::setMethodVersionPath;
-	this->functPtr[2] = &Request::setMethodVersionPath;
-	this->functPtr[3] = &Request::setMethodVersionPath;
-	this->functPtr[4] = &Request::setHostPort;
-	this->functPtr[5] = &Request::setConnection;
-	this->functPtr[6] = &Request::setAccept;
-	this->functPtr[7] = &Request::setReferer;
-	this->functPtr[8] = &Request::setAgent;
-	this->functPtr[9] = &Request::setAuthentification;
-	this->functPtr[10] = &Request::setContentLength;
-	this->functPtr[11] = &Request::setContentType;
+	this->functPtr[0] = &Request::setHostPort;
+	this->functPtr[1] = &Request::setConnection;
+	this->functPtr[2] = &Request::setAccept;
+	this->functPtr[3] = &Request::setReferer;
+	this->functPtr[4] = &Request::setAgent;
+	this->functPtr[5] = &Request::setAuthentification;
+	this->functPtr[6] = &Request::setContentLength;
+	this->functPtr[7] = &Request::setContentType;
 }
 
 Request::Request(Request const &src) {
@@ -150,7 +146,7 @@ void								Request::getErrorPage() {
 
 	if (this->_tooLarge)
 		statusCode = 413;
-	if (!this->_methodSet)
+	if (!this->_methodSet || !this->_hostSet)
 		statusCode = 400;
 	else
 		statusCode = 500;
@@ -195,29 +191,73 @@ void							Request::parsArgs(std::string arg) {
 	}
 }
 
-void							Request::setMethodVersionPath(std::vector<std::string> strSplit) {
-	std::vector<std::string>	splitBis;
+bool							Request::setMethodVersionPath(const std::string &buff)
+{
+	std::vector<std::string>	strSplit;
+	std::vector<std::string>	lines;
+	std::string					methods[4] = { "GET", "POST", "HEAD", "DELETE" };
 
-		if (strSplit.size() != 3)
-			this->_badRequest = true;
-		else
+	lines = ft_split(buff, "\r\n");
+	if (!lines.size())
+		return (false);
+	strSplit = ft_split(lines[0], " ");
+	if (strSplit.size() != 3)
+		return (false);
+	else
+	{
+		for (size_t i = 0; i < 4; i++)
 		{
-			this->_method = strSplit[0];
-			if (strSplit[2] != "HTTP/1.0" && strSplit[2] != "HTTP/1.1")
-				this->_badRequest = true;
-			this->_httpVersion = strSplit[2];
-			strSplit = ft_split(strSplit[1].c_str(), "?");
-			if (strSplit.size() == 2)
-				this->parsArgs(strSplit[1]);
-			this->_path = strSplit[0];
-			this->_methodSet = true;
+			if (methods[i] == strSplit[0])
+				this->_method = strSplit[0];
 		}
+		if (!this->_method.length())
+			return (false);
+		if (strSplit[1][0] != '/' || (strSplit[2] != "HTTP/1.0" && strSplit[2] != "HTTP/1.1"))
+			return (false);
+		this->_httpVersion = strSplit[2];
+		strSplit = ft_split(strSplit[1].c_str(), "?");
+		if (strSplit.size() == 2)
+			this->parsArgs(strSplit[1]);
+		this->_path = strSplit[0];
+		this->_methodSet = true;
+	}
+	return (true);
 }
 
-void							Request::setHostPort(std::vector<std::string> strSplit) {
-	strSplit = ft_split(strSplit[1].c_str(), ":");
-	this->_host = strSplit[0];
-	this->_port = strSplit[1];
+bool		invalidHost(char c)
+{
+	return (!std::isalpha(c) || c != '.');
+}
+
+bool		invalidPort(char c)
+{
+	return (!std::isdigit(c));
+}
+
+void							Request::setHostPort(std::vector<std::string> strSplit)
+{
+	std::string					line;
+	std::string::iterator		it;
+	std::vector<std::string> 	v;
+
+	std::cout << "sethostport called" << std::endl;
+	for (size_t i = 0; i < strSplit.size(); i++)
+			line.append(strSplit[i] + " ");
+	v = ft_split(line, ":");
+	if (v.size() < 3)
+		return ;
+	std::cout << "size" << std::endl;
+	it = std::find_if(v[1].begin(), v[1].end(), invalidHost);
+	if (it != v[1].end())
+		return ;
+	std::cout << "host" << std::endl;
+	this->_host = v[1];
+	it = std::find_if(v[2].begin(), v[2].end(), invalidPort);
+	if (it != v[2].end())
+		return ;
+	std::cout << "port" << std::endl;
+
+	this->_port = v[2];
 	this->_hostSet = true;
 }
 
@@ -510,7 +550,7 @@ void						Request::setHTTPFields(const std::string &header)
 {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
-	std::string					key[12] = { "GET", "HEAD", "POST", "DELETE", "Host:",
+	std::string					key[12] = { "Host:",
 				"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification:",
 				"Content-Length:", "Content-Type:"};
 
@@ -524,7 +564,7 @@ void						Request::setHTTPFields(const std::string &header)
 			{
 				for (size_t j = 0; j < 12; j++)
 				{
-					if (strSplit[0] == key[j])
+					if (!memcmp(vct[i].c_str(), key[j].c_str(), key[j].length()))
 					{
 						(this->*functPtr[j])(strSplit);
 						break ;
@@ -540,9 +580,10 @@ void						Request::setHTTPFields(const std::string &header)
 
 int						Request::awaitingHeader(int fd)
 {
-	size_t	index;
 	char	buff[BUFFLEN + 1];
 	int		bytes;
+	size_t	index;
+
 
 	bytes = recv(fd, buff, BUFFLEN, 0);
 
@@ -559,14 +600,22 @@ int						Request::awaitingHeader(int fd)
 	}
 	
 	buff[bytes] = '\0';
-	this->_request.append(buff);
 
-	if (!memcmp(this->request.c_str(), "GET ", 3))
+	if (!this->_methodSet && bytes == 2 && !memcmp(buff, "\r\n", 2))
 	{
-
+		this->_awaitingHeader = true;
+		return (-1);
 	}
 
-	std::cout << this->_request << std::endl;
+	if (!this->_methodSet && !setMethodVersionPath(buff))
+	{
+		this->getErrorPage();
+		this->_awaitingHeader = false;
+		return (-1);
+	}
+
+	this->_request.append(buff);
+
 	if ((index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
 		this->_awaitingHeader = false;
