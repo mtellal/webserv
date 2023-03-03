@@ -13,14 +13,12 @@
 #include "Cgi.hpp"
 #include "utils.hpp"
 
-Cgi::Cgi(const Cgi &src) :
-_serv(src._serv), _req(src._req), _header(src._header), 
-_raw_env(src._raw_env), _map_cgi(src._map_cgi), _status(0),
-_post(false), _get(false) {}
+Cgi::Cgi(const Cgi &src) : _header(src._header) { *this = src; }
 
 Cgi::Cgi(const Server &serv, const Request &req, Header &header, char **env):
-_serv(serv), _req(req), _header(header), _raw_env(env), 
-_map_cgi(serv.getCgi()), _status(0), _post(false), _get(false)
+_post(false), _get(false), _err(false),
+_rawEnv(env), _env(NULL), _pathCgiExe(""), _body(""), _cgiWarnings(""),
+_serv(serv), _req(req), _header(header) 
 {
     initEnv();
 }
@@ -31,15 +29,20 @@ Cgi     &Cgi::operator=(const Cgi &src)
 {
     if (this == &src)
     {
+        this->_get = src._get;
+        this->_post = src._post;
+        this->_err = src._err;
+        this->_rawEnv = src._rawEnv;
+        this->_envMap = src._envMap;
+
+
+        this->_pathCgiExe = src._pathCgiExe;
+        this->_body = src._body;
+        this->_cgiWarnings = src._cgiWarnings;
+
         this->_serv = src._serv;
         this->_req = src._req;
         this->_header = src._header;
-        this->_header = src._header;
-        this->_raw_env = src._raw_env;
-        this->_env = src._env;
-        this->_map_cgi = src._map_cgi;
-        this->_get = src._get;
-        this->_post = src._post;
     }
     return (*this);
 }
@@ -48,26 +51,29 @@ Header          Cgi::getHeader() const { return (this->_header); }
 
 /*
     Verify if cgi params if set and if the ressource and if the correct extension, 
-    if everything match then set _path_cgi to value (<key/extension, value/path_cgi>)
+    if everything match then set _pathCgiExe to value (<key/extension, value/path_cgi>)
 */
 int     Cgi::isCgiRequest(const std::string &path_file)
 {
     std::string                                     extension;
     size_t                                          index;
     std::map<std::string, std::string>::iterator    it;
+    std::map<std::string, std::string>           mapConfCgi;
 
     index = 0;
-    this->_map_cgi = this->_serv.getCgi();
-    if (!this->_map_cgi.size())
+    mapConfCgi = this->_serv.getCgi();
+    if (!mapConfCgi.size())
         return (-1);
-    it = this->_map_cgi.begin();
-    while (it != this->_map_cgi.end())
+    it = mapConfCgi.begin();
+    std::cout << "Cgi: map_cgi.size() " << mapConfCgi.size() << std::endl;
+    while (it != mapConfCgi.end())
     {
+        std::cout << "Cgi: map[i]: " << it->first << " " << it->second << std::endl;
         extension = ".";
         extension += it->first;
         if ((index = path_file.find(extension)) != (size_t)-1 && !path_file[index + extension.length()])
         {
-            this->_path_cgi = it->second;            
+            this->_pathCgiExe = it->second;            
             return (1);
         }
         it++;
@@ -78,91 +84,89 @@ int     Cgi::isCgiRequest(const std::string &path_file)
 
 void    Cgi::printEnv()
 {
-    std::map<std::string, std::string>::iterator it = _env.begin();
+    std::map<std::string, std::string>::iterator it = _envMap.begin();
 
-    while (it != _env.end())
+    while (it != _envMap.end())
         std::cout << it->first << " = " << (it++)->second << std::endl;
 }
 
-void    Cgi::addEnvInMap()
+void    Cgi::addVarEnv()
 {
     char    ** env;
     size_t  i;
     size_t  len;
 
     i = 0;
-    env = this->_raw_env;
+    env = this->_rawEnv;
     len = tab_len(env);
     while (i < len)
     {
-        std::string var_env;
+        std::string var_envMap;
         size_t      index;
         std::string key;
         std::string value;
 
-        var_env = env[i];
-        index = var_env.find("=");
-        key = var_env.substr(0, index);
-        value = var_env.substr(index + 1, var_env.length());
-        _env[key] = value;
+        var_envMap = env[i];
+        index = var_envMap.find("=");
+        key = var_envMap.substr(0, index);
+        value = var_envMap.substr(index + 1, var_envMap.length());
+        _envMap[key] = value;
         i++;
     }
 }
 
-void    Cgi::initEnv()
+void    Cgi::addCgiVarEnv()
 {
     Request &req = this->_req;
 
-    _env["REDIRECT_STATUS"]     =   200;
-    _env["AUTH_TYPE"]           =   req.getAuthentification();
+    _envMap["REDIRECT_STATUS"]     =   "200";
+    _envMap["AUTH_TYPE"]           =   req.getAuthentification();
     if (req.getMethod() == "POST")
     {
-        _env["CONTENT_LENGTH"] = "618";
+        _envMap["CONTENT_LENGTH"] = "618";
         if (req.getContentType().length())
         {
             std::cout << "content type set" << std::endl;
-            _env["CONTENT_TYPE"] = "multipart/form-data;boundary=------WebKitFormBoundary3IMBGwkS5BuesHoI";
+            _envMap["CONTENT_TYPE"] = "multipart/form-data;boundary=------WebKitFormBoundary3IMBGwkS5BuesHoI";
         }
     }
     else
-        _env["QUERY_STRING"]        =   req.getQueryString();
-    _env["GATEWAY_INTERFACE"]   =   "Cgi/1.1";
-    _env["PATH_INFO"]           =   req.getPath();
-    _env["PATH_TRANSLATED"]     =   req.getPath();
-    _env["REMOTE_ADDR"]         =   ""; // need to be set
-    _env["REMOTE_HOST"]         =   ""; // NULL
-    _env["REMOTE_IDENT"]        =   ""; // NULL
-    _env["REMOTE_USER"]         =   ""; // NULL
-    _env["REQUEST_METHOD"]       =   req.getMethod();
-    _env["SCRIPT_NAME"]         =  "." + _serv.getRoot() + req.getPath();
-    _env["SCRIPT_FILENAME"]     =   "." + _serv.getRoot() + req.getPath();
-    _env["SERVER_NAME"]         =   req.getServerName();
-    _env["SERVER_PORT"]         =   req.getPort();
-    _env["SERVER_PROTOCOL"]     =   "HTTP/1.1";
-    _env["SERVER_SOFTWARE"]     =   req.getServerName();
-
-    addEnvInMap();
-
+        _envMap["QUERY_STRING"]        =   req.getQueryString();
+    _envMap["GATEWAY_INTERFACE"]   =   "Cgi/1.1";
+    _envMap["PATH_INFO"]           =   req.getPath();
+    _envMap["PATH_TRANSLATED"]     =   req.getPath();
+    _envMap["REMOTE_ADDR"]         =   ""; // need to be set
+    _envMap["REMOTE_HOST"]         =   ""; // NULL
+    _envMap["REMOTE_IDENT"]        =   ""; // NULL
+    _envMap["REMOTE_USER"]         =   ""; // NULL
+    _envMap["REQUEST_METHOD"]       =   req.getMethod();
+    _envMap["SCRIPT_NAME"]         =  "." + _serv.getRoot() + req.getPath();
+    _envMap["SCRIPT_FILENAME"]     =   "." + _serv.getRoot() + req.getPath();
+    _envMap["SERVER_NAME"]         =   req.getServerName();
+    _envMap["SERVER_PORT"]         =   req.getPort();
+    _envMap["SERVER_PROTOCOL"]     =   "HTTP/1.1";
+    _envMap["SERVER_SOFTWARE"]     =   req.getServerName();
 }
 
 char    **Cgi::mapToTab()
 {
-    std::map<std::string, std::string>::iterator    it;
-    char                                            **e;
     size_t                                          i;
+    char                                            **e;
+    std::map<std::string, std::string>::iterator    it;
 
     i = 0;
-    it = this->_env.begin();
+    it = this->_envMap.begin();
     try
     {
-        e = new char*[this->_env.size() + 1];
+        e = new char*[this->_envMap.size() + 1];
     }
     catch (const std::exception &err)
     {
         std::cerr << "(mapToTab) creation of env general failed: " << err.what() << std::endl;
+        return (NULL);
     }
 
-    while (it != this->_env.end())
+    while (it != this->_envMap.end())
     {
         std::string  tmp;
 
@@ -175,6 +179,12 @@ char    **Cgi::mapToTab()
         catch (const std::exception &err)
         {
             std::cerr << "(mapToTab) creation of var [" << i << "] failed: " << err.what() << std::endl;
+            while (i > 0)
+            {
+                i--;
+                delete e[i];
+            }
+            return (NULL);
         }
 
         strcpy(e[i], tmp.c_str());
@@ -186,6 +196,25 @@ char    **Cgi::mapToTab()
     return (e);
 }
 
+/*
+    add predefined cgi variables, and default env variables in a map (_envMap)
+*/
+
+void    Cgi::initEnv()
+{
+    addCgiVarEnv();
+
+    addVarEnv();
+
+    this->_env = mapToTab();
+
+    if (!this->_env)
+    {
+        this->_header.setStatus(500);
+        this->_err = true;
+    }
+}
+
 char                **Cgi::exec_args(const std::string &path_file)
 {
     char        **args;
@@ -194,7 +223,7 @@ char                **Cgi::exec_args(const std::string &path_file)
     {
         args = new char*[3];
 
-        args[0] = strdup(this->_path_cgi.c_str());
+        args[0] = strdup(this->_pathCgiExe.c_str());
         args[1] = strdup(path_file.c_str());
         args[2] = NULL;
     }
@@ -206,15 +235,11 @@ char                **Cgi::exec_args(const std::string &path_file)
     return (args);
 }
 
-void                Cgi::setStatus(int s) { this->_status = s; }
-
 void                Cgi::setContentType(const std::string &ct) { this->_header.setContentType(ct); }
-
-void                Cgi::setPoweredBy(const std::string &app) { this->_application = app; }
 
 void                Cgi::setContentLength(const std::string &cl) { this->_header.setContentLength(cl); }
 
-void                Cgi::setCgiErr(const std::string &err) { this->_cgi_err = err; }
+void                Cgi::setCgiWarnings(const std::string &err) { this->_cgiWarnings = err; }
 
 void                Cgi::extractFields(const std::string &cgi_response)
 {
@@ -225,7 +250,6 @@ void                Cgi::extractFields(const std::string &cgi_response)
     {
             "Content-type",
             "Content-length",
-            "X-Powered-By",
             "PHP Warning",
             "PHP Parse error" 
 
@@ -234,8 +258,8 @@ void                Cgi::extractFields(const std::string &cgi_response)
     {
         &Cgi::setContentType,
         &Cgi::setContentLength,
-        &Cgi::setCgiErr,
-        &Cgi::setCgiErr
+        &Cgi::setCgiWarnings,
+        &Cgi::setCgiWarnings
     };
 
 
@@ -254,8 +278,8 @@ void                Cgi::extractFields(const std::string &cgi_response)
                 {
                     if (field.size() == 3)
                         (this->*functionPtr[j])(field[1] + field[2]);
-                    else if (field[0] == "Status")
-                        this->setStatus(ft_stoi(field[1], NULL));
+                    else if (field.size() > 1 && field[0] == "Status")
+                        this->_header.setStatus(ft_stoi(field[1], NULL));
                     else
                         (this->*functionPtr[j])(field[1]);
                 }
@@ -264,7 +288,7 @@ void                Cgi::extractFields(const std::string &cgi_response)
     }
 }
 
-void                child(int fdin, int pipe[2], const std::string &path_script, char **args, char **env)
+void                Cgi::child(int fdin, int pipe[2], const std::string &path_script, char **args)
 {
     if (fdin != STDIN_FILENO && dup2(fdin, 0) == -1)
     {
@@ -280,7 +304,7 @@ void                child(int fdin, int pipe[2], const std::string &path_script,
 
     close(pipe[0]);
 
-    if (execve(path_script.c_str(), args, env) == -1)
+    if (execve(path_script.c_str(), args, this->_env) == -1)
     {
         std::cerr << "execve failed" << std::endl;
         perror("execve call failed");
@@ -324,7 +348,6 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     pid_t           f;
 
     char            **args;
-    char            **env;
 
     std::string     response;
     std::string     header;
@@ -333,16 +356,11 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     int             in;
     
     in = STDIN_FILENO;
-    env = mapToTab();
     args = exec_args(path_file);
 
-    std::cout << "Cgi: path script " << this->_path_cgi << std::endl; 
+    std::cout << "Cgi: path script " << this->_pathCgiExe << std::endl; 
 
     std::cout << "///////////// C G I    E X E C U T E   C A L L E D ///////////////" << std::endl;
-
-
-    //Content-Length: 618
-    //Content-Type: multipart/form-data; boundary=----WebKitFormBoundary3IMBGwkS5BuesHoI    
 
 
     if (pipe(p) == -1)
@@ -367,7 +385,6 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     std::cout << "path: " << path_file << std::endl;
 
 
-
     f = fork();
     if (f == -1)
     {
@@ -375,7 +392,7 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
         return (500);
     }
     if (f == 0)
-        child(in, p, this->_path_cgi, args, env);
+        child(in, p, this->_pathCgiExe, args);
     else
     {
         // pere
@@ -418,8 +435,6 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
 
         this->_header.setContentLength(ft_itos(body.length()));
 
-        if ((this->_status == 0 || this->_status == 200) && !this->_cgi_err.length())
-            return (200);
     }
-    return (500);
+    return (0);
 }

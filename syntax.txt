@@ -1,0 +1,4 @@
+/////////	S Y N T A X   A C C E P T E D 		///////////// 
+
+cgi [.]extension path_script 
+	 

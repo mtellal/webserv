@@ -8,7 +8,8 @@
 #include <map>
 #include <ostream>
 #include <fstream>
-
+#include <cctype>
+#include <algorithm>
 
 
 class Directives {

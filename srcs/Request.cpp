@@ -534,6 +534,10 @@ void						Request::setHTTPFields(const std::string &header)
 		}
 }
 
+/*
+	determiner la requete => err direct tant que n
+*/
+
 int						Request::awaitingHeader(int fd)
 {
 	size_t	index;
@@ -556,6 +560,11 @@ int						Request::awaitingHeader(int fd)
 	
 	buff[bytes] = '\0';
 	this->_request.append(buff);
+
+	if (!memcmp(this->request.c_str(), "GET ", 3))
+	{
+
+	}
 
 	std::cout << this->_request << std::endl;
 	if ((index = this->_request.find("\r\n\r\n")) != (size_t)-1)
@@ -594,26 +603,30 @@ void						Request::request(int fd)
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
-		if (header.length() >= index + 4)
-			body = this->_request.substr(index + 4, this->_request.length());
-
-		this->_bodyBytesRecieved = oct - (header.length() + 4);
-
-		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
-		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
-
-		this->setHTTPFields(header);
-
-		if (this->_methodSet && this->_method == "POST")
+		if (header.length())
 		{
-			if (body.length())
-				this->bodyRequest(index);
+			if (header.length() >= index + 4)
+				body = this->_request.substr(index + 4, this->_request.length());
 
-			this->checkBodyBytesRecieved();
+			this->_bodyBytesRecieved = oct - (header.length() + 4);
+
+			std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
+			std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
+
+			this->setHTTPFields(header);
+
+			if (this->_methodSet && this->_method == "POST")
+			{
+				if (body.length())
+					this->bodyRequest(index);
+
+				this->checkBodyBytesRecieved();
+			}
+			if (!this->_methodSet || !this->_hostSet || this->_badRequest)
+				this->getErrorPage();
 		}
-
-		if (!this->_methodSet || !this->_hostSet || this->_badRequest)
-			this->getErrorPage();
+		else 
+			this->_closeConnection = true;
 	}
 }
 

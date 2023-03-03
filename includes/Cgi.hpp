@@ -48,27 +48,27 @@ class Cgi
 
     private:
 
+        bool                                _post;
+        bool                                _get;
+        bool                                _err;
+
+        char                                **_rawEnv;
+        char                                **_env;
+        std::string                         _pathCgiExe;
+
+        std::string                         _body;
+        std::string                         _cgiWarnings;
+
         Server                              _serv;
         Request                             _req;
         Header                              &_header;
-        char                                **_raw_env;
-        std::map<std::string, std::string>  _env;
-        std::map<std::string, std::string>  _map_cgi;
 
-        int                                 _status;
+        std::map<std::string, std::string>  _envMap;
         
-        std::string                         _path_cgi;
-
-        std::string                         _body;
-        std::string                         _contentType;
-        std::string                         _application;
-        std::string                         _cgi_err;
-
-        bool                                _post;
-        bool                                _get;
 
 
-        void            addEnvInMap();
+        void            addVarEnv();
+        void            addCgiVarEnv();
         char            **mapToTab();
         char            **exec_args(const std::string &path_file);
         void            extractFields(const std::string &cgi_response);
@@ -77,7 +77,10 @@ class Cgi
         void            setContentType(const std::string &ct);
         void            setContentLength(const std::string &ct);
         void            setPoweredBy(const std::string &app);
-        void            setCgiErr(const std::string &err);
+        void            setCgiWarnings(const std::string &err);
+
+        void            child(int fdin, int pipe[2], const std::string &path_script, char **args);
+
 
 
 

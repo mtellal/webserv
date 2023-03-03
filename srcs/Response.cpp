@@ -135,6 +135,7 @@ bool	Response::rightPathServer() {
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
 	root += newPath;
+	std::cout << "root " << root << std::endl;
 	if (stat(root.c_str(), &fileOrDir) == -1)
 	{
 		std::cerr << "can't read file informations from " << root << " because: ";
@@ -349,6 +350,7 @@ void	Response::sendData() {
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
+	std::cout << path << " path " << std::endl;
 	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
 
@@ -389,26 +391,6 @@ void	Response::sendHeader(std::string path)
 	}
 	else
 	{
-		if (this->_req.getCgi() && cgi.isCgiRequest(path))
-		{
-			std::cout << "\n////////////	CGI		////////////\n" << std::endl;
-			std::cout << "cgi found" << std::endl;
-
-			std::cout << "queryString: " << this->_req.getQueryString() << std::endl;
-			
-			std::cout << "Response: path send to execute" << path << std::endl;
-
-			int	status = cgi.execute(path, body);
-
-			std::cout << "Response: status cgi.execute " << status << std::endl;
-			header.setStatus(status);
-
-			header = cgi.getHeader();
-
-			std::cout << "\n////////////	CGI		////////////\n" << std::endl;
-
-		}
-
 		res = header.getHeader();
 
 		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
