@@ -1,8 +1,8 @@
 #include "Response.hpp"
 #include "Cgi.hpp"
-
 #include <stdio.h>
 #include <cstdlib>
+#include <signal.h>
 
 Response::Response() :
 _locBlocSelect(false), _isDir(false), _autoindex(false),
@@ -96,29 +96,26 @@ bool	Response::rightPathLocation() {
 		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	root += newPath;
-	if (stat(root.c_str(), &fileOrDir) == -1)
+	if (stat(root.c_str(), &fileOrDir) != -1)
 	{
-		std::cerr << "can't read file informations from " << root << " because: ";
-		perror("");
-	}
-	if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
-		this->_path.push_back(root);
-	else if (S_ISDIR(fileOrDir.st_mode))
-	{
-		this->_isDir = true;
-		if (root[root.size() - 1] != '/')
-			root += "/";
-		for (size_t i = 0; i < index.size(); i++)
-			this->_path.push_back(index[i].insert(0, root));
-		if (this->_locBloc.getAutoindexSet())
-			this->_autoindex = this->_locBloc.getAutoindex();
-		else if (this->_serv.getAutoindexSet())
-			this->_autoindex = this->_serv.getAutoindex();
+		if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
+			this->_path.push_back(root);
+		else if (S_ISDIR(fileOrDir.st_mode))
+		{
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			for (size_t i = 0; i < index.size(); i++)
+				this->_path.push_back(index[i].insert(0, root));
+			if (this->_locBloc.getAutoindexSet())
+				this->_autoindex = this->_locBloc.getAutoindex();
+			else if (this->_serv.getAutoindexSet())
+				this->_autoindex = this->_serv.getAutoindex();
+		}
+		else
+			return true;
 	}
 	else
-	{
 		return true;
-	}
 	return false;
 }
 
@@ -135,23 +132,23 @@ bool	Response::rightPathServer() {
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
 	root += newPath;
-	if (stat(root.c_str(), &fileOrDir) == -1)
+	if (stat(root.c_str(), &fileOrDir) != -1)
 	{
-		std::cerr << "can't read file informations from " << root << " because: ";
-		perror("");
-	}
-	if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
-		this->_path.push_back(root);
-	else if (S_ISDIR(fileOrDir.st_mode))
-	{
-		this->_isDir = true;
-		if (root[root.size() - 1] != '/')
-			root += "/";
-		index = this->_serv.getIndex();
-		for (size_t i = 0; i < index.size(); i++)
-			this->_path.push_back(index[i].insert(0, root));
-		if (this->_serv.getAutoindexSet())
-			this->_autoindex = this->_serv.getAutoindex();
+		if (S_ISREG(fileOrDir.st_mode) || this->_req.getMethod() == "DELETE")
+			this->_path.push_back(root);
+		else if (S_ISDIR(fileOrDir.st_mode))
+		{
+			this->_isDir = true;
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			index = this->_serv.getIndex();
+			for (size_t i = 0; i < index.size(); i++)
+				this->_path.push_back(index[i].insert(0, root));
+			if (this->_serv.getAutoindexSet())
+				this->_autoindex = this->_serv.getAutoindex();
+		}
+		else
+			return true;
 	}
 	else
 		return true;
@@ -197,6 +194,11 @@ std::string	Response::testAllPaths(bool *err) {
 				this->_statusCode = 200;
 				break;
 			}
+		}
+		else if (S_ISDIR(file.st_mode))
+		{
+				this->_isDir = true;
+				*err = true;
 		}
 		i++;
 		if (i == this->_path.size())
@@ -310,10 +312,20 @@ void	Response::httpRedir() {
 	return ;
 }
 
-std::string	Response::deleteResource(std::string path) {
-	struct stat stat_buf;
-	int result = stat(path.c_str(), &stat_buf);
+std::string	Response::deleteResource() {
+	struct stat	stat_buf;
+	std::string	path;
+	int			result;
 
+	if (this->_path.size() > 0)
+		path = this->_path[0];
+	else
+	{
+		this->_statusCode = 204;
+		return this->_defaultPage.createDefaultPage(this->_statusCode);
+	}
+ 
+	result = stat(path.c_str(), &stat_buf);
 	if (result != 0)
 		this->_statusCode = 204;
 	if (S_ISDIR(stat_buf.st_mode))
@@ -357,7 +369,7 @@ void	Response::sendData() {
 		return this->httpRedir();
 
 	if (this->_req.getMethod() == "DELETE")
-		path = this->deleteResource(this->_path[0]);
+		path = this->deleteResource();
 	this->sendHeader(path);
 }
 

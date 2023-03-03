@@ -2,6 +2,7 @@
 #include "Response.hpp"
 #include <string.h>
 #include <cstring>
+#include <signal.h>
 
 SocketServer::SocketServer() {}
 
@@ -361,6 +362,11 @@ size_t	SocketServer::isAwaitingRequest(int fd)
 	return (-1);
 }
 
+void	handler(int signal)
+{
+	(void)signal;
+}
+
 int		SocketServer::epollWait() {
 	struct epoll_event	event[NB_EVENTS];
 	int			nbrFd;
@@ -368,6 +374,7 @@ int		SocketServer::epollWait() {
 	int			index_wreq;
 	int 		srv_i;
 
+	signal(SIGINT, &handler);
 	nbrFd = epoll_wait(this->_epollFd, event, NB_EVENTS, 1000);
 	if (nbrFd == -1)
 	{

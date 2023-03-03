@@ -151,7 +151,7 @@ void								Request::getErrorPage() {
 
 	if (this->_tooLarge)
 		statusCode = 413;
-	if (!this->_methodSet)
+	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 		statusCode = 400;
 	else
 		statusCode = 500;
