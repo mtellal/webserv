@@ -122,7 +122,6 @@ bool	Response::rightPathLocation() {
 /*	Pareil que au dessus mais si un aucun bloc de Location est selectionne */
 bool	Response::rightPathServer() {
 	struct stat					fileOrDir;
-	//std::string					root = this->rightRoot();
 	std::string					root = this->_serv.getRoot();
 	std::string					newPath;
 	std::vector<std::string>	index;
@@ -138,7 +137,6 @@ bool	Response::rightPathServer() {
 			this->_path.push_back(root);
 		else if (S_ISDIR(fileOrDir.st_mode))
 		{
-			this->_isDir = true;
 			if (root[root.size() - 1] != '/')
 				root += "/";
 			index = this->_serv.getIndex();
@@ -436,9 +434,6 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	
 	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) == -1)
 		perror("send call failed");
-
-	//std::cout << content << std::endl;
-	//write(this->_req.getFd(), content.c_str(), content.size());
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
