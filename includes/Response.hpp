@@ -71,7 +71,7 @@ class Response
 		std::string					sendContentTypeError();
 		std::string					findRightError();
 		std::string					testAllPaths(bool *err);
-		std::string					deleteResource(std::string path);
+		std::string					deleteResource();
 };
 
 

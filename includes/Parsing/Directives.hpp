@@ -43,6 +43,7 @@ class Directives {
 		void								setCgi(std::vector<std::string> cgi, int &i);
 		void								setUpload(std::vector<std::string> upload, int &i);
 
+		bool								getCgiSet() const;
 		bool								getErrorPageSet() const;
 		bool								getClientMaxBodySizeSet() const;
 		bool								getRootSet() const;
@@ -55,6 +56,8 @@ class Directives {
 		void								showErrorPage(std::ostream & o) const;
 		void								showAutoindex(std::ostream & o) const;
 		void								showIndex(std::ostream & o) const;
+		void								showHttpMethods(std::ostream & o) const;
+		void								showCgi(std::ostream & o) const;
 
 	protected:
 
@@ -65,6 +68,7 @@ class Directives {
 		std::vector<std::string>			_index;
 		std::string							_httpRedir;
 		std::map<std::string, std::string>	_cgi;
+		bool								_cgiSet;
 		bool								_errorPageSet;
 		bool								_clientMaxBodySizeSet;
 		bool								_rootSet;

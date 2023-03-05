@@ -1,4 +1,5 @@
 #include "Configuration.hpp"
+#include <signal.h>
 
 Configuration::Configuration() {}
 
@@ -43,6 +44,8 @@ void	Configuration::open_and_check_file(std::string path_file) {
 	std::vector<std::string> lineSplit;
 	int n_line = 1;
 
+	signal(SIGINT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
 	if (!file)
 		return (error_msg("Error: File not found"));
 	while (std::getline(file, line))
@@ -89,7 +92,10 @@ std::ostream &operator<<(std::ostream & o, Configuration const & rhs)
 	if (!tmp.empty())
 	{
 		for (size_t i = 0; i < tmp.size(); i++)
+		{
+			o << "Server[" << i << "]" << std::endl;
 			o << tmp[i] << std::endl;
+		}
 	}
 	return o;
 }

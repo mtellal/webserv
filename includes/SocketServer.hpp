@@ -73,7 +73,6 @@ class SocketServer {
 
 		size_t						isAwaitingRequest(int fd);
 
-
 };
 
 #endif

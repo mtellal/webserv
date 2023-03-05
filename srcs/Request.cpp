@@ -146,7 +146,7 @@ void								Request::getErrorPage() {
 
 	if (this->_tooLarge)
 		statusCode = 413;
-	if (!this->_methodSet || !this->_hostSet)
+	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 		statusCode = 400;
 	else
 		statusCode = 500;
@@ -598,6 +598,8 @@ int						Request::awaitingHeader(int fd)
 
 	bytes = recv(fd, buff, BUFFLEN, 0);
 
+	// std::cout << "bytes = " << bytes << std::endl;
+
 	if (bytes < 1)
 	{
 		if (!bytes)
@@ -653,7 +655,7 @@ void						Request::request(int fd)
 	std::string		body;
 
 	oct = 0;
-	printRequest();
+	// printRequest();
 	if (this->_awaitingBody)
 	{
 		this->awaitingBody(fd);
