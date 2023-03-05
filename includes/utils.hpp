@@ -5,16 +5,18 @@
 # include <vector>
 # include <fstream>
 
-int							ft_stoi(const std::string str, bool *err);
+void			            trimSpaceBack(std::string &line);
+void			            trimSpaceFront(std::string &line);
 bool						only_space_or_empty(std::string line);
+bool	                    infileExists(const std::string &file);
+int							ft_stoi(const std::string str, bool *err);
 size_t                      tab_len(char **env);
 std::string					ft_itos(int nbr);
-std::string					getHttpStatusCodeMessage(int statusCode);
 std::string					fileToStr(std::string path);
-std::string 	            strtrim_char(std::string s, char c);
+std::string 	            removeChar(std::string s, char c);
+std::string					getHttpStatusCodeMessage(int statusCode);
 std::vector<std::string>	ft_split_str(const std::string &s, const std::string &str);
 std::vector<std::string>	ft_split(const std::string &str, const std::string &charset);
-bool	                    infileExists(const std::string &file);
 
 
 #endif

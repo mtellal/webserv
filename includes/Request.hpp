@@ -1,13 +1,20 @@
 #ifndef REQUEST_HPP
 # define REQUEST_HPP
 
-# include <string>
-# include <iostream>
-# include <sys/socket.h>
-# include <vector>
 # include <map>
+# include <vector>
+# include <string>
 # include <fstream>
-#include <cstring>
+# include <cstring>
+# include <iostream>
+# include <arpa/inet.h>
+# include <sys/epoll.h>
+# include <sys/socket.h>
+
+# include "Server.hpp"
+# include "PrintInfos.hpp"
+
+
 
 # define BUFFLEN 4096
 # define BUFFLEN_FILE 65536
@@ -17,7 +24,7 @@ class Request {
 	public:
 	
 		Request();
-		Request(int fd);
+		Request(int fd, std::vector<Server> servers);
 		Request(Request const &src);
 		~Request();
 
@@ -52,11 +59,13 @@ class Request {
 		std::string							getContentType() const;
 		std::string							getQueryString() const;
 		void								setBytesRecieved(size_t bytes);
+		Server								getServBlock() const;
 
 
 	private:
 
 		int									_fd;
+		std::vector<Server>					_servers;
 		bool								_errRequest;
 		bool								_queryStringSet;
 		bool								_boundarySet;
@@ -94,6 +103,7 @@ class Request {
 		bool								_awaitingHeader;
 		bool								_awaitingBody;
 
+		Server								_servBlock;
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			parsArgs(std::string tmp);
@@ -126,7 +136,12 @@ class Request {
 		void			checkBodyBytesRecieved();
 		void			addQueryString(const std::string &key, const std::string &value);
 
+		int				pickServBlock();
+		std::string		getRightHost(const std::string& host);
+		std::string		getIPFromHostName(const std::string& hostName);
 
+		std::string		getHostNameFromIP(const std::string& ipAddress);
+		int				selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index);
 
 };
 

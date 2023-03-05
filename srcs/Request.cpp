@@ -8,8 +8,8 @@
 
 Request::Request() {}
 
-Request::Request(int fd) : 
-_fd(fd), _errRequest(false), _queryStringSet(false), _boundarySet(false),
+Request::Request(int fd, std::vector<Server> servers) : 
+_fd(fd), _servers(servers), _errRequest(false), _queryStringSet(false), _boundarySet(false),
 _closeConnection(false), _connectionSet(false), _acceptSet(false),
 _refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
 _methodSet(false), _hostSet(false), _tooLarge(false),
@@ -37,6 +37,7 @@ Request	&Request::operator=(Request const &rhs) {
 	if (this != &rhs)
 	{
 		this->_fd = rhs._fd;
+		this->_servers = rhs._servers;
 		this->_errRequest = rhs._errRequest;
 		this->_queryStringSet = rhs._queryStringSet;
 		this->_boundarySet = rhs._boundarySet;
@@ -75,6 +76,8 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_request = rhs._request;
 		this->_awaitingHeader = rhs._awaitingHeader;
 		this->_awaitingBody = rhs._awaitingBody;
+
+		this->_servBlock = rhs._servBlock;
 	}
 	return *this;
 }
@@ -88,55 +91,36 @@ void		Request::setErrorRequest(bool v)
 //												G E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool								Request::getErrRequest() const { return this->_errRequest; }
-
-bool								Request::getcloseConnection() const { return this->_closeConnection; }
-
-bool								Request::getConnectionSet() const { return this->_connectionSet; }
-
-bool								Request::getAcceptSet() const { return this->_acceptSet; }
-
-bool								Request::getRefererSet() const { return this->_refererSet; }
-
 bool								Request::getAgentSet() const { return this->_agentSet; }
-
+bool								Request::getAcceptSet() const { return this->_acceptSet; }
+bool								Request::getErrRequest() const { return this->_errRequest; }
+bool								Request::getRefererSet() const { return this->_refererSet; }
 bool								Request::getBadRequest() const { return this->_badRequest; }
-
-bool								Request::getAwaitingRequest() const { return (this->_awaitingHeader || this->_awaitingBody); }
-
+bool								Request::getConnectionSet() const { return this->_connectionSet; }
 bool								Request::getBodyFileExists() const { return (this->_bodyFileExists); }
+bool								Request::getcloseConnection() const { return this->_closeConnection; }
+bool								Request::getAwaitingRequest() const { return (this->_awaitingHeader || this->_awaitingBody); }
 
 int									Request::getFd() const { return this->_fd; }
 
 size_t								Request::getBytesRecievd() const { return (this->_bodyBytesRecieved); }
 
-std::string							Request::getMethod() const { return this->_method; }
-
 std::string							Request::getPath() const { return this->_path;}
-
-std::string							Request::getHttpVersion() const { return this->_httpVersion; }
-
 std::string							Request::getHost() const { return this->_host; }
-
 std::string							Request::getPort() const { return this->_port; }
-
-std::string							Request::getConnection() const { return this->_connection; }
-
-std::string							Request::getReferer() const { return this->_referer; }
-
 std::string							Request::getAgent() const { return this->_agent; }
-
+std::string							Request::getMethod() const { return this->_method; }
+std::string							Request::getAccept() const { return this->_accept; }
+std::string							Request::getReferer() const { return this->_referer; }
+std::string							Request::getConnection() const { return this->_connection; }
 std::string							Request::getServerName() const { return this->_serverName; }
-
+std::string							Request::getContentType() const { return this->_contentType; }
+std::string							Request::getHttpVersion() const { return this->_httpVersion; }
+std::string							Request::getQueryString() const { return this->_queryString; }
+std::string							Request::getContentLength() const { return this->_contentLength; }
 std::string							Request::getAuthentification() const { return this->_authentification;}
 
-std::string							Request::getContentLength() const { return this->_contentLength; }
-
-std::string							Request::getContentType() const { return this->_contentType; }
-
-std::string							Request::getAccept() const { return this->_accept; }
-
-std::string							Request::getQueryString() const { return this->_queryString; }
+Server								Request::getServBlock() const { return (this->_servBlock); }
 
 void								Request::getErrorPage() {
 	std::string	path;
@@ -302,7 +286,7 @@ void							Request::setContentType(std::vector<std::string> strSplit) {
 	strSplit = ft_split(strSplit[1], " ");
 
 	if (strSplit.size() == 2 and strSplit[0] == "multipart/form-data;" and
-		strSplit[2].find("boundary=") != std::string::npos)
+		strSplit[1].find("boundary=") != std::string::npos)
 	{
 		strSplit = ft_split(strSplit[1].c_str(), "=\"");
 		if (strSplit.size() < 2)
@@ -311,6 +295,7 @@ void							Request::setContentType(std::vector<std::string> strSplit) {
 		this->_boundary = "--";
 		this->_boundary += strSplit[1];
 	}
+
 }
 
 void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
@@ -348,26 +333,147 @@ void							Request::setBytesRecieved(size_t bytes) { this->_bodyBytesRecieved = 
 //										M E M B E R S   F U N C T I O N S 									  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+int		Request::selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index) {
+	std::vector<std::string>	serverName;
+
+	for (size_t i = 0; i < vctServSelect.size(); i++)
+	{
+		if (vctServSelect[i].getServerNameSet())
+		{
+			serverName = vctServSelect[i].getServerName();
+			for (size_t j = 0; j < serverName.size(); j++)
+			{
+				if (serverName[j] == this->_host)
+					return index[i];
+			}
+		}
+	}
+	return index[0];
+}
+
+std::string	Request::getHostNameFromIP(const std::string& ipAddress) {
+	std::ifstream hostsFile("/etc/hosts");
+	std::string line;
+
+	if (!hostsFile.is_open())
+		return "";
+	while (std::getline(hostsFile, line))
+	{
+		if (!line.empty() && line[0] != '#')
+		{
+			std::istringstream iss(line);
+			std::string firstToken, hostName;
+			iss >> firstToken >> hostName;
+			if (firstToken == ipAddress)
+			{
+				hostsFile.close();
+				return hostName;
+			}
+		}
+	}
+	hostsFile.close();
+	return "";
+}
+
+std::string	Request::getIPFromHostName(const std::string& hostName) {
+	struct hostent* host = gethostbyname(hostName.c_str());
+	if (!host)
+		return "";
+
+	std::stringstream ss;
+	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
+	return ss.str();
+}
+
+std::string	Request::getRightHost(const std::string& host) {
+	std::vector<std::string>	resSplit;
+
+	resSplit = ft_split(host.c_str(), ".");
+	if (resSplit.size() == 4)
+		return host;
+	else
+		return getIPFromHostName(host);
+}
+
+//	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
+int		Request::pickServBlock()
+{
+	std::vector<Server>	vctServSelect;
+	std::vector<int>	index;
+	std::string			host;
+
+	for (size_t i = 0; i < this->_servers.size(); i++)
+	{
+		host = getRightHost(this->_host);
+		if ((host == getIPFromHostName(this->_servers[i].getHost()) ||
+			host == getHostNameFromIP(this->_servers[i].getHost()) ||
+			host == this->_servers[i].getHost()) &&
+			this->_port == this->_servers[i].getPort())
+		{
+			vctServSelect.push_back(this->_servers[i]);
+			index.push_back(i);
+		}
+	}
+	if (vctServSelect.size() == 1)
+		return index[0];
+	else if (vctServSelect.size() > 1)
+		return selectBlockWithServerName(vctServSelect, index);
+	else
+	{
+		for (size_t i = 0; i < this->_servers.size(); i++)
+		{
+			if (!this->_servers[i].getHostSet() &&
+				(this->_port == this->_servers[i].getPort()))
+			{
+				vctServSelect.push_back(this->_servers[i]);
+				index.push_back(i);
+			}
+		}
+			if (vctServSelect.size() == 1)
+				return index[0];
+			else if (vctServSelect.size() > 1)
+				return selectBlockWithServerName(vctServSelect, index);
+	}
+	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
+		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
+		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */
+	std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
+	return -1;
+}
+
+
 
 void						Request::extractContentDisposition(const std::string &line, std::string &name, std::string &filename)
 {
 	std::string 				tmp(line);
 	std::vector<std::string>	v;
 	std::vector<std::string>	keys;
+	std::vector<std::string>	tmp2;
 
-	v = ft_split(tmp, " ");
+	v = ft_split(tmp, ";");
 
-	for (size_t i = 0; i < v.size(); i++)
+	for (size_t i = 1; i < v.size(); i++)
 	{
-		if (!memcmp(v[i].c_str(), "filename", 8))
+		trimSpaceFront(v[i]);
+		if (!memcmp(v[i].c_str(), "filename=", 9))
 		{
-			filename = strtrim_char(v[i].substr(9, v[i].length()), ';');
-			filename = strtrim_char(filename, '"');
+			tmp2 = ft_split(v[i], "=");
+			if (tmp2.size() == 2)
+			{
+				filename = tmp2[1];
+				filename = removeChar(filename, '"');
+				trimSpaceBack(filename);
+			}
 		}
-		else if (!memcmp(v[i].c_str(), "name", 4))
+		else if (!memcmp(v[i].c_str(), "name=", 5))
 		{
-			name = strtrim_char(v[i].substr(5, v[i].length()), ';');
-			name = strtrim_char(name, '"');
+			tmp2 = ft_split(v[i], "=");
+			if (tmp2.size() == 2)
+			{
+				name = tmp2[1];
+				name = removeChar(name, '"');
+				trimSpaceBack(filename);
+			}
 		}
 	}
 }
@@ -404,7 +510,10 @@ void							Request::extractFile(const std::string &bound_data)
 	for (size_t i = 0; i < fields.size(); i++)
 	{
 		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
+		{
+			std::cout << "content dispo: " << fields[i] << std::endl;
 			this->extractContentDisposition(fields[i], name, fileName);
+		}
 	}
 
 	if (fileName.length())
@@ -423,6 +532,8 @@ void							Request::extractFile(const std::string &bound_data)
 		outfile.write(bound_data.c_str() + index + 4, bound_data.length() - index - 4 - 2);
 		outfile.close();
 	}
+	else
+		std::cerr << "Request: error: can't extract data no filename specified" << std::endl;
 }
 
 /*
@@ -457,7 +568,6 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 		if (!bytes)
 		{
 			this->_closeConnection = true;
-			std::cout << "connection closed" << std::endl;
 		}
 		this->quitAwaitingRequest();
 		return (-1);
@@ -561,22 +671,29 @@ void						Request::setHTTPFields(const std::string &header)
 {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
-	std::string					key[8] = { "host",
-				"connection", "accept", "referer", "user-agent", "authentification",
-				"content-length", "content-type"};
+	std::string					key[8] = { "host:",
+				"connection:", "accept:", "referer:", "user-agent:", "authentification:",
+				"content-length:", "content-type:"};
+	std::string					field;
+	size_t						index;
 
 	vct = ft_split(header, "\n\r");
 	for (size_t i = 0; i < vct.size(); i++)
 	{
-		strSplit = ft_split(vct[i], ":");
-		if (strSplit.size() >= 2)
+		index = vct[i].find(':');
+		
+		if (index != (size_t)-1)
 		{
-			lowerCase(strSplit[0]);
-			trimSpace(strSplit[1]);
+			field = vct[i].substr(0, index + 1);
+			lowerCase(field);
 			for (size_t j = 0; j < 8; j++)
 			{
-				if (!memcmp(strSplit[0].c_str(), key[j].c_str(), key[j].length()))
+				if (!memcmp(field.c_str(), key[j].c_str(), key[j].length()))
 				{
+					strSplit = ft_split(vct[i], ":");
+					if (strSplit.size() < 2)
+						break;
+					trimSpace(strSplit[1]);
 					(this->*functPtr[j])(strSplit);
 					break ;
 				}
@@ -591,14 +708,13 @@ void						Request::setHTTPFields(const std::string &header)
 
 int						Request::awaitingHeader(int fd)
 {
-	char	buff[BUFFLEN + 1];
-	int		bytes;
-	size_t	index;
+	char		buff[BUFFLEN + 1];
+	int			bytes;
+	size_t		index;
 
 
 	bytes = recv(fd, buff, BUFFLEN, 0);
 
-	// std::cout << "bytes = " << bytes << std::endl;
 
 	if (bytes < 1)
 	{
@@ -613,6 +729,9 @@ int						Request::awaitingHeader(int fd)
 	}
 	
 	buff[bytes] = '\0';
+
+	std::cout << bytes << std::endl;
+	std::cout << buff << std::endl;
 
 	if (!this->_methodSet && bytes == 2 && !memcmp(buff, "\r\n", 2))
 	{
@@ -629,7 +748,7 @@ int						Request::awaitingHeader(int fd)
 
 	this->_request.append(buff);
 
-	if ((index = this->_request.find("\r\n\r\n")) != (size_t)-1)
+	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
 		this->_awaitingHeader = false;
 		return (bytes);
@@ -639,58 +758,61 @@ int						Request::awaitingHeader(int fd)
 	return (-1);
 }
 
-void	printRequest()
-{
-	std::cout << "\n///////////////////////////////////////////////////////////" << std::endl;
-	std::cout <<         "			R E Q U E S T"		 << std::endl;
-	std::cout << "///////////////////////////////////////////////////////////" << std::endl;
-
-}
-
 void						Request::request(int fd)
 {
-	int				oct;
+	int				bytesRecievd;
 	size_t			index;
 	std::string		header;
 	std::string		body;
+	int				idxServBlock;
 
-	oct = 0;
-	// printRequest();
+	bytesRecievd = 0;
+	printRequest();
 	if (this->_awaitingBody)
 	{
 		this->awaitingBody(fd);
 	}
-	else if ((oct = this->awaitingHeader(fd)) != -1)
+	else if ((bytesRecievd = this->awaitingHeader(fd)) != -1)
 	{
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
-		if (header.length())
+		if (bytesRecievd >= (int)header.length() + 4)
+			body = this->_request.substr(index + 4, this->_request.length());
+
+
+		std::cout << "bytesRecieved " << bytesRecievd << std::endl;
+		std::cout << "index " << index << std::endl;
+		std::cout << "body.length() " << body.length() << std::endl;
+		
+		std::cout << "header.length() " << header.length() << std::endl;
+
+		this->_bodyBytesRecieved = bytesRecievd - (header.length() + 4);
+
+		this->setHTTPFields(header);
+
+		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
+		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
+		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
+
+
+		if (this->_methodSet && this->_method == "POST")
 		{
-			if (header.length() >= index + 4)
-				body = this->_request.substr(index + 4, this->_request.length());
-
-			this->_bodyBytesRecieved = oct - (header.length() + 4);
-
-			this->setHTTPFields(header);
-
-			std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
-			std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
-			std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
-
-
-			if (this->_methodSet && this->_method == "POST")
-			{
-				if (body.length())
-					this->bodyRequest(index);
-
-				this->checkBodyBytesRecieved();
-			}
-			if (!this->_methodSet || !this->_hostSet || this->_badRequest)
-				this->getErrorPage();
+			if (body.length())
+				this->bodyRequest(index);
+			this->checkBodyBytesRecieved();
 		}
-		else 
-			this->_closeConnection = true;
+
+		if ((idxServBlock = pickServBlock()) == -1)
+		{
+			this->getErrorPage();
+			return ;
+		}
+
+		this->_servBlock = this->_servers[idxServBlock];
+
+		if (!this->_hostSet || this->_badRequest)
+			this->getErrorPage();
 	}
 }
 

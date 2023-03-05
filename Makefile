@@ -2,7 +2,7 @@ NAME		= webserv
 
 CC			= c++
 
-INC			= -I includes/ -I includes/Parsing/
+INC			= -I includes/ -I includes/Parsing/ -I includes/utils
 
 # CPPFLAGS	= -std=c++98 -Wall -Wextra -Werror
 CPPFLAGS	= -std=c++98 -g -Wall -Wextra -Werror
@@ -19,7 +19,8 @@ SRCS	=	main.cpp \
 			Header.cpp \
 			Cgi.cpp \
 			Client.cpp \
-			DefaultPage.cpp
+			DefaultPage.cpp \
+			utils/PrintInfos.cpp
 
 SRCDIR		= srcs
 

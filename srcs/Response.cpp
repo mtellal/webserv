@@ -11,11 +11,17 @@ _closeConnection(false)	{}
 Response::Response(const Request &req, const Server &s, char **envp) :
 _serv(s), _req(req), _locBlocSelect(false),
 _isDir(false), _autoindex(false), _closeConnection(false),
-_envp(envp), _defaultPage(_req, _serv)	{}
+_envp(envp), _defaultPage(_req, _serv)
+{
+	printResponse();
+}
 
 Response::Response(Response const &src) { *this = src; }
 
-Response::~Response() {}
+Response::~Response()
+{
+	printResponse(1);
+}
 
 Response	&Response::operator=(Response const &rhs) {
 	if (this != &rhs)
@@ -354,12 +360,11 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
-	// std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
-	// std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
-
+	/* std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
+	std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
+ */
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
-	std::cout << path << " path " << std::endl;
 	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
 
@@ -392,7 +397,6 @@ void	Response::sendHeader(std::string path)
 	Header			header(path, &this->_statusCode, this);
 	Cgi				cgi(this->_serv, this->_req, header, this->_envp);
 
-
 	if (header.getContentType() == "406")
 	{
 		this->_statusCode = 406;
@@ -400,6 +404,7 @@ void	Response::sendHeader(std::string path)
 	}
 	else
 	{
+
 		res = header.getHeader();
 
 		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;

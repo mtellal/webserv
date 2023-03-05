@@ -156,7 +156,7 @@ std::string	fileToStr(std::string path) {
 	return page;
 }
 
-std::string 	strtrim_char(std::string s, char c)
+std::string 	removeChar(std::string s, char c)
 {
 	std::string str;
 	size_t		i;
@@ -189,4 +189,16 @@ bool	infileExists(const std::string &file)
 		
 	in.close();
 	return (true);
+}
+
+void			trimSpaceFront(std::string &line)
+{
+	while (line.length() && line[0] == ' ')
+		line.erase(0, 1);
+}
+
+void			trimSpaceBack(std::string &line)
+{
+	while (line.length() && line[line.length() - 1] == ' ')
+		line.erase(line.length() - 1, 1);
 }
