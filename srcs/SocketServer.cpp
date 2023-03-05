@@ -231,40 +231,6 @@ int		SocketServer::isServerFd(int fd) const {
 	return -1;
 }
 
-/*
-	Compare ip and host from servers in configuration file, 
-	with the ip addr of the request (after dns research, ex: localhost => 127.0.0.0.1)
-*/
-
-////		OLD VERSION PICK SERVER BLOCK
-
-/* int		SocketServer::pickServBlock(const Request &req)
-{
-	struct addrinfo	tmp;
-	struct addrinfo *res = NULL;
-	std::string 	ip;
-
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.ai_family = AF_INET;
-	tmp.ai_socktype = SOCK_STREAM;
-
-	if (getaddrinfo(req.getHost().c_str(), req.getPort().c_str(), &tmp, &res) == -1)
-		perror("getaddrinfo call failed");
-	else
-		ip = getAddressInfo(*(res->ai_addr));
-	freeaddrinfo(res);
-
-	for (size_t i = 0; i < this->_servers.size(); i++)
-	{
-		if (this->_servers[i].getAddress() == ip
-			&& this->_servers[i].getPort() == req.getPort())
-		{		
-				return (i);
-		}
-	}
-	return index[0];
-} */
-
 
 int		SocketServer::selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index, const Request &req) {
 	std::vector<std::string>	serverName;

@@ -359,6 +359,7 @@ void	Response::sendData() {
 
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
+	std::cout << path << " path " << std::endl;
 	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
 
@@ -399,22 +400,10 @@ void	Response::sendHeader(std::string path)
 	}
 	else
 	{
-		if (this->_req.getCgi() && cgi.isCgiRequest(path))
-		{
-			std::cout << "cgi found" << std::endl;
-			std::cout << "Response: path send to execute" << std::endl;
-			int	status = cgi.execute(path, body);
-
-			std::cout << "Response: status cgi.execute " << status << std::endl;
-			header.setStatus(status);
-
-			header = cgi.getHeader();
-		}
-
 		res = header.getHeader();
 
-		// std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		// std::cout << "\n//////////	 BODY	///////////\n" << body << std::endl;
+		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
+		std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
 
 		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
 

@@ -29,12 +29,12 @@ class Request {
 		bool								getErrRequest() const;
 		bool								getcloseConnection() const;
 		bool								getAwaitingRequest() const;
-		bool								getCgi() const;
 		bool								getConnectionSet() const;
 		bool								getAcceptSet() const;
 		bool								getRefererSet() const;
 		bool								getAgentSet() const;
 		bool								getBadRequest() const;
+		bool								getBodyFileExists() const;
 		int									getFd() const;
 		size_t								getBytesRecievd() const;
 		std::string							getMethod() const;
@@ -50,7 +50,7 @@ class Request {
 		std::string							getAuthentification() const;
 		std::string							getContentLength() const;
 		std::string							getContentType() const;
-		std::map<std::string, std::string>	getQueryString() const;
+		std::string							getQueryString() const;
 		void								setBytesRecieved(size_t bytes);
 
 
@@ -71,7 +71,7 @@ class Request {
 		bool								_connectionSet;
 		std::string							_accept;
 		bool								_acceptSet;
-		std::map<std::string, std::string>	_queryString;
+		std::string							_queryString;
 		bool								_refererSet;
 		std::string							_referer;
 		bool								_agentSet;
@@ -85,13 +85,9 @@ class Request {
 		bool								_tooLarge;
 		bool								_badRequest;
 
-		bool								_awaitingRequest;
 		size_t								_bodyBytesRecieved;
 		bool								_bodyFileExists;
 		std::string							_bodyFilePath;
-
-		bool								_cgi;
-		std::string							_cgiInputFile;
 
 		std::string							_request;
 
@@ -101,7 +97,7 @@ class Request {
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			parsArgs(std::string tmp);
-		void			setMethodVersionPath(std::vector<std::string> strSplit);
+		bool			setMethodVersionPath(const std::string &line);
 		void			setHostPort(std::vector<std::string> strSplit);
 		void			setConnection(std::vector<std::string> strSplit);
 		void			setAccept(std::vector<std::string> strSplit);
@@ -111,21 +107,25 @@ class Request {
 		void			setContentLength(std::vector<std::string> strSplit);
 		void			setContentType(std::vector<std::string> strSplit);
 		void			setGetParams(std::vector<std::string> vct, size_t *i);
-		void			parseBodyFile();
+		void			verifyFiles();
 		void			setHTTPFields(const std::string &header);
-		void			parseBoundaryData(const std::string &bound_data);
+		void			extractFile(const std::string &bound_data);
 		void			bodyRequest(const std::string &body, size_t &total);
 		void			bodyRequest(size_t index);
 		void			quitAwaitingRequest();
 		void			quitRequest();
 		void			getErrorPage();
 
-		void			postRequest();
 		int				awaitingHeader(int fd);
 		void			awaitingBody(int fd);
-		std::string		extractFileName(const std::string &line);
+		void			extractContentDisposition(const std::string &line, std::string &name, std::string &filename);
+		void			extractContentType(const std::string &line, std::string &contentType);
+
 		int				recvToBodyFile(int fd, std::ofstream &out);
 		int				openBodyFile(std::ofstream &out);
+		void			checkBodyBytesRecieved();
+		void			addQueryString(const std::string &key, const std::string &value);
+
 
 
 };
