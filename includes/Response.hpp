@@ -72,6 +72,7 @@ class Response
 		std::string					findRightError();
 		std::string					testAllPaths(bool *err);
 		std::string					deleteResource();
+		void						printStatusCode();
 };
 
 

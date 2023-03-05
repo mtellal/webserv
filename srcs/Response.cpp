@@ -384,6 +384,15 @@ std::string	Response::sendContentTypeError() {
 	return path;
 }
 
+void	Response::printStatusCode() {
+	std::cout << "\033[1;34mResponse status code: \033[0m";
+
+	if (this->_statusCode == 200)
+		std::cout << "\033[1;32m" << this->_statusCode << "\033[0m" << std::endl << std::endl;
+	else
+		std::cout << "\033[1;31m" << this->_statusCode << "\033[0m" << std::endl << std::endl;
+}
+
 void	Response::sendHeader(std::string path)
 {
 	std::string		res;
@@ -410,7 +419,7 @@ void	Response::sendHeader(std::string path)
 
 			header = cgi.getHeader();
 		}
-
+		this->printStatusCode();
 		res = header.getHeader();
 
 		// std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;

@@ -13,8 +13,10 @@ SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false),
 	if (this->getErrSocket())
 		return ;
 	this->createFdEpoll();
+	std::cout << "\033[1;32mStart Webserv\033[0m" << std::endl << std::endl;
 	while (this->epollWait() != 1)
 		;
+	std::cout << "\033[1;31mStop Webserv\033[0m" << std::endl;
 	this->closeSockets();
 }
 
@@ -336,7 +338,7 @@ int		SocketServer::pickServBlock(const Request &req)
 	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
 		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
 		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */
-	std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
+	// std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
 	return -1;
 }
 
@@ -362,10 +364,16 @@ size_t	SocketServer::isAwaitingRequest(int fd)
 	return (-1);
 }
 
-void	handler(int signal)
-{
+void	handler(int signal) {
 	(void)signal;
 }
+
+void	SocketServer::printRequest(Request const &req) const {
+	std::cout << "\033[1;34mNew request: \033[0m";
+	std::cout << "\033[1;37m[" << req.getHost() << ":" << req.getPort() << "]\033[0m";
+	std::cout << "\033[1;37m " << req.getPath() << "\033[0m" << std::endl;
+}
+
 
 int		SocketServer::epollWait() {
 	struct epoll_event	event[NB_EVENTS];
@@ -414,15 +422,10 @@ int		SocketServer::epollWait() {
 			else
 			{
 				if ((srv_i = pickServBlock(req)) == -1)
-				{
-					std::cerr << "pickServBlock() call failed (verify a serv block exists)" << std::endl;
 					this->closeConnection(event[j].data.fd);
-				}
 				else
-				{	
-					// printResponse();
-				
-					// std::cout << "server picked is: " << srv_i << std::endl;
+				{
+					this->printRequest(req);
 
 					Response	rep(req, this->_servers[srv_i], this->_envp);
 					rep.selectLocationBlock();
@@ -432,7 +435,7 @@ int		SocketServer::epollWait() {
 
 					// printResponse(1);
 
-				}		
+				}
 			}
 		}
 	}
@@ -444,13 +447,11 @@ void	SocketServer::createConnection(int index_serv_fd)
 	Client				client;
 	int					client_fd;
 	struct sockaddr		tmp;
-	// struct sockaddr_in	tmpBis;
 	socklen_t			tmp_len = sizeof(tmp);
 	struct epoll_event	event;
 
 	// std::cout << "////////////	NEW CONNECTION 	///////////\n";
 
-	// std::cout << "new connection from serv: " << index_serv << std::endl;
 	if ((client_fd = accept(this->_servers_fd[index_serv_fd], (struct sockaddr *)&tmp,
 			&tmp_len)) == -1)
 	{
@@ -468,8 +469,6 @@ void	SocketServer::createConnection(int index_serv_fd)
 
 	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv_fd));
 
-	// std::cout << "fd open = " << client_fd << std::endl;
-
 	event.events = EPOLLIN;
 	event.data.fd = client_fd;
 	if (epoll_ctl(this->_epollFd, EPOLLIN, client_fd, &event) == -1)
@@ -478,9 +477,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 		this->_errSocket = true;
 		return ;
 	}
-	
 	// std::cout << client << std::endl;
-
 }
 
 void	SocketServer::closeConnection(int fd)
