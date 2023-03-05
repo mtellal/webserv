@@ -224,40 +224,36 @@ bool							Request::setMethodVersionPath(const std::string &buff)
 	return (true);
 }
 
-bool		invalidHost(char c)
+bool	checkHost(const std::string &host)
 {
-	return (!std::isalpha(c) || c != '.');
+	for (size_t i = 0; i < host.length(); i++)
+	{
+		if (!std::isalnum(host[i]) && host[i] != '.')
+			return (false);
+	}
+	return (true);
 }
 
-bool		invalidPort(char c)
+bool	checkPort(std::string &port)
 {
-	return (!std::isdigit(c));
+	while (port.length() && port[port.length() - 1] == ' ')
+		port.erase(port.length() - 1, 1);
+	for (size_t i = 0; i < port.length(); i++)
+	{
+		if (!std::isdigit(port[i]))
+			return (false);
+	}
+	return (true);
 }
 
 void							Request::setHostPort(std::vector<std::string> strSplit)
 {
-	std::string					line;
-	std::string::iterator		it;
-	std::vector<std::string> 	v;
-
-	std::cout << "sethostport called" << std::endl;
-	for (size_t i = 0; i < strSplit.size(); i++)
-			line.append(strSplit[i] + " ");
-	v = ft_split(line, ":");
-	if (v.size() < 3)
+	if (strSplit.size() != 3)
 		return ;
-	std::cout << "size" << std::endl;
-	it = std::find_if(v[1].begin(), v[1].end(), invalidHost);
-	if (it != v[1].end())
+	if (!checkHost(strSplit[1]) || !checkPort(strSplit[2]))
 		return ;
-	std::cout << "host" << std::endl;
-	this->_host = v[1];
-	it = std::find_if(v[2].begin(), v[2].end(), invalidPort);
-	if (it != v[2].end())
-		return ;
-	std::cout << "port" << std::endl;
-
-	this->_port = v[2];
+	this->_host = strSplit[1];
+	this->_port = strSplit[2];
 	this->_hostSet = true;
 }
 
@@ -300,16 +296,17 @@ void							Request::setContentLength(std::vector<std::string> strSplit) {
 }
 
 void							Request::setContentType(std::vector<std::string> strSplit) {
-	for (size_t i = 1; i < strSplit.size(); i++)
-	{
-		if (i != 1)
-			this->_contentType += " ";
-		this->_contentType += strSplit[i];
-	}
-	if (strSplit.size() == 3 and strSplit[1] == "multipart/form-data;" and
+
+	this->_contentType = strSplit[1];
+
+	strSplit = ft_split(strSplit[1], " ");
+
+	if (strSplit.size() == 2 and strSplit[0] == "multipart/form-data;" and
 		strSplit[2].find("boundary=") != std::string::npos)
 	{
-		strSplit = ft_split(strSplit[2].c_str(), "=\"");
+		strSplit = ft_split(strSplit[1].c_str(), "=\"");
+		if (strSplit.size() < 2)
+			return ;
 		this->_boundarySet = true;
 		this->_boundary = "--";
 		this->_boundary += strSplit[1];
@@ -542,6 +539,20 @@ void	Request::bodyRequest(size_t index)
 	out.close();
 }
 
+void		lowerCase(std::string &str)
+{
+	for (size_t i = 0; i < str.length(); i++)
+		str[i] = std::tolower(str[i]);
+}
+
+void		trimSpace(std::string &field)
+{
+	while (field.length() && field[0] == ' ')
+		field.erase(0, 1);
+	while (field.length() && field[field.length() - 1] == ' ')
+		field.erase(field.length() - 1, 1);
+}
+
 /*
 	Extract and set HTTP fields
 */
@@ -550,28 +561,28 @@ void						Request::setHTTPFields(const std::string &header)
 {
 	std::vector<std::string>	vct;
 	std::vector<std::string>	strSplit;
-	std::string					key[12] = { "Host:",
-				"Connection:", "Accept:", "Referer:", "User-Agent:", "Authentification:",
-				"Content-Length:", "Content-Type:"};
+	std::string					key[8] = { "host",
+				"connection", "accept", "referer", "user-agent", "authentification",
+				"content-length", "content-type"};
 
 	vct = ft_split(header, "\n\r");
 	for (size_t i = 0; i < vct.size(); i++)
+	{
+		strSplit = ft_split(vct[i], ":");
+		if (strSplit.size() >= 2)
 		{
-			strSplit = ft_split(vct[i].c_str(), " ");
-			if (this->_boundarySet and strSplit[0] == this->_boundary)
-				this->setGetParams(vct, &i);
-			else
+			lowerCase(strSplit[0]);
+			trimSpace(strSplit[1]);
+			for (size_t j = 0; j < 8; j++)
 			{
-				for (size_t j = 0; j < 12; j++)
+				if (!memcmp(strSplit[0].c_str(), key[j].c_str(), key[j].length()))
 				{
-					if (!memcmp(vct[i].c_str(), key[j].c_str(), key[j].length()))
-					{
-						(this->*functPtr[j])(strSplit);
-						break ;
-					}
+					(this->*functPtr[j])(strSplit);
+					break ;
 				}
 			}
 		}
+	}
 }
 
 /*
@@ -659,10 +670,12 @@ void						Request::request(int fd)
 
 			this->_bodyBytesRecieved = oct - (header.length() + 4);
 
+			this->setHTTPFields(header);
+
 			std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
+			std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
 			std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
-			this->setHTTPFields(header);
 
 			if (this->_methodSet && this->_method == "POST")
 			{
@@ -681,9 +694,10 @@ void						Request::request(int fd)
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {
 	o << "method = " << rhs.getMethod() << std::endl;
-	o << "path = " << rhs.getPath() << std::endl;
-	o << "httpVersion = " << rhs.getHttpVersion() << std::endl;
-	o << "host = " << rhs.getHost() << std::endl;
 	o << "port = " << rhs.getPort() << std::endl;
+	o << "host = " << rhs.getHost() << std::endl;
+	o << "path = " << rhs.getPath() << std::endl;
+	o << "contentLength = " << rhs.getContentLength() << std::endl;
+	o << "httpVersion = " << rhs.getHttpVersion() << std::endl;
 	return o;
 }
