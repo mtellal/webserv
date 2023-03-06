@@ -329,15 +329,14 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
-void							Request::setBytesRecieved(size_t bytes) { this->_bodyBytesRecieved = bytes; }
+void	Request::setBytesRecieved(size_t bytes) { this->_bodyBytesRecieved = bytes; }
 
-int								Request::setServBlock()
+int		Request::setServBlock()
 {
-	size_t	idxServBlock;
+	int	idxServBlock;
 
 	if ((idxServBlock = pickServBlock()) == -1)
 		return (-1);
-	// std::cout << "serv block: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
 	return (0);
@@ -400,15 +399,40 @@ std::string	Request::getIPFromHostName(const std::string& hostName) {
 	return ss.str();
 }
 
+// bool	SocketServer::hostExist(std::string host) {
+// 	std::vector<std::string> splitHost;
+
+// 	splitHost = ft_split(host.c_str(), ".");
+// 	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
+// 		host == "0.0.0.0")
+// 		return true;
+
+// 	splitHost = ft_split(getIPFromHostName(host), ".");
+// 	if (splitHost.size() == 4 && splitHost[0] == "127")
+// 		return true;
+// 	return false;
+// }
+
+// std::string	Request::getIPFromHostName(const std::string& hostName) {
+// 	struct hostent* host = gethostbyname(hostName.c_str());
+// 	if (!host)
+// 		return "";
+
+// 	std::stringstream ss;
+// 	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
+// 	return ss.str();
+// }
+
 std::string	Request::getRightHost(const std::string& host) {
 	std::vector<std::string>	resSplit;
+	std::string					res;
 
 	resSplit = ft_split(host.c_str(), ".");
 	if (resSplit.size() == 4)
 		return host;
-	else
-		return getIPFromHostName(host);
-	return host;
+	else if ((res = getIPFromHostName(host)) != "")
+		return res;
+	return "";
 }
 
 //	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
@@ -419,58 +443,53 @@ int		Request::pickServBlock()
 	std::string			host;
 
 	host = getRightHost(this->getHost());
-	// std::cout << "host = " << host << std::endl;
+
+	if (!host.empty())
+	{
+		for (size_t i = 0; i < this->_servers.size(); i++)
+		{
+			if (this->_servers[i].getHostSet() &&
+				(host == getRightHost(this->_servers[i].getHost()) ||
+				host == this->_servers[i].getHost()) &&
+				this->getPort() == this->_servers[i].getPort())
+			{
+				vctServSelect.push_back(this->_servers[i]);
+				index.push_back(i);
+			}
+		}
+		if (vctServSelect.size() == 1)
+			return index[0];
+		else if (vctServSelect.size() > 1)
+			return selectBlockWithServerName(vctServSelect, index);
+	}
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		// std::cout << this->_servers[i].getHostSet()  << std::endl;
-		// std::cout << getRightHost(this->_servers[i].getHost()) << std::endl;
-		// std::cout << this->_servers[i].getHost() << std::endl;
-		// std::cout << this->getPort() << " " << this->_servers[i].getPort() << std::endl;
-		if (this->_servers[i].getHostSet() &&
-			(host == getRightHost(this->_servers[i].getHost()) ||
-			host == this->_servers[i].getHost()) &&
-			this->getPort() == this->_servers[i].getPort())
+		if (!this->_servers[i].getHostSet() &&
+			(this->getPort() == this->_servers[i].getPort()))
 		{
-			vctServSelect.push_back(this->_servers[i]);
-			index.push_back(i);
+			if (ft_split(host.c_str(), ".").size() == 4)
+			{
+				vctServSelect.push_back(this->_servers[i]);
+				index.push_back(i);
+			}
+			else if (this->_servers[i].getServerNameSet())
+			{
+				for (size_t j = 0; j < this->_servers[i].getServerName().size(); j++)
+				{
+					if (this->_host == this->_servers[i].getServerName()[j])
+					{
+						vctServSelect.push_back(this->_servers[i]);
+						index.push_back(i);
+					}
+				}
+			}
 		}
 	}
 	if (vctServSelect.size() == 1)
 		return index[0];
 	else if (vctServSelect.size() > 1)
 		return selectBlockWithServerName(vctServSelect, index);
-	else
-	{
-		// std::cout << "2222" << std::endl;
-		for (size_t i = 0; i < this->_servers.size(); i++)
-		{
-			if (!this->_servers[i].getHostSet() &&
-				(this->getPort() == this->_servers[i].getPort()))
-			{
-				// std::cout << "A" << std::endl;
-				if (ft_split(host.c_str(), ".").size() == 4)
-				{
-					vctServSelect.push_back(this->_servers[i]);
-					index.push_back(i);
-				}
-				else if (this->_servers[i].getServerNameSet())
-				{
-					for (size_t j = 0; j < this->_servers[i].getServerName().size(); j++)
-					{
-						if (this->_host == this->_servers[i].getServerName()[j])
-						{
-							vctServSelect.push_back(this->_servers[i]);
-							index.push_back(i);
-						}
-					}
-				}
-			}
-		}
-			if (vctServSelect.size() == 1)
-				return index[0];
-			else if (vctServSelect.size() > 1)
-				return selectBlockWithServerName(vctServSelect, index);
-	}
+	// }
 	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
 		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
 		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */

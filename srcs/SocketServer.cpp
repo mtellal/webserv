@@ -82,6 +82,9 @@ std::string	SocketServer::getIPFromHostName(const std::string& hostName) {
 bool	SocketServer::hostExist(std::string host) {
 	std::vector<std::string> splitHost;
 
+	// if (host == "")
+	// 	return true;
+	// std::cout << "Host = " << host << std::endl;
 	splitHost = ft_split(host.c_str(), ".");
 	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
 		host == "0.0.0.0")
@@ -98,7 +101,9 @@ bool	SocketServer::hostAlreadySet(size_t maxIdx) {
 
 	for (size_t j = 0; j < maxIdx; j++)
 	{
-		if (vctServ[maxIdx].getPort() == vctServ[j].getPort())
+		// if (vctServ[maxIdx].getPort() == vctServ[j].getPort())
+		if (vctServ[maxIdx].getPort() == vctServ[j].getPort() &&
+			this->hostExist(vctServ[j].getHost()))
 			return true;
 	}
 	return false;
@@ -118,8 +123,9 @@ void	SocketServer::initSocket()
 
 	for (size_t i = 0; i < _servers.size(); i++)
 	{
-		if (!this->hostAlreadySet(i))
+		if (!this->hostAlreadySet(i) && this->hostExist(this->_servers[i].getHost()))
 		{
+			// std::cout << "TEST = " << this->_servers[i].getHost() << std::endl;
 			if (getaddrinfo(NULL, _servers[i].getPort().c_str(), &hints, &res) != 0)
 				return (errorSocket("getaddrinfo call failed"));
 			
@@ -161,7 +167,7 @@ void	SocketServer::createFdEpoll() {
 		return ;
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		if (!this->hostAlreadySet(i))
+		if (!this->hostAlreadySet(i) && this->hostExist(this->_servers[i].getHost()))
 		{
 			event.events = EPOLLIN;
 			event.data.fd = this->_servers_fd[j];
