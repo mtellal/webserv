@@ -416,9 +416,8 @@ void	Response::sendHeader(std::string path)
 		{
 			std::cout << "/// EXECUTE CGI SCRIPT ///" << std::endl;
 			
+			cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], body);
 		}
-
-		std::cout << "/// DON'T EXECUTE CGI SCRIPT ///" << std::endl;
 
 		res = header.getHeader();
 

@@ -16,9 +16,8 @@
 Cgi::Cgi(const Cgi &src) : _header(src._header) { *this = src; }
 
 Cgi::Cgi(const Server &serv, const Request &req, Header &header, char **env):
-_post(false), _get(false), _err(false),
-_rawEnv(env), _env(NULL), _pathCgiExe(""), _body(""), _cgiWarnings(""),
-_serv(serv), _req(req), _header(header) 
+_err(false), _get(false), _post(false), 
+_rawEnv(env), _req(req), _serv(serv), _header(header)
 {
     initEnv();
 }
@@ -29,58 +28,33 @@ Cgi     &Cgi::operator=(const Cgi &src)
 {
     if (this == &src)
     {
+        this->_err = src._err;
         this->_get = src._get;
         this->_post = src._post;
-        this->_err = src._err;
+        
+        this->_env = src._env;
         this->_rawEnv = src._rawEnv;
-        this->_envMap = src._envMap;
 
-
-        this->_pathCgiExe = src._pathCgiExe;
         this->_body = src._body;
+        this->_pathCgiExe = src._pathCgiExe;
         this->_cgiWarnings = src._cgiWarnings;
-
-        this->_serv = src._serv;
+        
         this->_req = src._req;
+        this->_serv = src._serv;
         this->_header = src._header;
+        
+        this->_envMap = src._envMap;
     }
     return (*this);
 }
 
 Header          Cgi::getHeader() const { return (this->_header); }
 
-/*
-    Verify if cgi params if set and if the ressource and if the correct extension, 
-    if everything match then set _pathCgiExe to value (<key/extension, value/path_cgi>)
-*/
-int     Cgi::isCgiRequest(const std::string &path_file)
-{
-    std::string                                     extension;
-    size_t                                          index;
-    std::map<std::string, std::string>::iterator    it;
-    std::map<std::string, std::string>           mapConfCgi;
+void                Cgi::setCgiWarnings(const std::string &err) { this->_cgiWarnings = err; }
 
-    index = 0;
-    mapConfCgi = this->_serv.getCgi();
-    if (!mapConfCgi.size())
-        return (-1);
-    it = mapConfCgi.begin();
-    std::cout << "Cgi: map_cgi.size() " << mapConfCgi.size() << std::endl;
-    while (it != mapConfCgi.end())
-    {
-        std::cout << "Cgi: map[i]: " << it->first << " " << it->second << std::endl;
-        extension = ".";
-        extension += it->first;
-        if ((index = path_file.find(extension)) != (size_t)-1 && !path_file[index + extension.length()])
-        {
-            this->_pathCgiExe = it->second;            
-            return (1);
-        }
-        it++;
-    }
-    return (-1);
-}
+void                Cgi::setContentType(const std::string &ct) { this->_header.setContentType(ct); }
 
+void                Cgi::setContentLength(const std::string &cl) { this->_header.setContentLength(cl); }
 
 void    Cgi::printEnv()
 {
@@ -215,32 +189,6 @@ void    Cgi::initEnv()
     }
 }
 
-char                **Cgi::exec_args(const std::string &path_file)
-{
-    char        **args;
-
-    try
-    {
-        args = new char*[3];
-
-        args[0] = strdup(this->_pathCgiExe.c_str());
-        args[1] = strdup(path_file.c_str());
-        args[2] = NULL;
-    }
-    catch (const std::exception &err)
-    {
-        std::cerr << " new call failed (exec_args)" << std::endl;
-    }
-
-    return (args);
-}
-
-void                Cgi::setContentType(const std::string &ct) { this->_header.setContentType(ct); }
-
-void                Cgi::setContentLength(const std::string &cl) { this->_header.setContentLength(cl); }
-
-void                Cgi::setCgiWarnings(const std::string &err) { this->_cgiWarnings = err; }
-
 void                Cgi::extractFields(const std::string &cgi_response)
 {
     std::string                 header;
@@ -288,7 +236,7 @@ void                Cgi::extractFields(const std::string &cgi_response)
     }
 }
 
-void                Cgi::child(int fdin, int pipe[2], const std::string &path_script, char **args)
+void                Cgi::child(int fdin, int pipe[2], char **args)
 {
     if (fdin != STDIN_FILENO && dup2(fdin, 0) == -1)
     {
@@ -304,7 +252,7 @@ void                Cgi::child(int fdin, int pipe[2], const std::string &path_sc
 
     close(pipe[0]);
 
-    if (execve(path_script.c_str(), args, this->_env) == -1)
+    if (execve(args[0], args, this->_env) == -1)
     {
         std::cerr << "execve failed" << std::endl;
         perror("execve call failed");
@@ -336,13 +284,38 @@ std::string        parent(int pipe[2])
     return (response);
 }
 
+char                **Cgi::exec_args(const std::string &file, const std::string &exe)
+{
+    char        **args;
+
+    args = NULL;
+    try
+    {
+        args = new char*[3];
+
+        args[0] = strdup(exe.c_str());
+        args[1] = strdup(file.c_str());
+        args[2] = NULL;
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << " new call failed (exec_args)" << std::endl;
+    }
+
+    return (args);
+}
+
+void        Cgi::quitCgi(int status)
+{
+    this->_header.setStatus(status);
+}
 
 /*
     GET: set data from env var;
     POST: redirect recv bytes in stdin cgi process
 */
 
-int           Cgi::execute(const std::string &path_file, std::string &body)
+void             Cgi::execute(const std::string &file, const std::string &exe, std::string &content)
 {
     int             p[2];
     pid_t           f;
@@ -355,10 +328,9 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     
     int             in;
     
+    
     in = STDIN_FILENO;
-    args = exec_args(path_file);
-
-    std::cout << "Cgi: path script " << this->_pathCgiExe << std::endl; 
+    args = exec_args(file, exe);
 
     std::cout << "///////////// C G I    E X E C U T E   C A L L E D ///////////////" << std::endl;
 
@@ -366,33 +338,34 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
-        return (500);
+        return (quitCgi(500));
     }
 
     if (this->_req.getMethod() == "POST")
     {
         std::cout << "stdin from cgi is a file" << std::endl;
-        if ((in = open("./uploads/inputCGI", 0)) == -1)
+        if ((in = open("./uploads/bodyfile", 0)) == -1)
         {
             perror("cgi.execute failed can't open path_file");
-            return (500);
+            return (quitCgi(500));
         }
     }
 
-    std::cout << "path_file: " << path_file << std::endl;
+    std::cout << "file: " << file << std::endl;
+    std::cout << "exe: " << exe << std::endl;
+
     std::cout << "in: " << in << std::endl;
     std::cout << "method: " << _req.getMethod() << std::endl;
-    std::cout << "path: " << path_file << std::endl;
 
 
     f = fork();
     if (f == -1)
     {
         perror("fork call failed");
-        return (500);
+        return (quitCgi(500));
     }
     if (f == 0)
-        child(in, p, this->_pathCgiExe, args);
+        child(in, p, args);
     else
     {
         // pere
@@ -400,16 +373,14 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
             close(in);
         int status;
 
-        waitpid(f, &status, -1);
+        waitpid(f, &status, 0);
+        
+        if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
+        {
+            return (quitCgi(500));
+        }
 
         response = parent(p);
-
-
-         if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
-        {
-            //std::cout << response << std::endl;
-            return (500);
-        }
 
         std::cout << "//////////////////////" << std::endl;
         std::cout << response.substr(0, 100) << std::endl;
@@ -420,21 +391,21 @@ int           Cgi::execute(const std::string &path_file, std::string &body)
         if (index == (size_t)-1)
         {
             perror("no \\n\\r in cgi response, can't extract header-body: ");
-            return (502);
+            return (quitCgi(502));
         }
 
         header = response.substr(0, index);
-        body = response.substr(index + 2, response.length());
+        content = response.substr(index + 2, response.length());
 
        /*  std::cout << "///// CGI HEADER  /////" << header << std::endl;
         std::cout << "///// CGI BODY  /////" << body << std::endl; */
 
         extractFields(header);
 
-        std::cout << body.length() << std::endl;
+        std::cout << content.length() << std::endl;
 
-        this->_header.setContentLength(ft_itos(body.length()));
+        this->_header.setContentLength(ft_itos(content.length()));
 
     }
-    return (0);
+    return ;
 }

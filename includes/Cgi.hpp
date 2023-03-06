@@ -39,28 +39,27 @@ class Cgi
 
         Cgi &operator=(const Cgi &);
         
-        int             isCgiRequest(const std::string &path_file);
         void            initEnv();
         void            printEnv();
-        int             execute(const std::string &path_file, std::string &body);
+        void             execute(const std::string &file, const std::string &exe, std::string &content);
 
         Header          getHeader() const;
 
     private:
 
-        bool                                _post;
-        bool                                _get;
         bool                                _err;
+        bool                                _get;
+        bool                                _post;
 
-        char                                **_rawEnv;
         char                                **_env;
-        std::string                         _pathCgiExe;
+        char                                **_rawEnv;
 
         std::string                         _body;
+        std::string                         _pathCgiExe;
         std::string                         _cgiWarnings;
 
-        Server                              _serv;
         Request                             _req;
+        Server                              _serv;
         Header                              &_header;
 
         std::map<std::string, std::string>  _envMap;
@@ -69,25 +68,18 @@ class Cgi
 
         void            addVarEnv();
         void            addCgiVarEnv();
-        char            **mapToTab();
-        char            **exec_args(const std::string &path_file);
-        void            extractFields(const std::string &cgi_response);
-
         void            setStatus(int s);
-        void            setContentType(const std::string &ct);
-        void            setContentLength(const std::string &ct);
         void            setPoweredBy(const std::string &app);
+        void            setContentType(const std::string &ct);
         void            setCgiWarnings(const std::string &err);
-
-        void            child(int fdin, int pipe[2], const std::string &path_script, char **args);
-
-
-
-
-
-
+        void            setContentLength(const std::string &ct);
+        void            extractFields(const std::string &cgi_response);
+        void            child(int fdin, int pipe[2], char **args);
+        void            quitCgi(int status);
         
 
+        char            **mapToTab();
+        char            **exec_args(const std::string &file, const std::string &exe);
         
 };
 

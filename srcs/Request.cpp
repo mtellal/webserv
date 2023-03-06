@@ -17,6 +17,12 @@ _fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _serve
 {
 	this->functPtr[0] = &Request::setHostPort;
 	this->functPtr[1] = &Request::setConnection;
+	this->functPtr[2] = &Request::setAccept;
+	this->functPtr[3] = &Request::setReferer;
+	this->functPtr[4] = &Request::setAgent;
+	this->functPtr[5] = &Request::setAuthentification;
+	this->functPtr[6] = &Request::setContentLength;
+	this->functPtr[7] = &Request::setContentType;
 }
 
 Request::Request(Request const &src) {
@@ -46,11 +52,14 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_awaitingHeader = rhs._awaitingHeader;
 		this->_closeConnection = rhs._closeConnection;
 
+		this->_fd = rhs._fd;
+		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
+
 		this->_host = rhs._host;
 		this->_path = rhs._path;
 		this->_port = rhs._port;
 		this->_agent = rhs._agent;
-		this->_mehtod = rhs._mehtod;
+		this->_method = rhs._method;
 		this->_accept = rhs._accept;
 		this->_referer = rhs._referer;
 		this->_request = rhs._request;
@@ -60,7 +69,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_httpVersion = rhs._httpVersion;
 		this->_queryString = rhs._queryString;
 		this->_contentType = rhs._contentType;
-		this->_bodyFileExists = rhs._bodyFileExists;
+		this->_bodyFilePath = rhs._bodyFilePath;
 		this->_cgiExtension = rhs._cgiExtension;
 		this->_contentLength = rhs._contentLength;
 		this->_authentification = rhs._authentification;
@@ -621,6 +630,8 @@ void							Request::checkCgiPath()
 	std::map<std::string, std::string>				mapCgi;
 
 	mapCgi = this->_servBlock.getCgi();
+	if (!mapCgi.size())
+		return ;
 	point = searchPoint(this->_path);
 	if (point == -1)
 		return ;
@@ -814,12 +825,6 @@ void						Request::request(int fd)
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
-		std::cout << "bytesRecieved " << bytesRecievd << std::endl;
-		std::cout << "index " << index << std::endl;
-		std::cout << "body.length() " << body.length() << std::endl;
-		
-		std::cout << "header.length() " << header.length() << std::endl;
-
 		this->setHTTPFields(header);
 
 		if (this->setServBlock() == -1)
@@ -830,7 +835,6 @@ void						Request::request(int fd)
 
 		checkCgiPath();
 		
-		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
 		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
 		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
@@ -859,6 +863,7 @@ std::ostream &operator<<(std::ostream & o, Request const & rhs) {
 	o << "serv = " << rhs.getServBlock().getFd() << std::endl;
 	o << "path = " << rhs.getPath() << std::endl;
 	o << "contentLength = " << rhs.getContentLength() << std::endl;
+	o << "cgiExtension = " << rhs.getCgiExtension() << std::endl;
 	o << "httpVersion = " << rhs.getHttpVersion() << std::endl;
 	return o;
 }
