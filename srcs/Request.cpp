@@ -118,7 +118,9 @@ std::string							Request::getContentType() const { return this->_contentType; }
 std::string							Request::getHttpVersion() const { return this->_httpVersion; }
 std::string							Request::getQueryString() const { return this->_queryString; }
 std::string							Request::getContentLength() const { return this->_contentLength; }
-std::string							Request::getAuthentification() const { return this->_authentification;}
+std::string							Request::getAuthentification() const { return this->_authentification; }
+std::string							Request::getCgiExtension() const { return (this->_cgiExtension); }
+
 
 Server								Request::getServBlock() const { return (this->_servBlock); }
 
@@ -327,6 +329,17 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 }
 
 void							Request::setBytesRecieved(size_t bytes) { this->_bodyBytesRecieved = bytes; }
+
+int								Request::setServBlock()
+{
+	size_t	idxServBlock;
+
+	if ((idxServBlock = pickServBlock()) == -1)
+		return (-1);
+	this->_servBlock = this->_servers[idxServBlock];
+	this->_servBlock.setSocket(idxServBlock);
+	return (0);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -611,7 +624,7 @@ int							searchPoint(const std::string &line)
 	return (-1);
 }
 
-bool							Request::isCgiPath()
+void							Request::checkCgiPath()
 {
 	int												point;
 	std::map<std::string, std::string>::iterator	it;	
@@ -619,20 +632,19 @@ bool							Request::isCgiPath()
 
 	mapCgi = this->_servBlock.getCgi();
 	point = searchPoint(this->_path);
-	
-	std::cout << mapCgi.size() << std::endl;
-	std::cout << "isCgi: point + 1 [" << this->_path[point + 1] << "]" << std::endl;
-
-	if (point == -1 || this->_path[point + 1] != '\0' || this->_path[point + 1] != '?')
-		return (false);
-
+	if (point == -1)
+		return ;
 	it = mapCgi.begin();
 	while (it != mapCgi.end())
 	{
-		if (!memcmp(this->_path.c_str() + point + 1, it->first.c_str(), it->first.length()))
-			return (true);
+		if (!memcmp(this->_path.c_str() + point + 1, it->first.c_str(), it->first.length())
+				&& this->_path[point + 1 + it->first.length()] == '\0')
+			{
+				this->_cgiExtension = it->first;
+				return;
+			}
+		it++;
 	}
-	return (false);
 }
 
 void							Request::checkBodyBytesRecieved()
@@ -641,7 +653,7 @@ void							Request::checkBodyBytesRecieved()
 		this->_awaitingBody = true;
 	else
 	{		
-		if (!isCgiPath())
+		if (!this->_cgiExtension.length())
 		{
 			std::cout << "Request: this->_path is not a cgi file" << std::endl;
 			this->verifyFiles();
@@ -801,10 +813,8 @@ void						Request::request(int fd)
 	size_t			index;
 	std::string		header;
 	std::string		body;
-	int				idxServBlock;
 
 	bytesRecievd = 0;
-	printRequest();
 	if (this->_awaitingBody)
 	{
 		this->awaitingBody(fd);
@@ -814,36 +824,33 @@ void						Request::request(int fd)
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
-		if (bytesRecievd >= (int)header.length() + 4)
-			body = this->_request.substr(index + 4, this->_request.length());
-
-
 		std::cout << "bytesRecieved " << bytesRecievd << std::endl;
 		std::cout << "index " << index << std::endl;
 		std::cout << "body.length() " << body.length() << std::endl;
 		
 		std::cout << "header.length() " << header.length() << std::endl;
 
-		this->_bodyBytesRecieved = bytesRecievd - (header.length() + 4);
-
 		this->setHTTPFields(header);
 
-		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
-		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
-		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
-
-		if ((idxServBlock = pickServBlock()) == -1)
+		if (this->setServBlock() == -1)
 		{
 			this->getErrorPage();
 			return ;
 		}
 
-		this->_servBlock = this->_servers[idxServBlock];
+		checkCgiPath();
 		
-		this->_servBlock.setSocket(idxServBlock);
-		
+		std::cout << "\n	//////	HEADER	//////\n" << header << std::endl;
+		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
+		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
+
 		if (this->_methodSet && this->_method == "POST")
 		{
+			if (bytesRecievd >= (int)header.length() + 4)
+				body = this->_request.substr(index + 4, this->_request.length());
+
+			this->_bodyBytesRecieved = bytesRecievd - (header.length() + 4);
+
 			if (body.length())
 				this->bodyRequest(index);
 			this->checkBodyBytesRecieved();
@@ -853,6 +860,7 @@ void						Request::request(int fd)
 			this->getErrorPage();
 	}
 }
+
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {
 	o << "method = " << rhs.getMethod() << std::endl;

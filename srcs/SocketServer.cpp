@@ -13,8 +13,10 @@ SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false),
 	if (this->getErrSocket())
 		return ;
 	this->createFdEpoll();
+	std::cout << "\033[1;32mStart Webserv\033[0m" << std::endl << std::endl;
 	while (this->epollWait() != 1)
 		;
+	std::cout << "\033[1;31mStop Webserv\033[0m" << std::endl;
 	this->closeSockets();
 }
 
@@ -209,9 +211,15 @@ size_t	SocketServer::isAwaitingRequest(int fd)
 	return (-1);
 }
 
-void	handler(int signal)
-{
+void	handler(int signal) {
 	(void)signal;
+}
+
+void	SocketServer::printRequest(Request const &req) const {
+	std::cout << "\033[1;34mNew request: \033[0m";
+	std::cout << "\033[1;37m[" << req.getHost() << ":" << req.getPort() << "]\033[0m";
+	std::cout << "\033[1;37m " << req.getMethod() << "\033[0m";
+	std::cout << "\033[1;37m " << req.getPath() << "\033[0m" << std::endl;
 }
 
 int		SocketServer::epollWait() {
@@ -259,6 +267,7 @@ int		SocketServer::epollWait() {
 			}
 			else
 			{
+				this->printRequest(req);
 				Response	rep(req, req.getServBlock(), this->_envp);
 				rep.selectLocationBlock();
 				rep.sendData();
@@ -277,13 +286,11 @@ void	SocketServer::createConnection(int index_serv_fd)
 	Client				client;
 	int					client_fd;
 	struct sockaddr		tmp;
-	// struct sockaddr_in	tmpBis;
 	socklen_t			tmp_len = sizeof(tmp);
 	struct epoll_event	event;
 
 	// std::cout << "////////////	NEW CONNECTION 	///////////\n";
 
-	// std::cout << "new connection from serv: " << index_serv << std::endl;
 	if ((client_fd = accept(this->_servers_fd[index_serv_fd], (struct sockaddr *)&tmp,
 			&tmp_len)) == -1)
 	{
@@ -301,8 +308,6 @@ void	SocketServer::createConnection(int index_serv_fd)
 
 	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv_fd));
 
-	// std::cout << "fd open = " << client_fd << std::endl;
-
 	event.events = EPOLLIN;
 	event.data.fd = client_fd;
 	if (epoll_ctl(this->_epollFd, EPOLLIN, client_fd, &event) == -1)
@@ -311,9 +316,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 		this->_errSocket = true;
 		return ;
 	}
-	
 	// std::cout << client << std::endl;
-
 }
 
 void	SocketServer::closeConnection(int fd)

@@ -19,8 +19,7 @@ SRCS	=	main.cpp \
 			Header.cpp \
 			Cgi.cpp \
 			Client.cpp \
-			DefaultPage.cpp \
-			utils/PrintInfos.cpp
+			DefaultPage.cpp 
 
 SRCDIR		= srcs
 

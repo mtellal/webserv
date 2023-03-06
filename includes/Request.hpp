@@ -12,7 +12,6 @@
 # include <sys/socket.h>
 
 # include "Server.hpp"
-# include "PrintInfos.hpp"
 
 
 # define BUFFLEN 4096
@@ -59,6 +58,7 @@ class Request {
 		std::string							getQueryString() const;
 		void								setBytesRecieved(size_t bytes);
 		Server								getServBlock() const;
+		std::string							getCgiExtension() const;
 
 
 	private:
@@ -104,6 +104,8 @@ class Request {
 
 		Server								_servBlock;
 
+		std::string							_cgiExtension;
+
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			parsArgs(std::string tmp);
 		bool			setMethodVersionPath(const std::string &line);
@@ -124,6 +126,8 @@ class Request {
 		void			quitAwaitingRequest();
 		void			quitRequest();
 		void			getErrorPage();
+		int				setServBlock();
+
 
 		int				awaitingHeader(int fd);
 		void			awaitingBody(int fd);
@@ -142,7 +146,7 @@ class Request {
 		std::string		getHostNameFromIP(const std::string& ipAddress);
 		int				selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index);
 
-		bool			isCgiPath();
+		void			checkCgiPath();
 
 
 };

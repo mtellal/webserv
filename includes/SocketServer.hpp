@@ -72,6 +72,7 @@ class SocketServer {
 		int							selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index, const Request &req);
 
 		size_t						isAwaitingRequest(int fd);
+		void						printRequest(Request const &req) const;
 
 };
 

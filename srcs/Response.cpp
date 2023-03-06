@@ -13,14 +13,12 @@ _serv(s), _req(req), _locBlocSelect(false),
 _isDir(false), _autoindex(false), _closeConnection(false),
 _envp(envp), _defaultPage(_req, _serv)
 {
-	printResponse();
 }
 
 Response::Response(Response const &src) { *this = src; }
 
 Response::~Response()
 {
-	printResponse(1);
 }
 
 Response	&Response::operator=(Response const &rhs) {
@@ -375,6 +373,7 @@ void	Response::sendData() {
 	if (this->_req.getMethod() == "DELETE")
 		path = this->deleteResource();
 	this->sendHeader(path);
+	this->printStatusCode();
 }
 
 std::string	Response::sendContentTypeError() {
@@ -388,6 +387,15 @@ std::string	Response::sendContentTypeError() {
 	res = header.getHeaderRequestError();
 	write(this->_req.getFd(), res.c_str(), res.size());
 	return path;
+}
+
+void	Response::printStatusCode() {
+	std::cout << "\033[1;34mResponse status code: \033[0m";
+
+	if (this->_statusCode == 200)
+		std::cout << "\033[1;32m" << this->_statusCode << "\033[0m" << std::endl << std::endl;
+	else
+		std::cout << "\033[1;31m" << this->_statusCode << "\033[0m" << std::endl << std::endl;
 }
 
 void	Response::sendHeader(std::string path)
@@ -404,6 +412,13 @@ void	Response::sendHeader(std::string path)
 	}
 	else
 	{
+		if (this->_req.getCgiExtension().length())
+		{
+			std::cout << "/// EXECUTE CGI SCRIPT ///" << std::endl;
+			
+		}
+
+		std::cout << "/// DON'T EXECUTE CGI SCRIPT ///" << std::endl;
 
 		res = header.getHeader();
 
