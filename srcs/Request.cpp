@@ -141,10 +141,12 @@ void								Request::getErrorPage() {
 
 	Header header(path, &statusCode);
 	strHeader = header.getHeaderRequestError();
-	send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL);
+	if (send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL) == -1)
+		perror("send call failed");
 
 	page = fileToStr(path);
-	send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL);
+	if (send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL) == -1)
+		perror("send call failed");
 	this->_closeConnection = true;
 }
 
@@ -335,6 +337,7 @@ int								Request::setServBlock()
 
 	if ((idxServBlock = pickServBlock()) == -1)
 		return (-1);
+	// std::cout << "serv block: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
 	return (0);
@@ -405,6 +408,7 @@ std::string	Request::getRightHost(const std::string& host) {
 		return host;
 	else
 		return getIPFromHostName(host);
+	return host;
 }
 
 //	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
@@ -414,13 +418,18 @@ int		Request::pickServBlock()
 	std::vector<int>	index;
 	std::string			host;
 
+	host = getRightHost(this->getHost());
+	// std::cout << "host = " << host << std::endl;
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
-		host = getRightHost(this->_host);
-		if ((host == getIPFromHostName(this->_servers[i].getHost()) ||
-			host == getHostNameFromIP(this->_servers[i].getHost()) ||
+		// std::cout << this->_servers[i].getHostSet()  << std::endl;
+		// std::cout << getRightHost(this->_servers[i].getHost()) << std::endl;
+		// std::cout << this->_servers[i].getHost() << std::endl;
+		// std::cout << this->getPort() << " " << this->_servers[i].getPort() << std::endl;
+		if (this->_servers[i].getHostSet() &&
+			(host == getRightHost(this->_servers[i].getHost()) ||
 			host == this->_servers[i].getHost()) &&
-			this->_port == this->_servers[i].getPort())
+			this->getPort() == this->_servers[i].getPort())
 		{
 			vctServSelect.push_back(this->_servers[i]);
 			index.push_back(i);
@@ -432,13 +441,29 @@ int		Request::pickServBlock()
 		return selectBlockWithServerName(vctServSelect, index);
 	else
 	{
+		// std::cout << "2222" << std::endl;
 		for (size_t i = 0; i < this->_servers.size(); i++)
 		{
 			if (!this->_servers[i].getHostSet() &&
-				(this->_port == this->_servers[i].getPort()))
+				(this->getPort() == this->_servers[i].getPort()))
 			{
-				vctServSelect.push_back(this->_servers[i]);
-				index.push_back(i);
+				// std::cout << "A" << std::endl;
+				if (ft_split(host.c_str(), ".").size() == 4)
+				{
+					vctServSelect.push_back(this->_servers[i]);
+					index.push_back(i);
+				}
+				else if (this->_servers[i].getServerNameSet())
+				{
+					for (size_t j = 0; j < this->_servers[i].getServerName().size(); j++)
+					{
+						if (this->_host == this->_servers[i].getServerName()[j])
+						{
+							vctServSelect.push_back(this->_servers[i]);
+							index.push_back(i);
+						}
+					}
+				}
 			}
 		}
 			if (vctServSelect.size() == 1)
@@ -829,14 +854,15 @@ void						Request::request(int fd)
 
 		if (this->setServBlock() == -1)
 		{
-			this->getErrorPage();
+			// this->getErrorPage();
+			this->_closeConnection = true;
 			return ;
 		}
 
 		checkCgiPath();
 		
-		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
-		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
+		// std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
+		// std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
 		if (this->_methodSet && this->_method == "POST")
 		{

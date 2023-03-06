@@ -421,10 +421,11 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
-		std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
+		// std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
+		// std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
 
-		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
+		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) == -1)
+			perror("send call failed");
 
 		this->sendPage(path, body);
 	}
