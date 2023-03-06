@@ -15,7 +15,6 @@
 # include "PrintInfos.hpp"
 
 
-
 # define BUFFLEN 4096
 # define BUFFLEN_FILE 65536
 
@@ -24,7 +23,7 @@ class Request {
 	public:
 	
 		Request();
-		Request(int fd, std::vector<Server> servers);
+		Request(int fd, const std::vector<Server> &servers);
 		Request(Request const &src);
 		~Request();
 
@@ -142,6 +141,9 @@ class Request {
 
 		std::string		getHostNameFromIP(const std::string& ipAddress);
 		int				selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index);
+
+		bool			isCgiPath();
+
 
 };
 

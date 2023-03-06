@@ -16,6 +16,7 @@ class Server : public Directives {
 
 		Server						&operator=(Server const &rhs);
 
+		size_t						getFd() const;
 		std::string					getHost() const;
 		std::string					getPort() const;
 		std::vector<std::string>	getServerName() const;

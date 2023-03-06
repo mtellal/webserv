@@ -54,27 +54,21 @@ Server	&Server::operator=(Server const &rhs) {
 //												G E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string					Server::getHost() const { return this->_host; }
-
-std::string					Server::getPort() const { return this->_port; }
-
-std::vector<std::string>	Server::getServerName() const { return this->_serverName; }
-
-std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
-
-bool						Server::getErrorServer() const { return this->_errorServer; }
-
+bool						Server::getPortSet() const { return this->_portSet; }
+bool						Server::getHostSet() const { return this->_hostSet; }
 bool						Server::getBlockClose() const { return this->_blockClose; }
-
+bool						Server::getErrorServer() const { return this->_errorServer; }
 bool						Server::getServerNameSet() const { return this->_serverNameSet; }
 
-bool						Server::getHostSet() const { return this->_hostSet; }
+size_t						Server::getFd() const { return (this->_server_fd); }
 
-bool						Server::getPortSet() const { return this->_portSet; }
-
+std::string					Server::getHost() const { return this->_host; }
+std::string					Server::getPort() const { return this->_port; }
+std::string					Server::getDomain() const { return (this->_domain); }
 std::string					Server::getAddress() const { return (this->_address); }
 
-std::string					Server::getDomain() const { return (this->_domain); }
+std::vector<std::string>	Server::getServerName() const { return this->_serverName; }
+std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //												S E T T E R													  //

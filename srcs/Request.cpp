@@ -8,7 +8,7 @@
 
 Request::Request() {}
 
-Request::Request(int fd, std::vector<Server> servers) : 
+Request::Request(int fd, const std::vector<Server> &servers) : 
 _fd(fd), _servers(servers), _errRequest(false), _queryStringSet(false), _boundarySet(false),
 _closeConnection(false), _connectionSet(false), _acceptSet(false),
 _refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
@@ -511,7 +511,6 @@ void							Request::extractFile(const std::string &bound_data)
 	{
 		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
 		{
-			std::cout << "content dispo: " << fields[i] << std::endl;
 			this->extractContentDisposition(fields[i], name, fileName);
 		}
 	}
@@ -602,13 +601,54 @@ int								Request::openBodyFile(std::ofstream &out)
 	return (0);
 }
 
+int							searchPoint(const std::string &line)
+{
+	for (size_t i = line.length() -1; i > 0; i--)
+	{
+		if (line[i] == '.')
+			return (i);
+	}
+	return (-1);
+}
+
+bool							Request::isCgiPath()
+{
+	int												point;
+	std::map<std::string, std::string>::iterator	it;	
+	std::map<std::string, std::string>				mapCgi;
+
+	mapCgi = this->_servBlock.getCgi();
+	point = searchPoint(this->_path);
+	
+	std::cout << mapCgi.size() << std::endl;
+	std::cout << "isCgi: point + 1 [" << this->_path[point + 1] << "]" << std::endl;
+
+	if (point == -1 || this->_path[point + 1] != '\0' || this->_path[point + 1] != '?')
+		return (false);
+
+	it = mapCgi.begin();
+	while (it != mapCgi.end())
+	{
+		if (!memcmp(this->_path.c_str() + point + 1, it->first.c_str(), it->first.length()))
+			return (true);
+	}
+	return (false);
+}
+
 void							Request::checkBodyBytesRecieved()
 {
 	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
 		this->_awaitingBody = true;
 	else
 	{		
-		this->verifyFiles();
+		if (!isCgiPath())
+		{
+			std::cout << "Request: this->_path is not a cgi file" << std::endl;
+			this->verifyFiles();
+			remove(this->_bodyFilePath.c_str());
+		}
+		else
+			std::cout << "Request: is cgi path" << std::endl;
 		this->_awaitingBody = false;
 	}
 }
@@ -730,9 +770,6 @@ int						Request::awaitingHeader(int fd)
 	
 	buff[bytes] = '\0';
 
-	std::cout << bytes << std::endl;
-	std::cout << buff << std::endl;
-
 	if (!this->_methodSet && bytes == 2 && !memcmp(buff, "\r\n", 2))
 	{
 		this->_awaitingHeader = true;
@@ -795,14 +832,6 @@ void						Request::request(int fd)
 		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
 		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
-
-		if (this->_methodSet && this->_method == "POST")
-		{
-			if (body.length())
-				this->bodyRequest(index);
-			this->checkBodyBytesRecieved();
-		}
-
 		if ((idxServBlock = pickServBlock()) == -1)
 		{
 			this->getErrorPage();
@@ -810,6 +839,15 @@ void						Request::request(int fd)
 		}
 
 		this->_servBlock = this->_servers[idxServBlock];
+		
+		this->_servBlock.setSocket(idxServBlock);
+		
+		if (this->_methodSet && this->_method == "POST")
+		{
+			if (body.length())
+				this->bodyRequest(index);
+			this->checkBodyBytesRecieved();
+		}
 
 		if (!this->_hostSet || this->_badRequest)
 			this->getErrorPage();
@@ -820,6 +858,7 @@ std::ostream &operator<<(std::ostream & o, Request const & rhs) {
 	o << "method = " << rhs.getMethod() << std::endl;
 	o << "port = " << rhs.getPort() << std::endl;
 	o << "host = " << rhs.getHost() << std::endl;
+	o << "serv = " << rhs.getServBlock().getFd() << std::endl;
 	o << "path = " << rhs.getPath() << std::endl;
 	o << "contentLength = " << rhs.getContentLength() << std::endl;
 	o << "httpVersion = " << rhs.getHttpVersion() << std::endl;
