@@ -9,22 +9,14 @@
 Request::Request() {}
 
 Request::Request(int fd, const std::vector<Server> &servers) : 
-_fd(fd), _servers(servers), _errRequest(false), _queryStringSet(false), _boundarySet(false),
-_closeConnection(false), _connectionSet(false), _acceptSet(false),
-_refererSet(false), _agentSet(false), _serverName("Webserv/1.0"),
-_methodSet(false), _hostSet(false), _tooLarge(false),
-_badRequest(false),
-_bodyBytesRecieved(0), _bodyFileExists(false), _bodyFilePath("./uploads/bodyfile"),
-_awaitingHeader(false), _awaitingBody(false)
+_hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false), 
+_methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
+_boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
+_bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), 
+_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers)
 {
 	this->functPtr[0] = &Request::setHostPort;
 	this->functPtr[1] = &Request::setConnection;
-	this->functPtr[2] = &Request::setAccept;
-	this->functPtr[3] = &Request::setReferer;
-	this->functPtr[4] = &Request::setAgent;
-	this->functPtr[5] = &Request::setAuthentification;
-	this->functPtr[6] = &Request::setContentLength;
-	this->functPtr[7] = &Request::setContentType;
 }
 
 Request::Request(Request const &src) {
@@ -36,48 +28,46 @@ Request::~Request() {}
 Request	&Request::operator=(Request const &rhs) {
 	if (this != &rhs)
 	{
-		this->_fd = rhs._fd;
-		this->_servers = rhs._servers;
-		this->_errRequest = rhs._errRequest;
-		this->_queryStringSet = rhs._queryStringSet;
-		this->_boundarySet = rhs._boundarySet;
-		this->_closeConnection = rhs._closeConnection;
-		this->_boundary = rhs._boundary;
 
-		this->_method = rhs._method;
-		this->_path = rhs._path;
-		this->_httpVersion = rhs._httpVersion;
-		this->_host = rhs._host;
-		this->_port = rhs._port;
-
-		this->_connection = rhs._connection;
-		this->_connectionSet = rhs._connectionSet;
-		this->_accept = rhs._accept;
-		this->_acceptSet = rhs._acceptSet;
-		this->_queryString = rhs._queryString;
-		this->_refererSet = rhs._refererSet;
-		this->_referer = rhs._referer;
-		this->_agentSet = rhs._agentSet;
-		this->_agent = rhs._agent;
-
-		this->_serverName = rhs._serverName;
-		this->_authentification = rhs._authentification;
-		this->_contentLength = rhs._contentLength;
-		this->_contentType = rhs._contentType;
-		this->_methodSet = rhs._methodSet;
 		this->_hostSet = rhs._hostSet;
 		this->_tooLarge = rhs._tooLarge;
+		this->_agentSet = rhs._agentSet;
+		this->_acceptSet = rhs._acceptSet;
+		this->_methodSet = rhs._methodSet;
+
+		this->_errRequest = rhs._errRequest;
+		this->_refererSet = rhs._refererSet;
 		this->_badRequest = rhs._badRequest;
-
-		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
-		this->_bodyFileExists = rhs._bodyFileExists;
-		this->_bodyFilePath = rhs._bodyFilePath;
-
-		this->_request = rhs._request;
-		this->_awaitingHeader = rhs._awaitingHeader;
+		this->_boundarySet = rhs._boundarySet;
 		this->_awaitingBody = rhs._awaitingBody;
+		this->_connectionSet = rhs._connectionSet;
+		this->_queryStringSet = rhs._queryStringSet;
+		this->_bodyFileExists = rhs._bodyFileExists;
+		this->_awaitingHeader = rhs._awaitingHeader;
+		this->_closeConnection = rhs._closeConnection;
 
+		this->_host = rhs._host;
+		this->_path = rhs._path;
+		this->_port = rhs._port;
+		this->_agent = rhs._agent;
+		this->_mehtod = rhs._mehtod;
+		this->_accept = rhs._accept;
+		this->_referer = rhs._referer;
+		this->_request = rhs._request;
+		this->_boundary = rhs._boundary;
+		this->_connection = rhs._connection;
+		this->_serverName = rhs._serverName;
+		this->_httpVersion = rhs._httpVersion;
+		this->_queryString = rhs._queryString;
+		this->_contentType = rhs._contentType;
+		this->_bodyFileExists = rhs._bodyFileExists;
+		this->_cgiExtension = rhs._cgiExtension;
+		this->_contentLength = rhs._contentLength;
+		this->_authentification = rhs._authentification;
+
+		this->_servers = rhs._servers;
 		this->_servBlock = rhs._servBlock;
+
 	}
 	return *this;
 }
@@ -638,7 +628,7 @@ void							Request::checkCgiPath()
 	while (it != mapCgi.end())
 	{
 		if (!memcmp(this->_path.c_str() + point + 1, it->first.c_str(), it->first.length())
-				&& this->_path[point + 1 + it->first.length()] == '\0')
+				&& (this->_path[point + 1 + it->first.length()] == '\0' || this->_path[point + 1 + it->first.length()] == '?'))
 			{
 				this->_cgiExtension = it->first;
 				return;
