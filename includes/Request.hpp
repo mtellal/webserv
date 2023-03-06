@@ -10,6 +10,7 @@
 # include <arpa/inet.h>
 # include <sys/epoll.h>
 # include <sys/socket.h>
+# include <ctime>
 
 # include "Server.hpp"
 
@@ -109,6 +110,7 @@ class Request {
 		void			quitRequest();
 		void			getErrorPage();
 		void			checkCgiPath();
+		void			printRequest() const;
 		void			awaitingBody(int fd);
 		void			quitAwaitingRequest();
 		void			checkBodyBytesRecieved();

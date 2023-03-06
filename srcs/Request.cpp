@@ -327,13 +327,16 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 	}
 }
 
-void							Request::setBytesRecieved(size_t bytes) { this->_bodyBytesRecieved = bytes; }
+void							Request::setBytesRecieved(size_t bytes)
+{
+	this->_bodyBytesRecieved = bytes;
+}
 
 int								Request::setServBlock()
 {
 	size_t	idxServBlock;
 
-	if ((idxServBlock = pickServBlock()) == -1)
+	if ((idxServBlock = pickServBlock()) == (size_t)-1)
 		return (-1);
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
@@ -827,6 +830,8 @@ void						Request::request(int fd)
 
 		this->setHTTPFields(header);
 
+		printRequest();
+
 		if (this->setServBlock() == -1)
 		{
 			this->getErrorPage();
@@ -835,8 +840,8 @@ void						Request::request(int fd)
 
 		checkCgiPath();
 		
-		std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
-		std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
+		/* std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
+		std::cout << "\n	//////	BODY	//////\n" << body << std::endl; */
 
 		if (this->_methodSet && this->_method == "POST")
 		{
@@ -855,6 +860,20 @@ void						Request::request(int fd)
 	}
 }
 
+void	Request::printRequest() const
+{
+	time_t		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cout << "\033[1;36m [REQUEST] \033[0m";
+	std::cout << "\033[1;97m[" << this->_host << ":" << this->_port << "]\033[0m";
+	std::cout << "\033[1;97m " << this->_method << "\033[0m";
+	std::cout << "\033[1;97m " << this->_path << "\033[0m";
+	std::cout << "\033[1;90m - " << this->_agent << "\033[0m" << std::endl;
+}
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {
 	o << "method = " << rhs.getMethod() << std::endl;

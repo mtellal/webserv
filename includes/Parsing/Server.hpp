@@ -42,6 +42,7 @@ class Server : public Directives {
 		std::string					getDomain() const;
 		std::string					getAddress() const;
 
+		Client						getClient(int fd) const;
 		std::vector<std::string>	getServerName() const;
 		std::vector<Location>		getVctLocation() const;
 

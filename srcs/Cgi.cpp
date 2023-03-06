@@ -48,13 +48,24 @@ Cgi     &Cgi::operator=(const Cgi &src)
     return (*this);
 }
 
-Header          Cgi::getHeader() const { return (this->_header); }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												G E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void                Cgi::setCgiWarnings(const std::string &err) { this->_cgiWarnings = err; }
 
 void                Cgi::setContentType(const std::string &ct) { this->_header.setContentType(ct); }
 
 void                Cgi::setContentLength(const std::string &cl) { this->_header.setContentLength(cl); }
+
+Header              Cgi::getHeader() const { return (this->_header); }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//										M E M B E R S   F U N C T I O N S 									  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 void    Cgi::printEnv()
 {
@@ -97,11 +108,11 @@ void    Cgi::addCgiVarEnv()
     _envMap["AUTH_TYPE"]           =   req.getAuthentification();
     if (req.getMethod() == "POST")
     {
-        _envMap["CONTENT_LENGTH"] = "618";
+        _envMap["CONTENT_LENGTH"] = req.getContentLength();
         if (req.getContentType().length())
         {
             std::cout << "content type set" << std::endl;
-            _envMap["CONTENT_TYPE"] = "multipart/form-data;boundary=------WebKitFormBoundary3IMBGwkS5BuesHoI";
+            _envMap["CONTENT_TYPE"] = req.getContentType();
         }
     }
     else
@@ -145,7 +156,6 @@ char    **Cgi::mapToTab()
         std::string  tmp;
 
         tmp = it->first + "=" + it->second;
-
         try 
         {
             e[i] = new char[tmp.length() + 1];
@@ -160,7 +170,6 @@ char    **Cgi::mapToTab()
             }
             return (NULL);
         }
-
         strcpy(e[i], tmp.c_str());
         e[i][tmp.length()] = '\0';
         i++;
@@ -254,7 +263,6 @@ void                Cgi::child(int fdin, int pipe[2], char **args)
 
     if (execve(args[0], args, this->_env) == -1)
     {
-        std::cerr << "execve failed" << std::endl;
         perror("execve call failed");
         close(pipe[1]);
         exit(1);
@@ -272,19 +280,17 @@ std::string        parent(int pipe[2])
     bytes = read(pipe[0], buff, len - 1);
     buff[bytes] = '\0';
     response.append(buff);
-
     while (bytes > 0)
     {
         bytes = read(pipe[0], buff, len - 1);
         buff[bytes] = '\0';
         response.append(buff);
     }
-
     close(pipe[0]);
     return (response);
 }
 
-char                **Cgi::exec_args(const std::string &file, const std::string &exe)
+char                **Cgi::execArgs(const std::string &file, const std::string &exe)
 {
     char        **args;
 
@@ -317,24 +323,21 @@ void        Cgi::quitCgi(int status)
 
 void             Cgi::execute(const std::string &file, const std::string &exe, std::string &content)
 {
+    int             in;
     int             p[2];
+    int             status;
+    char            **args;
+    size_t          index;
+    std::string     header;
+    std::string     response;
     pid_t           f;
 
-    char            **args;
-
-    std::string     response;
-    std::string     header;
-    size_t          index;
     
-    int             in;
-    
-    
-    in = STDIN_FILENO;
-    args = exec_args(file, exe);
-
     std::cout << "///////////// C G I    E X E C U T E   C A L L E D ///////////////" << std::endl;
 
 
+    in = STDIN_FILENO;
+    args = execArgs(file, exe);
     if (pipe(p) == -1)
     {
         perror("pipe call failed");
@@ -357,7 +360,6 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
     std::cout << "in: " << in << std::endl;
     std::cout << "method: " << _req.getMethod() << std::endl;
 
-
     f = fork();
     if (f == -1)
     {
@@ -371,14 +373,11 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
         // pere
         if (in != STDIN_FILENO)
             close(in);
-        int status;
-
+        
         waitpid(f, &status, 0);
         
         if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
-        {
-            return (quitCgi(500));
-        }
+            return (quitCgi(502));
 
         response = parent(p);
 
@@ -396,16 +395,8 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
 
         header = response.substr(0, index);
         content = response.substr(index + 2, response.length());
-
-       /*  std::cout << "///// CGI HEADER  /////" << header << std::endl;
-        std::cout << "///// CGI BODY  /////" << body << std::endl; */
-
         extractFields(header);
-
-        std::cout << content.length() << std::endl;
-
         this->_header.setContentLength(ft_itos(content.length()));
-
     }
     return ;
 }

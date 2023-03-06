@@ -1,16 +1,10 @@
 #include "Header.hpp"
-#include "utils.hpp"
-#include <sstream>
-#include <sys/stat.h>
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <ctime>
 
 Header::Header() {}
 
-Header::Header(std::string file, int *statusCode, Response *rep) : _statusCode(statusCode),
-				_file(file), _rep(rep){
+Header::Header(std::string file, int *statusCode, Response *rep) :
+_statusCode(statusCode), _file(file), _rep(rep)
+{
 	this->_req = this->_rep->getRequest();
 	this->_serv = this->_rep->getServ();
 
@@ -29,7 +23,9 @@ Header::Header(std::string file, int *statusCode, Response *rep) : _statusCode(s
 	this->_header["Content-Length"] = this->getContentLength();
 }
 
-Header::Header(std::string file, int *statusCode) : _statusCode(statusCode), _file(file) {
+Header::Header(std::string file, int *statusCode) :
+_statusCode(statusCode), _file(file)
+{
 	this->_header["Content-type"] = "text/html";
 	this->_header["Server"] = "Webserv/1.0";
 	this->_header["Date"] = this->getDate();
@@ -37,7 +33,6 @@ Header::Header(std::string file, int *statusCode) : _statusCode(statusCode), _fi
 	this->_header["Content-Length"] = this->getContentLength();
 
 }
-
 
 Header::Header(Header const &src) {
 	*this = src;
@@ -48,25 +43,62 @@ Header::~Header() {}
 Header	&Header::operator=(Header const &rhs) {
 	if (this != &rhs)
 	{
-		this->_req = rhs._req;
 		this->_statusCode = rhs._statusCode;
 		this->_file = rhs._file;
+		this->_req = rhs._req;
 		this->_serv = rhs._serv;
 		this->_rep = rhs._rep;
+		this->_header = rhs._header;
 	}
 	return *this;
 }
 
-void	Header::setContentType(std::string const &contentType) {
-	this->_header["Content-type"] = contentType;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												G E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string	Header::getDate() const {
+	std::string date;
+	time_t tmm = time(0);
+
+	tm *g = gmtime(&tmm);
+	date = asctime(g);
+	date.erase(date.size() - 1, 1);
+	date += " GMT";
+
+	return date;
 }
 
-void	Header::setContentLength(std::string const &contentLength) {
-	this->_header["Content-Length"] = contentLength;
+std::string	Header::getContentLength() const {
+	struct stat	stats;
+
+	stat(this->_file.c_str(), &stats);
+	return ft_itos(stats.st_size);
 }
 
-void	Header::setStatus(int s) {
-	*this->_statusCode = s;
+std::string	Header::getLastModified() const {
+	struct stat s;
+
+	stat(this->_file.c_str(), &s);
+	return ctime(&s.st_mtime);
+}
+
+std::string	Header::getAllow() const {
+	std::string					ret;
+	std::vector<std::string>	allow;
+
+	if (this->_rep->getlocBlocSelect() and this->_rep->getLocBloc().getHttpMethodsSet())
+		allow = this->_rep->getLocBloc().getHttpMethods();
+	else
+		allow = this->_rep->getServ().getHttpMethods();
+
+	for (size_t i = 0; i < allow.size(); i++)
+	{
+		if (i != 0)
+			ret += ", ";
+		ret += allow[i];
+	}
+	return ret;
 }
 
 std::string	Header::getHeader() {
@@ -108,15 +140,6 @@ std::string	Header::getHeaderRequestError() {
 	return res;
 }
 
-std::string	Header::ft_itos(int nbr) const {
-	std::string s;
-	std::stringstream out;
-
-	out << nbr;
-	s = out.str();
-	return s;
-}
-
 std::string	Header::getContentType() {
 
 	std::string					type;
@@ -138,6 +161,37 @@ std::string	Header::getContentType() {
 			return "text/plain";
 	}
 	return "406";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//												S E T T E R													  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void	Header::setContentType(std::string const &contentType) {
+	this->_header["Content-type"] = contentType;
+}
+
+void	Header::setContentLength(std::string const &contentLength) {
+	this->_header["Content-Length"] = contentLength;
+}
+
+void	Header::setStatus(int s) {
+	*this->_statusCode = s;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//										M E M B E R S   F U N C T I O N S 									  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string	Header::ft_itos(int nbr) const {
+	std::string s;
+	std::stringstream out;
+
+	out << nbr;
+	s = out.str();
+	return s;
 }
 
 std::string	Header::parsContentTypeFile(std::vector<std::string> splitAccept) const {
@@ -184,47 +238,3 @@ std::string	Header::parsContentTypeFile(std::vector<std::string> splitAccept) co
 	return "";
 }
 
-
-std::string	Header::getDate() const {
-	std::string date;
-	time_t tmm = time(0);
-
-	tm *g = gmtime(&tmm);
-	date = asctime(g);
-	date.erase(date.size() - 1, 1);
-	date += " GMT";
-
-	return date;
-}
-
-std::string	Header::getContentLength() const {
-	struct stat	stats;
-
-	stat(this->_file.c_str(), &stats);
-	return ft_itos(stats.st_size);
-}
-
-std::string	Header::getLastModified() const {
-	struct stat s;
-
-	stat(this->_file.c_str(), &s);
-	return ctime(&s.st_mtime);
-}
-
-std::string	Header::getAllow() const {
-	std::string					ret;
-	std::vector<std::string>	allow;
-
-	if (this->_rep->getlocBlocSelect() and this->_rep->getLocBloc().getHttpMethodsSet())
-		allow = this->_rep->getLocBloc().getHttpMethods();
-	else
-		allow = this->_rep->getServ().getHttpMethods();
-
-	for (size_t i = 0; i < allow.size(); i++)
-	{
-		if (i != 0)
-			ret += ", ";
-		ret += allow[i];
-	}
-	return ret;
-}

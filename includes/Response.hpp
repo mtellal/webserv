@@ -28,51 +28,50 @@ class Response
 
 		Response	&operator=(Response const &rhs);
 
+		void						sendData();
 		void						selectServerBlock();
 		void						selectLocationBlock();
-		void						sendData();
 		bool						getlocBlocSelect() const;
 		bool						getCloseConnection() const;
 		Server						getServ() const;
-		Request						getRequest() const;
 		Location					getLocBloc() const;
+		Request						getRequest() const;
 
 
 	private:
 
-		Server						_serv;
-		Request						_req;
-		std::vector<std::string>	_path;
-		std::vector<std::string>	_errPath;
-		std::ifstream				_file;
-		std::string					_httpRep;
-		int							_statusCode;
-		bool						_locBlocSelect;
-		Location					_locBloc;
 		bool						_isDir;
 		bool						_autoindex;
+		bool						_locBlocSelect;
 		bool						_closeConnection;
 		char						**_envp;
-		std::string					cgi_script;
+		int							_statusCode;
+
+		std::string					_httpRep;
+		Request						_req;
+		Server						_serv;
+		std::ifstream				_file;
+		Location					_locBloc;
 		DefaultPage					_defaultPage;
+		std::vector<std::string>	_path;
+		std::vector<std::string>	_errPath;
 
-		bool						rightPathLocation();
-		bool						rightPathServer();
-		std::string					rightPathErr(bool &pageFind);
-		std::string					rightRoot();
-		std::vector<std::string>	rightIndex();
-
+		void						httpRedir();
+		void						printResponse() const;
+		void						findRightCodeError();
 		void						sendHeader(std::string path);
 		void						sendPage(std::string path, const std::string &cgi_content);
-		void						httpRedir();
-		void						findRightCodeError();
 		bool						rightPath();
+		bool						rightPathServer();
+		bool						rightPathLocation();
 		bool						methodNotAllowed() const;
-		std::string					sendContentTypeError();
+		std::string					rightRoot();
 		std::string					findRightError();
-		std::string					testAllPaths(bool *err);
 		std::string					deleteResource();
-		void						printStatusCode();
+		std::string					sendContentTypeError();
+		std::string					testAllPaths(bool *err);
+		std::string					rightPathErr(bool &pageFind);
+		std::vector<std::string>	rightIndex();
 };
 
 

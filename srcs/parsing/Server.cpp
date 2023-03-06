@@ -71,6 +71,20 @@ std::string					Server::getPort() const { return this->_port; }
 std::string					Server::getDomain() const { return (this->_domain); }
 std::string					Server::getAddress() const { return (this->_address); }
 
+Client						Server::getClient(int fd) const
+{
+	size_t	i;
+
+	i = 0;
+	while (i < this->_clients_fd.size())
+	{
+		if ((int)this->_clients_fd[i] == fd)
+			break ;
+		i++;	
+	}
+	return (this->_clients[i]);
+}
+
 std::vector<std::string>	Server::getServerName() const { return this->_serverName; }
 std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
 

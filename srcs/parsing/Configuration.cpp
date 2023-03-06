@@ -22,9 +22,9 @@ Configuration &Configuration::operator=(Configuration const &rhs) {
 	return *this;
 }
 
-std::vector<Server>	Configuration::getVctServer() const { return this->_servers; }
-
 bool	Configuration::getErrorConf(){ return this->_errorConf; }
+
+std::vector<Server>	Configuration::getVctServer() const { return this->_servers; }
 
 void	Configuration::error_msg(const std::string &msg = "", const int &n_line = -1)
 {

@@ -1,10 +1,18 @@
 #ifndef HEADER_HPP
 # define HEADER_HPP
 
+# include <sstream>
+# include <sys/stat.h>
+# include <iostream>
+# include <fstream>
+# include <string>
+# include <stdio.h>
+# include <ctime>
+
 # include "Request.hpp"
 # include "Server.hpp"
 # include "Response.hpp"
-# include <string>
+# include "utils.hpp"
 
 class Response;
 
@@ -20,31 +28,30 @@ class Header {
 	
 		Header	&operator=(Header const &rhs);
 
-		void	setContentType(std::string const &contentType);
-		void	setContentLength(std::string const &contentLength);
-		void	setStatus(int status);
+		void		setStatus(int status);
+		void		setContentType(std::string const &contentType);
+		void		setContentLength(std::string const &contentLength);
 
 		std::string	getHeader();
-		std::string	getHeaderRequestError();
 		std::string	getContentType();
+		std::string	getHeaderRequestError();
 
 
 	private:
 	
-		Request								_req;
 		int									*_statusCode;
 		std::string							_file;
+		Request								_req;
 		Server								_serv;
 		Response							*_rep;
 		std::map<std::string, std::string>	_header;
 
-		std::string	ft_itos(int nbr) const;
-		std::string	parsContentTypeFile(std::vector<std::string> splitAccept) const;
-
 		std::string	getDate() const;
-		std::string	getContentLength() const;
-		std::string	getLastModified() const;
 		std::string	getAllow() const;
+		std::string	ft_itos(int nbr) const;
+		std::string	getLastModified() const;
+		std::string	getContentLength() const;
+		std::string	parsContentTypeFile(std::vector<std::string> splitAccept) const;
 
 };
 
