@@ -86,6 +86,7 @@ class Request {
 		std::string							_path;
 		std::string							_port;
 		std::string							_agent;
+		std::string							_errMsg;
 		std::string							_method;
 		std::string							_accept;
 		std::string							_referer;
@@ -108,7 +109,6 @@ class Request {
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			verifyFiles();
 		void			quitRequest();
-		void			getErrorPage();
 		void			checkCgiPath();
 		void			printRequest() const;
 		void			awaitingBody(int fd);
@@ -116,6 +116,7 @@ class Request {
 		void			checkBodyBytesRecieved();
 		void			parsArgs(std::string tmp);
 		void			bodyRequest(size_t index);
+		void			getErrorPage(const std::string &errMsg);
 		void			setHTTPFields(const std::string &header);
 		void			extractFile(const std::string &bound_data);
 		void			setAgent(std::vector<std::string> strSplit);

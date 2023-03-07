@@ -278,7 +278,9 @@ int		SocketServer::epollWait() {
 					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + index_wreq);
 
 			if (req.getcloseConnection())
+			{
 				this->closeConnection(event[j].data.fd);
+			}
 			else if (req.getAwaitingRequest())
 			{
 				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
