@@ -13,7 +13,7 @@ _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false),
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
 _bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), 
-_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers)
+_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath(".bodyfile"), _servers(servers)
 {
 	this->functPtr[0] = &Request::setHostPort;
 	this->functPtr[1] = &Request::setConnection;
@@ -123,9 +123,8 @@ std::string							Request::getCgiExtension() const { return (this->_cgiExtension
 
 Server								Request::getServBlock() const { return (this->_servBlock); }
 
-void								Request::getErrorPage(const std::string &errMsg) {
+void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 	time_t		t;
-	int			statusCode;
 	std::string	path;
 	std::string	strHeader;
 	std::string	page;
@@ -361,7 +360,6 @@ int		Request::setServBlock()
 	std::cout << "Idx server: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
-	this->_bodyFilePath = this->_servBlock.getUpload() ;
 	return (0);
 }
 
@@ -542,6 +540,7 @@ void							Request::extractFile(const std::string &bound_data)
 	std::string					contentType;
 	std::string					fileName;
 	std::string					name;
+	std::string					uploadPath;
 	std::ofstream				outfile;
 	std::vector<std::string>	fields;
 
@@ -562,7 +561,15 @@ void							Request::extractFile(const std::string &bound_data)
 
 	if (fileName.length())
 	{
-		fileName = this->_servBlock.getUpload() + fileName;
+		uploadPath = this->_servBlock.getUpload();
+
+		if (!uploadPath.length())
+			return (this->getErrorPage("Upload path not defined"));
+		if (memcmp(uploadPath.c_str(), this->_servBlock.getRoot().c_str(), uploadPath.length()))
+			return (this->getErrorPage("Upload path not in " + this->_servBlock.getRoot() + " folder", 403));
+
+		fileName = uploadPath + fileName;
+
 		outfile.open(fileName.c_str(),
 			std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
@@ -624,6 +631,8 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 
 int								Request::openBodyFile(std::ofstream &out)
 {
+	std::string		errMsg;
+
 	if (this->_bodyFileExists)
 		out.open(this->_bodyFilePath.c_str(),
 			std::ofstream::out | std::ofstream::ate | std::ofstream::app | std::ofstream::binary);
@@ -636,7 +645,7 @@ int								Request::openBodyFile(std::ofstream &out)
 	if (!out.is_open())
 	{
 		this->quitAwaitingRequest();
-		this->getErrorPage("can't open file " + this->_bodyFilePath);
+		this->getErrorPage("can't open file \"" + this->_bodyFilePath + "\"");
 		return (-1);
 	}
 
@@ -817,7 +826,7 @@ int						Request::awaitingHeader(int fd)
 
 	if (!this->_methodSet && !setMethodVersionPath(buff))
 	{
-		this->getErrorPage("Invalid HTTP request");
+		this->getErrorPage("Invalid HTTP request", 400);
 		this->_awaitingHeader = false;
 		return (-1);
 	}
@@ -876,7 +885,7 @@ void						Request::request(int fd)
 		}
 
 		if (!this->_hostSet || this->_badRequest)
-			this->getErrorPage("Bad request");
+			this->getErrorPage("Bad request", 400);
 	}
 }
 

@@ -116,7 +116,6 @@ class Request {
 		void			checkBodyBytesRecieved();
 		void			parsArgs(std::string tmp);
 		void			bodyRequest(size_t index);
-		void			getErrorPage(const std::string &errMsg);
 		void			setHTTPFields(const std::string &header);
 		void			extractFile(const std::string &bound_data);
 		void			setAgent(std::vector<std::string> strSplit);
@@ -130,6 +129,7 @@ class Request {
 		void			bodyRequest(const std::string &body, size_t &total);
 		void			setGetParams(std::vector<std::string> vct, size_t *i);
 		void			setAuthentification(std::vector<std::string> strSplit);
+		void			getErrorPage(const std::string &errMsg, int status = 500);
 		void			addQueryString(const std::string &key, const std::string &value);
 		void			extractContentType(const std::string &line, std::string &contentType);
 		void			extractContentDisposition(const std::string &line, std::string &name, std::string &filename);
