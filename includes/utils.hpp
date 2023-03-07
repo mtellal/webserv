@@ -15,6 +15,7 @@ std::string					ft_itos(int nbr);
 std::string					fileToStr(std::string path);
 std::string 	            removeChar(std::string s, char c);
 std::string					getHttpStatusCodeMessage(int statusCode);
+std::string					getIPFromHostName(const std::string& hostName);
 std::vector<std::string>	ft_split_str(const std::string &s, const std::string &str);
 std::vector<std::string>	ft_split(const std::string &str, const std::string &charset);
 

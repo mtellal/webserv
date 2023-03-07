@@ -188,19 +188,6 @@ void	Server::error_msg(const int &n_line, const std::string &err_msg)
 	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
 } 
 
-
-
-std::string	Server::getIPFromHostName(const std::string& hostName) {
-	struct hostent* host = gethostbyname(hostName.c_str());
-
-	if (!host)
-		return "";
-
-	std::stringstream ss;
-	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
-	return ss.str();
-}
-
 bool	Server::checkHost(std::string host) {
 	std::vector<std::string> splitHost;
 
@@ -216,9 +203,9 @@ bool	Server::checkHost(std::string host) {
 }
 
 void	Server::readServBlock(std::ifstream &file, int &i) {
-	int j;
-	std::string line;
-	std::string directives[11] = { "listen", "server_name", "error_page", "client_max_body_size",
+	int			j;
+	std::string	line;
+	std::string	directives[11] = { "listen", "server_name", "error_page", "client_max_body_size",
 						 "root", "autoindex", "index", "return", "http_methods", "cgi", "upload" };
 
 	i += 1;

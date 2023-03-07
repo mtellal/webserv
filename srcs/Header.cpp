@@ -90,7 +90,8 @@ std::string	Header::getHeader() {
 	if (this->_req.getAgentSet())
 		res += "User-Agent: " + this->_header["User-Agent"] + "\n";
 	res += "Allow: " + this->_header["Allow"] + "\n";
-	res += "Content-Length: " + this->_header["Content-Length"] + "\n\n";
+	if (this->_req.getMethod() != "HEAD")
+		res += "Content-Length: " + this->_header["Content-Length"] + "\n\n";
 
 	return res;
 }

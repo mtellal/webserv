@@ -337,6 +337,7 @@ int		Request::setServBlock()
 
 	if ((idxServBlock = pickServBlock()) == -1)
 		return (-1);
+	std::cout << "Idx server: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
 	return (0);
@@ -388,40 +389,6 @@ std::string	Request::getHostNameFromIP(const std::string& ipAddress) {
 	hostsFile.close();
 	return "";
 }
-
-std::string	Request::getIPFromHostName(const std::string& hostName) {
-	struct hostent* host = gethostbyname(hostName.c_str());
-	if (!host)
-		return "";
-
-	std::stringstream ss;
-	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
-	return ss.str();
-}
-
-// bool	SocketServer::hostExist(std::string host) {
-// 	std::vector<std::string> splitHost;
-
-// 	splitHost = ft_split(host.c_str(), ".");
-// 	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
-// 		host == "0.0.0.0")
-// 		return true;
-
-// 	splitHost = ft_split(getIPFromHostName(host), ".");
-// 	if (splitHost.size() == 4 && splitHost[0] == "127")
-// 		return true;
-// 	return false;
-// }
-
-// std::string	Request::getIPFromHostName(const std::string& hostName) {
-// 	struct hostent* host = gethostbyname(hostName.c_str());
-// 	if (!host)
-// 		return "";
-
-// 	std::stringstream ss;
-// 	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
-// 	return ss.str();
-// }
 
 std::string	Request::getRightHost(const std::string& host) {
 	std::vector<std::string>	resSplit;
@@ -493,7 +460,7 @@ int		Request::pickServBlock()
 	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
 		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
 		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */
-	std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
+	// std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
 	return -1;
 }
 

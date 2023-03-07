@@ -1,9 +1,6 @@
 #include "Configuration.hpp"
 #include "SocketServer.hpp"
 
-
-
-
 int main(int argc, char **argv, char **envp)
 {
 	std::string	file;
@@ -37,7 +34,6 @@ int main(int argc, char **argv, char **envp)
 	Autres codes err ?
 
 	Method DELETE, code 202 ?
-	Method HEAD ?
 
-	favicon ?
+	send call failed: Broken pipe
 */

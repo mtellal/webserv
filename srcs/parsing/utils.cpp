@@ -4,7 +4,8 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
-// #include <unistd.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 int	ft_stoi(const std::string str, bool *err)
 {
@@ -201,4 +202,14 @@ void			trimSpaceBack(std::string &line)
 {
 	while (line.length() && line[line.length() - 1] == ' ')
 		line.erase(line.length() - 1, 1);
+}
+
+std::string	getIPFromHostName(const std::string& hostName) {
+	struct hostent* host = gethostbyname(hostName.c_str());
+	if (!host)
+		return "";
+
+	std::stringstream ss;
+	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
+	return ss.str();
 }

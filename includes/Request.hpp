@@ -139,7 +139,6 @@ class Request {
 		int				selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index);
 
 		std::string		getRightHost(const std::string& host);
-		std::string		getIPFromHostName(const std::string& hostName);
 		std::string		getHostNameFromIP(const std::string& ipAddress);
 
 };

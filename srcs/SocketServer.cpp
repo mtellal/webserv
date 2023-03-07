@@ -69,16 +69,6 @@ std::string		getAddressInfo(const struct sockaddr addr)
 	return (address);
 }
 
-std::string	SocketServer::getIPFromHostName(const std::string& hostName) {
-	struct hostent* host = gethostbyname(hostName.c_str());
-	if (!host)
-		return "";
-
-	std::stringstream ss;
-	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
-	return ss.str();
-}
-
 bool	SocketServer::hostExist(std::string host) {
 	std::vector<std::string> splitHost;
 

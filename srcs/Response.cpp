@@ -427,7 +427,8 @@ void	Response::sendHeader(std::string path)
 		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) == -1)
 			perror("send call failed");
 
-		this->sendPage(path, body);
+		if (this->_req.getMethod() != "HEAD")
+			this->sendPage(path, body);
 	}
 }
 

@@ -71,7 +71,6 @@ class Server : public Directives {
 		bool						isLocationBlock(std::vector<std::string> splitLine);
 		bool						checkHost(std::string host);
 		void						error_msg(const int &n_line, const std::string &err_msg);
-		std::string					getIPFromHostName(const std::string& hostName);
 
 
 };
