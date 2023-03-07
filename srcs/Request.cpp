@@ -386,42 +386,6 @@ int		Request::selectBlockWithServerName(std::vector<Server> vctServSelect, std::
 	return index[0];
 }
 
-std::string	Request::getHostNameFromIP(const std::string& ipAddress) {
-	std::ifstream hostsFile("/etc/hosts");
-	std::string line;
-
-	if (!hostsFile.is_open())
-		return "";
-	while (std::getline(hostsFile, line))
-	{
-		if (!line.empty() && line[0] != '#')
-		{
-			std::istringstream iss(line);
-			std::string firstToken, hostName;
-			iss >> firstToken >> hostName;
-			if (firstToken == ipAddress)
-			{
-				hostsFile.close();
-				return hostName;
-			}
-		}
-	}
-	hostsFile.close();
-	return "";
-}
-
-std::string	Request::getRightHost(const std::string& host) {
-	std::vector<std::string>	resSplit;
-	std::string					res;
-
-	resSplit = ft_split(host.c_str(), ".");
-	if (resSplit.size() == 4)
-		return host;
-	else if ((res = getIPFromHostName(host)) != "")
-		return res;
-	return "";
-}
-
 //	verif si aucun host peut etre envoyer, ex: 'Host: ""' 
 int		Request::pickServBlock()
 {
@@ -485,7 +449,6 @@ int		Request::pickServBlock()
 }
 
 
-
 void						Request::extractContentDisposition(const std::string &line, std::string &name, std::string &filename)
 {
 	std::string 				tmp(line);
@@ -541,9 +504,9 @@ void							Request::extractFile(const std::string &bound_data)
 	std::string					fileName;
 	std::string					name;
 	std::string					uploadPath;
+	std::string					rootPath;
 	std::ofstream				outfile;
 	std::vector<std::string>	fields;
-
 
 	index = bound_data.find("\r\n\r\n");
 
@@ -562,10 +525,26 @@ void							Request::extractFile(const std::string &bound_data)
 	if (fileName.length())
 	{
 		uploadPath = this->_servBlock.getUpload();
+		rootPath = this->_servBlock.getRoot();
 
 		if (!uploadPath.length())
 			return (this->getErrorPage("Upload path not defined"));
-		if (memcmp(uploadPath.c_str(), this->_servBlock.getRoot().c_str(), uploadPath.length()))
+			
+		if (uploadPath[0] != '/')
+			uploadPath += "/" + uploadPath;
+		if (uploadPath[0] != '.')
+			uploadPath = "." + uploadPath;
+		if (uploadPath[uploadPath.length() - 1] != '/')
+			uploadPath += "/";
+		
+		if (rootPath[0] != '/')
+			rootPath += "/" + rootPath;
+		if (rootPath[0] != '.')
+			rootPath = "." + rootPath;
+		if (rootPath[rootPath.length() - 1] != '/')
+			rootPath += "/";
+
+		if (memcmp(uploadPath.c_str(), rootPath.c_str(), rootPath.length()))
 			return (this->getErrorPage("Upload path not in " + this->_servBlock.getRoot() + " folder", 403));
 
 		fileName = uploadPath + fileName;
@@ -801,9 +780,7 @@ int						Request::awaitingHeader(int fd)
 	int			bytes;
 	size_t		index;
 
-
 	bytes = recv(fd, buff, BUFFLEN, 0);
-
 
 	if (bytes < 1)
 	{
@@ -831,7 +808,7 @@ int						Request::awaitingHeader(int fd)
 		return (-1);
 	}
 
-	this->_request.append(buff);
+	this->_request.append(buff, bytes);
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
@@ -865,18 +842,16 @@ void						Request::request(int fd)
 		printRequest();
 
 		if (this->setServBlock() == -1)
-		{
 			return (this->getErrorPage("Host unavailable"));
-		}
-
+		
 		checkCgiPath();
 
 		if (this->_methodSet && this->_method == "POST")
 		{
-			if (bytesRecievd >= (int)header.length() + 4)
-				body = this->_request.substr(index + 4, this->_request.length());
-
-			this->_bodyBytesRecieved = bytesRecievd - (header.length() + 4);
+			if (bytesRecievd > (int)index + 4)
+				body = this->_request.substr(index + 4, bytesRecievd);
+			
+			this->_bodyBytesRecieved = bytesRecievd - (index + 4);
 
 			if (body.length())
 				this->bodyRequest(index);

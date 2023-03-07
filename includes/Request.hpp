@@ -141,9 +141,6 @@ class Request {
 		int				recvToBodyFile(int fd, std::ofstream &out);
 		int				selectBlockWithServerName(std::vector<Server> vctServSelect, std::vector<int> index);
 
-		std::string		getRightHost(const std::string& host);
-		std::string		getHostNameFromIP(const std::string& ipAddress);
-
 };
 
 std::ostream &operator<<( std::ostream & o, Request const & rhs);

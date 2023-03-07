@@ -204,7 +204,7 @@ void			trimSpaceBack(std::string &line)
 		line.erase(line.length() - 1, 1);
 }
 
-std::string	getIPFromHostName(const std::string& hostName) {
+std::string		getIPFromHostName(const std::string& hostName) {
 	struct hostent* host = gethostbyname(hostName.c_str());
 	if (!host)
 		return "";
@@ -212,4 +212,40 @@ std::string	getIPFromHostName(const std::string& hostName) {
 	std::stringstream ss;
 	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
 	return ss.str();
+}
+
+std::string		getHostNameFromIP(const std::string& ipAddress) {
+	std::ifstream hostsFile("/etc/hosts");
+	std::string line;
+
+	if (!hostsFile.is_open())
+		return "";
+	while (std::getline(hostsFile, line))
+	{
+		if (!line.empty() && line[0] != '#')
+		{
+			std::istringstream iss(line);
+			std::string firstToken, hostName;
+			iss >> firstToken >> hostName;
+			if (firstToken == ipAddress)
+			{
+				hostsFile.close();
+				return hostName;
+			}
+		}
+	}
+	hostsFile.close();
+	return "";
+}
+
+std::string		getRightHost(const std::string& host) {
+	std::vector<std::string>	resSplit;
+	std::string					res;
+
+	resSplit = ft_split(host.c_str(), ".");
+	if (resSplit.size() == 4)
+		return host;
+	else if ((res = getIPFromHostName(host)) != "")
+		return res;
+	return "";
 }
