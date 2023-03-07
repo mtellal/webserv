@@ -108,13 +108,21 @@ void	Server::setHost(std::vector<std::string> host, int &i) {
 		}
 		else
 		{
-			ft_stoi(host[1], &err);
-			if (err)
-				error_msg(i, "directive listen, wrong syntaxe");
+			if (checkHost(host[1]))
+			{
+				this->_hostSet = true;
+				this->_host = host[1];
+			}
 			else
 			{
-				this->_host = "0.0.0.0";
-				this->setPort(host[1], i);
+				ft_stoi(host[1], &err);
+				if (err)
+					error_msg(i, "directive listen, wrong syntaxe");
+				else
+				{
+					this->_host = "0.0.0.0";
+					this->setPort(host[1], i);
+				}
 			}
 		}
 	}
@@ -128,7 +136,10 @@ void	Server::setPort(std::string port, int &line)
 	for (size_t i = 0; i < port.length(); i++)
 	{
 		if (port[i] < '0' || port[i] > '9')
-			error_msg(line, "directive listen, port must be contains only numeric values");
+		{
+			error_msg(line, "directive listen wrong host or port");
+			return ;
+		}
 	}
 	this->_portSet = true;
 	this->_port = port;
@@ -175,34 +186,34 @@ void	Server::error_msg(const int &n_line, const std::string &err_msg)
 {
 	this->_errorServer = true;
 	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
+} 
+
+
+
+std::string	Server::getIPFromHostName(const std::string& hostName) {
+	struct hostent* host = gethostbyname(hostName.c_str());
+
+	if (!host)
+		return "";
+
+	std::stringstream ss;
+	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
+	return ss.str();
 }
 
+bool	Server::checkHost(std::string host) {
+	std::vector<std::string> splitHost;
 
+	splitHost = ft_split(host.c_str(), ".");
+	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
+		host == "0.0.0.0")
+		return true;
 
-// std::string	Server::getIPFromHostName(const std::string& hostName) {
-// 	struct hostent* host = gethostbyname(hostName.c_str());
-
-// 	if (!host)
-// 		return "";
-
-// 	std::stringstream ss;
-// 	ss << inet_ntoa(*(struct in_addr*)host->h_addr);
-// 	return ss.str();
-// }
-
-// bool	Server::checkHost(std::string host) {
-// 	std::vector<std::string> splitHost;
-
-// 	splitHost = ft_split(host.c_str(), ".");
-// 	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
-// 		host == "0.0.0.0")
-// 		return true;
-
-// 	splitHost = ft_split(getIPFromHostName(host), ".");
-// 	if (splitHost.size() == 4 && splitHost[0] == "127")
-// 		return true;
-// 	return false;
-// }
+	splitHost = ft_split(getIPFromHostName(host), ".");
+	if (splitHost.size() == 4 && splitHost[0] == "127")
+		return true;
+	return false;
+}
 
 void	Server::readServBlock(std::ifstream &file, int &i) {
 	int j;
