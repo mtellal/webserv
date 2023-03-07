@@ -17,7 +17,10 @@ _errSocket(false), _envp(envp)
 	this->createFdEpoll();
 	std::cout << "\033[1;32mStart Webserv\033[0m" << std::endl << std::endl;
 	while (this->epollWait() != 1)
-		;
+	{
+		std::cout << "\033[1;97mListening ...\033[0m" << std::flush;
+		std::cout << "\r";
+	}
 	std::cout << "\033[1;31mStop Webserv\033[0m" << std::endl;
 	this->closeSockets();
 }
@@ -253,9 +256,10 @@ int		SocketServer::epollWait() {
 	for (int j = 0; j < nbrFd; j++)
 	{
 		// std::cout << "EVENT = " << event[j].data.fd << std::endl;
-		std::cout << "listening" << std::endl;
 		if (event[j].data.fd == 0)
+		{
 			return 1;
+		}
 		if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
 		{
 			createConnection(index_serv);
@@ -293,6 +297,7 @@ int		SocketServer::epollWait() {
 			}
 		}
 	}
+
 	return 0;
 }
 

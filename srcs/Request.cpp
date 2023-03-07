@@ -546,8 +546,6 @@ void							Request::extractFile(const std::string &bound_data)
 		outfile.write(bound_data.c_str() + index + 4, bound_data.length() - index - 4 - 2);
 		outfile.close();
 	}
-	else
-		std::cerr << "Request: error: can't extract data no filename specified" << std::endl;
 }
 
 /*
@@ -659,12 +657,9 @@ void							Request::checkBodyBytesRecieved()
 	{		
 		if (!this->_cgiExtension.length())
 		{
-			std::cout << "Request: this->_path is not a cgi file" << std::endl;
 			this->verifyFiles();
 			remove(this->_bodyFilePath.c_str());
 		}
-		else
-			std::cout << "Request: is cgi path" << std::endl;
 		this->_awaitingBody = false;
 	}
 }
@@ -840,9 +835,6 @@ void						Request::request(int fd)
 
 		checkCgiPath();
 		
-		/* std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
-		std::cout << "\n	//////	BODY	//////\n" << body << std::endl; */
-
 		if (this->_methodSet && this->_method == "POST")
 		{
 			if (bytesRecievd >= (int)header.length() + 4)

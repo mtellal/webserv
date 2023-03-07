@@ -413,7 +413,6 @@ void	Response::sendHeader(std::string path)
 	std::string		res;
 	std::string		body;
 	Header			header(path, &this->_statusCode, this);
-	Cgi				cgi(this->_serv, this->_req, header, this->_envp);
 
 	if (header.getContentType() == "406")
 	{
@@ -424,6 +423,8 @@ void	Response::sendHeader(std::string path)
 	{
 		if (this->_req.getCgiExtension().length())
 		{
+			Cgi	cgi(this->_serv, this->_req, header, this->_envp);
+			
 			std::cout << "/// EXECUTE CGI SCRIPT ///" << std::endl;
 			
 			cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], body);
