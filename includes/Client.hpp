@@ -29,19 +29,20 @@ class Client
 
         Client &operator=(const Client &c);
 
-        std::string         getIpAddress() const;
+        void                setFD(int i);
+        void                setIpAddress(std::string s);
+        void                setAddr(struct sockaddr &addr);
+        void				set(std::string ip, int f, struct sockaddr &addr);
+
         int                 getFD() const;
+        std::string         getIpAddress() const;
         struct sockaddr     getAddr() const;
     
-        void				set(std::string ip, int f, struct sockaddr &addr);
-        void                setIpAddress(std::string s);
-        void                setFD(int i);
-        void                setAddr(struct sockaddr &addr);
 
     private:
 
-        std::string         ip_address;
         int                 fd;
+        std::string         ip_address;
         struct sockaddr     addr;
 
 };

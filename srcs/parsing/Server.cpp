@@ -3,9 +3,10 @@
 #include <arpa/inet.h>
 
 Server::Server() :
-Directives(),  _host("0.0.0.0"),
-_port("8080"), _hostSet(false), _portSet(false), 
-_serverNameSet(false), _errorServer(false), _blockClose(false)
+Directives(), 
+_hostSet(false), _portSet(false), _blockClose(false),
+_errorServer(false), _serverNameSet(false),
+_host("0.0.0.0"), _port("8080")
 {
 	this->functPtr[0] = &Server::setHost;
 	this->functPtr[1] = &Server::setServerName;
@@ -31,20 +32,23 @@ Server	&Server::operator=(Server const &rhs) {
 
 	if (this != &rhs)
 	{
-		this->_server_fd = rhs._server_fd;
-		this->_clients_fd = rhs._clients_fd;
-		this->_clients = rhs._clients;
-		this->_vctLocation = rhs._vctLocation;
-		this->_host = rhs._host;
-		this->_domain = rhs._domain;
-		this->_address = rhs._address;
-		this->_port = rhs._port;
-		this->_serverName = rhs._serverName;
 		this->_hostSet = rhs._hostSet;
 		this->_portSet = rhs._portSet;
-		this->_serverNameSet = rhs._serverNameSet;
-		this->_errorServer = rhs._errorServer;
 		this->_blockClose = rhs._blockClose;
+		this->_errorServer = rhs._errorServer;
+		this->_serverNameSet = rhs._serverNameSet;
+
+		this->_server_fd = rhs._server_fd;
+
+		this->_host = rhs._host;
+		this->_port = rhs._port;
+		this->_domain = rhs._domain;
+		this->_address = rhs._address;
+		this->_clients = rhs._clients;
+		this->_vctLocation = rhs._vctLocation;
+
+		this->_clients_fd = rhs._clients_fd;
+		this->_serverName = rhs._serverName;
 		
 	}
 	return *this;
@@ -66,6 +70,20 @@ std::string					Server::getHost() const { return this->_host; }
 std::string					Server::getPort() const { return this->_port; }
 std::string					Server::getDomain() const { return (this->_domain); }
 std::string					Server::getAddress() const { return (this->_address); }
+
+Client						Server::getClient(int fd) const
+{
+	size_t	i;
+
+	i = 0;
+	while (i < this->_clients_fd.size())
+	{
+		if ((int)this->_clients_fd[i] == fd)
+			break ;
+		i++;	
+	}
+	return (this->_clients[i]);
+}
 
 std::vector<std::string>	Server::getServerName() const { return this->_serverName; }
 std::vector<Location>		Server::getVctLocation() const { return this->_vctLocation; }
@@ -272,6 +290,11 @@ bool	Server::isLocationBlock(std::vector<std::string> splitLine) {
 	}
 	return true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//														D E B U G 											  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 void	Server::showServerName(std::ostream & o) const {
 	if (this->_serverNameSet)

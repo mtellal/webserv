@@ -14,8 +14,8 @@ class Configuration {
 
 		Configuration &operator=(Configuration const &rhs);
 
-		std::vector<Server> getVctServer() const;
 		bool				getErrorConf();
+		std::vector<Server> getVctServer() const;
 
 
 	private:

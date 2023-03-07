@@ -123,12 +123,16 @@ std::string							Request::getCgiExtension() const { return (this->_cgiExtension
 
 Server								Request::getServBlock() const { return (this->_servBlock); }
 
-void								Request::getErrorPage() {
+void								Request::getErrorPage(const std::string &errMsg) {
+	time_t		t;
+	int			statusCode;
 	std::string	path;
 	std::string	strHeader;
 	std::string	page;
-	int			statusCode;
+	std::string	_time;
 
+	std::time(&t);
+	_time = std::ctime(&t);
 	if (this->_tooLarge)
 		statusCode = 413;
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
@@ -136,6 +140,22 @@ void								Request::getErrorPage() {
 	else
 		statusCode = 500;
 
+	if (errMsg.length())
+	{
+		std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
+		std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+		std::cout << "\033[1;36m [RESPONSE] \033[0m";
+		if (this->_hostSet)
+			std::cout << "\033[1;97m[" << this->_host << ":" << this->_port << "]\033[0m";
+		if (this->_methodSet)
+			std::cout << "\033[1;97m [" << this->_method << "\033[0m";
+		std::cout << "\033[1;97m " << this->_path<< "]\033[0m";
+		if (statusCode== 200)
+			std::cout << " - \033[1;32m" << statusCode << "\033[0m";
+		else
+			std::cout << " - \033[1;31m" << statusCode << "\033[0m";
+		std::cout << "\033[1;97m " << getHttpStatusCodeMessage(statusCode) << "\033[1;97m" << std::endl;
+	}
 	DefaultPage	defaultPage;
 	path = defaultPage.createDefaultPage(statusCode);
 
@@ -211,7 +231,7 @@ bool							Request::setMethodVersionPath(const std::string &buff)
 	return (true);
 }
 
-bool	checkHost(const std::string &host)
+bool	checkStrHost(const std::string &host)
 {
 	for (size_t i = 0; i < host.length(); i++)
 	{
@@ -221,7 +241,7 @@ bool	checkHost(const std::string &host)
 	return (true);
 }
 
-bool	checkPort(std::string &port)
+bool	checkStrPort(std::string &port)
 {
 	while (port.length() && port[port.length() - 1] == ' ')
 		port.erase(port.length() - 1, 1);
@@ -235,9 +255,10 @@ bool	checkPort(std::string &port)
 
 void							Request::setHostPort(std::vector<std::string> strSplit)
 {
+
 	if (strSplit.size() != 3)
 		return ;
-	if (!checkHost(strSplit[1]) || !checkPort(strSplit[2]))
+	if (!checkStrHost(strSplit[1]) || !checkStrPort(strSplit[2]))
 		return ;
 	this->_host = strSplit[1];
 	this->_port = strSplit[2];
@@ -540,22 +561,19 @@ void							Request::extractFile(const std::string &bound_data)
 
 	if (fileName.length())
 	{
-		fileName = "./uploads/" + fileName;
+		fileName = this->_servBlock.getUpload() + fileName;
 		outfile.open(fileName.c_str(),
 			std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
 		if (!outfile.is_open())
 		{
-			std::cerr << "Request: error: can't open file " << fileName << std::endl;
-			this->getErrorPage();
+			this->getErrorPage("can't open file \"" + fileName + "\"");
 			return ;
 		}
 
 		outfile.write(bound_data.c_str() + index + 4, bound_data.length() - index - 4 - 2);
 		outfile.close();
 	}
-	else
-		std::cerr << "Request: error: can't extract data no filename specified" << std::endl;
 }
 
 /*
@@ -586,7 +604,7 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 	{
 		out.close();
 		if (bytes == -1)
-			this->getErrorPage();
+			this->getErrorPage("recv failed");
 		if (!bytes)
 		{
 			this->_closeConnection = true;
@@ -617,7 +635,7 @@ int								Request::openBodyFile(std::ofstream &out)
 	if (!out.is_open())
 	{
 		this->quitAwaitingRequest();
-		this->getErrorPage();
+		this->getErrorPage("can't open file " + this->_bodyFilePath);
 		return (-1);
 	}
 
@@ -664,15 +682,12 @@ void							Request::checkBodyBytesRecieved()
 	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
 		this->_awaitingBody = true;
 	else
-	{		
+	{
 		if (!this->_cgiExtension.length())
 		{
-			std::cout << "Request: this->_path is not a cgi file" << std::endl;
 			this->verifyFiles();
 			remove(this->_bodyFilePath.c_str());
 		}
-		else
-			std::cout << "Request: is cgi path" << std::endl;
 		this->_awaitingBody = false;
 	}
 }
@@ -786,8 +801,7 @@ int						Request::awaitingHeader(int fd)
 			this->_closeConnection = true;
 		else if (bytes == -1)
 		{
-			perror("recv call failed");
-			this->getErrorPage();
+			this->getErrorPage("recv call failed");
 		}
 		return (-1);
 	}
@@ -802,7 +816,7 @@ int						Request::awaitingHeader(int fd)
 
 	if (!this->_methodSet && !setMethodVersionPath(buff))
 	{
-		this->getErrorPage();
+		this->getErrorPage("Invalid HTTP request");
 		this->_awaitingHeader = false;
 		return (-1);
 	}
@@ -838,17 +852,14 @@ void						Request::request(int fd)
 
 		this->setHTTPFields(header);
 
+		printRequest();
+
 		if (this->setServBlock() == -1)
 		{
-			// this->getErrorPage();
-			this->_closeConnection = true;
-			return ;
+			return (this->getErrorPage("Host unavailable"));
 		}
 
 		checkCgiPath();
-		
-		// std::cout << "\n	//////	REQUEST.CPP HEADER	//////\n" << *this << std::endl;
-		// std::cout << "\n	//////	BODY	//////\n" << body << std::endl;
 
 		if (this->_methodSet && this->_method == "POST")
 		{
@@ -859,14 +870,29 @@ void						Request::request(int fd)
 
 			if (body.length())
 				this->bodyRequest(index);
+
 			this->checkBodyBytesRecieved();
 		}
 
 		if (!this->_hostSet || this->_badRequest)
-			this->getErrorPage();
+			this->getErrorPage("Bad request");
 	}
 }
 
+void	Request::printRequest() const
+{
+	time_t		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cout << "\033[1;36m [REQUEST] \033[0m";
+	std::cout << "\033[1;97m[" << this->_host << ":" << this->_port << "]\033[0m";
+	std::cout << "\033[1;97m " << this->_method << "\033[0m";
+	std::cout << "\033[1;97m " << this->_path << "\033[0m";
+	std::cout << "\033[1;90m - " << this->_agent << "\033[0m" << std::endl;
+}
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {
 	o << "method = " << rhs.getMethod() << std::endl;

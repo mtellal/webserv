@@ -22,64 +22,73 @@ class Directives {
 
 		Directives	&operator=(const Directives &rhs);
 
-		std::map<int, std::string>			getErrorPage() const;
-		int									getClientMaxBodySize() const;
-		std::string							getRoot() const;
-		bool								getAutoindex() const;
-		std::vector<std::string>			getIndex() const;
-		std::string							getHttpRedir() const;
-		std::vector<std::string>			getHttpMethods() const;
-		bool								getErrorDirectives() const;
-		std::map<std::string, std::string>	getCgi() const;
-		std::string							getUpload() const;
 
-		void								setErrorPage(std::vector<std::string> str, int &i);
-		void								setClientMaxBodySize(std::vector<std::string> maxClient, int &i);
-		void								setRoot(std::vector<std::string> root, int &i);
-		void								setAutoindex(std::vector<std::string> autoindex, int &i);
-		void								setIndex(std::vector<std::string> index, int &i);
-		void								setHttpRedir(std::vector<std::string> redir, int &i);
-		void								setHttpMethods(std::vector<std::string> redir, int &i);
-		void								setCgi(std::vector<std::string> cgi, int &i);
-		void								setUpload(std::vector<std::string> upload, int &i);
-
-		bool								getCgiSet() const;
-		bool								getErrorPageSet() const;
-		bool								getClientMaxBodySizeSet() const;
-		bool								getRootSet() const;
-		bool								getAutoindexSet() const;
-		bool								getIndexSet() const;
-		bool								getHttpRedirSet() const;
-		bool								getHttpMethodsSet() const;
-		bool								getUploadSet() const;
-
+		void								showCgi(std::ostream & o) const;
+		void								showIndex(std::ostream & o) const;
 		void								showErrorPage(std::ostream & o) const;
 		void								showAutoindex(std::ostream & o) const;
-		void								showIndex(std::ostream & o) const;
 		void								showHttpMethods(std::ostream & o) const;
-		void								showCgi(std::ostream & o) const;
+
+		void								setCgi(std::vector<std::string> cgi, int &i);
+		void								setRoot(std::vector<std::string> root, int &i);
+		void								setIndex(std::vector<std::string> index, int &i);
+		void								setUpload(std::vector<std::string> upload, int &i);
+		void								setErrorPage(std::vector<std::string> str, int &i);
+		void								setHttpRedir(std::vector<std::string> redir, int &i);
+		void								setHttpMethods(std::vector<std::string> redir, int &i);
+		void								setAutoindex(std::vector<std::string> autoindex, int &i);
+		void								setClientMaxBodySize(std::vector<std::string> maxClient, int &i);
+
+		bool								getCgiSet() const;
+		bool								getRootSet() const;
+		bool								getIndexSet() const;
+		bool								getUploadSet() const;
+		bool								getErrorPageSet() const;
+		bool								getHttpRedirSet() const;
+		bool								getAutoindexSet() const;
+		bool								getHttpMethodsSet() const;
+		bool								getClientMaxBodySizeSet() const;
+
+		bool								getAutoindex() const;
+		bool								getErrorDirectives() const;
+		
+		int									getClientMaxBodySize() const;
+		
+		std::string							getRoot() const;
+		std::string							getUpload() const;
+		std::string							getHttpRedir() const;
+		
+		std::vector<std::string>			getIndex() const;
+		std::vector<std::string>			getHttpMethods() const;
+		
+		std::map<int, std::string>			getErrorPage() const;
+		std::map<std::string, std::string>	getCgi() const;
 
 	protected:
 
-		std::map<int, std::string>			_errorPage;
-		int									_clientMaxBodySize;
-		std::string							_root;
-		bool								_autoindex;
-		std::vector<std::string>			_index;
-		std::string							_httpRedir;
-		std::map<std::string, std::string>	_cgi;
 		bool								_cgiSet;
-		bool								_errorPageSet;
-		bool								_clientMaxBodySizeSet;
 		bool								_rootSet;
-		bool								_autoindexSet;
 		bool								_indexSet;
-		bool								_httpRedirSet;
-		bool								_errorDirectives;
-		std::vector<std::string>			_httpMethods;
-		bool								_httpMethodsSet;
-		std::string							_upload;
 		bool								_uploadSet;
+		bool								_autoindex;
+		bool								_errorPageSet;
+		bool								_autoindexSet;
+		bool								_httpRedirSet;
+		bool								_httpMethodsSet;
+		bool								_errorDirectives;
+		bool								_clientMaxBodySizeSet;
+
+		int									_clientMaxBodySize;
+		
+		std::string							_root;
+		std::string							_upload;
+		std::string							_httpRedir;
+		
+		std::vector<std::string>			_index;
+		std::vector<std::string>			_httpMethods;
+		
+		std::map<int, std::string>			_errorPage;
+		std::map<std::string, std::string>	_cgi;
 
 		bool								checkFormatDir(std::vector<std::string> host, int &i);
 

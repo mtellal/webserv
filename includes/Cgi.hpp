@@ -41,7 +41,7 @@ class Cgi
         
         void            initEnv();
         void            printEnv();
-        void             execute(const std::string &file, const std::string &exe, std::string &content);
+        void            execute(const std::string &file, const std::string &exe, std::string &content);
 
         Header          getHeader() const;
 
@@ -69,17 +69,16 @@ class Cgi
         void            addVarEnv();
         void            addCgiVarEnv();
         void            setStatus(int s);
+        void            quitCgi(int status);
         void            setPoweredBy(const std::string &app);
         void            setContentType(const std::string &ct);
         void            setCgiWarnings(const std::string &err);
         void            setContentLength(const std::string &ct);
-        void            extractFields(const std::string &cgi_response);
         void            child(int fdin, int pipe[2], char **args);
-        void            quitCgi(int status);
+        void            extractFields(const std::string &cgi_response);
         
-
         char            **mapToTab();
-        char            **exec_args(const std::string &file, const std::string &exe);
+        char            **execArgs(const std::string &file, const std::string &exe);
         
 };
 

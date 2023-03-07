@@ -5,38 +5,34 @@
 #include <signal.h>
 
 Response::Response() :
-_locBlocSelect(false), _isDir(false), _autoindex(false),
-_closeConnection(false)	{}
+_isDir(false), _autoindex(false),
+_locBlocSelect(false), _closeConnection(false) {} 
 
 Response::Response(const Request &req, const Server &s, char **envp) :
-_serv(s), _req(req), _locBlocSelect(false),
-_isDir(false), _autoindex(false), _closeConnection(false),
-_envp(envp), _defaultPage(_req, _serv)
-{
-}
+_isDir(false), _autoindex(false),
+_locBlocSelect(false), _closeConnection(false), 
+_envp(envp), _req(req), _serv(s), _defaultPage(_req, _serv) {}
 
 Response::Response(Response const &src) { *this = src; }
 
-Response::~Response()
-{
-}
+Response::~Response() {}
 
 Response	&Response::operator=(Response const &rhs) {
 	if (this != &rhs)
 	{
-		this->_serv = rhs._serv;
-		this->_req = rhs._req;
-		this->_path = rhs._path;
-		this->_errPath = rhs._errPath;
-		this->_httpRep = rhs._httpRep;
-		this->_statusCode = rhs._statusCode;
-		this->_locBlocSelect = rhs._locBlocSelect;
-		this->_locBloc = rhs._locBloc;
 		this->_isDir = rhs._isDir;
 		this->_autoindex = rhs._autoindex;
+		this->_locBlocSelect = rhs._locBlocSelect;
 		this->_closeConnection = rhs._closeConnection;
 		this->_envp = rhs._envp;
+		this->_statusCode = rhs._statusCode;
+		this->_httpRep = rhs._httpRep;
+		this->_req = rhs._req;
+		this->_serv = rhs._serv;
+		this->_locBloc = rhs._locBloc;
 		this->_defaultPage = rhs._defaultPage;
+		this->_path = rhs._path;
+		this->_errPath = rhs._errPath;
 	}
 	return *this;
 }
@@ -46,9 +42,9 @@ Response	&Response::operator=(Response const &rhs) {
 //												G E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool		Response::getCloseConnection() const { return this->_closeConnection; }
-
 bool		Response::getlocBlocSelect() const {	return this->_locBlocSelect; }
+
+bool		Response::getCloseConnection() const { return this->_closeConnection; }
 
 Server		Response::getServ() const { return this->_serv; }
 
@@ -57,7 +53,9 @@ Request		Response::getRequest() const { return this->_req; }
 Location	Response::getLocBloc() const { return this->_locBloc; }
 
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//										M E M B E R S   F U N C T I O N S 									  //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string	Response::rightRoot() {
 	std::string	root;
@@ -373,7 +371,7 @@ void	Response::sendData() {
 	if (this->_req.getMethod() == "DELETE")
 		path = this->deleteResource();
 	this->sendHeader(path);
-	this->printStatusCode();
+	this->printResponse();
 }
 
 std::string	Response::sendContentTypeError() {
@@ -389,13 +387,25 @@ std::string	Response::sendContentTypeError() {
 	return path;
 }
 
-void	Response::printStatusCode() {
-	std::cout << "\033[1;34mResponse status code: \033[0m";
+void	Response::printResponse() const
+{
+	time_t		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cout << "\033[1;36m [RESPONSE] \033[0m";
+	std::cout << "\033[1;97m[" << this->_req.getHost() << ":" << this->_req.getPort() << "]\033[0m";
+	std::cout << "\033[1;97m [" << this->_req.getMethod() << "\033[0m";
+	std::cout << "\033[1;97m " << this->_req.getPath() << "]\033[0m";
 
 	if (this->_statusCode == 200)
-		std::cout << "\033[1;32m" << this->_statusCode << "\033[0m" << std::endl << std::endl;
+		std::cout << " - \033[1;32m" << this->_statusCode << "\033[0m";
 	else
-		std::cout << "\033[1;31m" << this->_statusCode << "\033[0m" << std::endl << std::endl;
+		std::cout << " - \033[1;31m" << this->_statusCode << "\033[0m";
+
+	std::cout << "\033[1;97m " << getHttpStatusCodeMessage(this->_statusCode) << "\033[1;97m" << std::endl;
 }
 
 void	Response::sendHeader(std::string path)
@@ -403,7 +413,6 @@ void	Response::sendHeader(std::string path)
 	std::string		res;
 	std::string		body;
 	Header			header(path, &this->_statusCode, this);
-	Cgi				cgi(this->_serv, this->_req, header, this->_envp);
 
 	if (header.getContentType() == "406")
 	{
@@ -414,6 +423,8 @@ void	Response::sendHeader(std::string path)
 	{
 		if (this->_req.getCgiExtension().length())
 		{
+			Cgi	cgi(this->_serv, this->_req, header, this->_envp);
+			
 			std::cout << "/// EXECUTE CGI SCRIPT ///" << std::endl;
 			
 			cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], body);
@@ -421,11 +432,10 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
-		// std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		// std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
-
-		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) == -1)
-			perror("send call failed");
+		/* std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
+		std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
+ */
+		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
 
 		if (this->_req.getMethod() != "HEAD")
 			this->sendPage(path, body);

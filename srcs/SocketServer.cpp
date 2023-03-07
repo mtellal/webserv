@@ -6,7 +6,9 @@
 
 SocketServer::SocketServer() {}
 
-SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false), _envp(envp) {
+SocketServer::SocketServer(Configuration conf, char **envp) :
+_errSocket(false), _envp(envp)
+{
 	this->_servers = conf.getVctServer();
 
 	this->initSocket();
@@ -15,7 +17,10 @@ SocketServer::SocketServer(Configuration conf, char **envp) : _errSocket(false),
 	this->createFdEpoll();
 	std::cout << "\033[1;32mStart Webserv\033[0m" << std::endl << std::endl;
 	while (this->epollWait() != 1)
-		;
+	{
+		std::cout << "\033[1;97mListening ...\033[0m" << std::flush;
+		std::cout << "\r";
+	}
 	std::cout << "\033[1;31mStop Webserv\033[0m" << std::endl;
 	this->closeSockets();
 }
@@ -29,12 +34,13 @@ SocketServer::~SocketServer() {}
 SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 	if (this != &rhs)
 	{
-		this->_servers = rhs._servers;
-		this->_servers_fd = rhs._servers_fd;
-		this->_clientServerFds = rhs._clientServerFds;
-		this->_epollFd = rhs._epollFd;
 		this->_errSocket = rhs._errSocket;
+		this->_epollFd = rhs._epollFd;
 		this->_envp = rhs._envp;
+		this->_servers_fd = rhs._servers_fd;
+		this->_servers = rhs._servers;
+		this->_awaitingRequest = rhs._awaitingRequest;
+		this->_clientServerFds = rhs._clientServerFds;
 	}
 	return *this;
 }
@@ -43,22 +49,16 @@ SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 //												G E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<Server>			SocketServer::getVctServer() const { return this->_servers; }
-
-std::vector<size_t>			SocketServer::getServerFd() const { return this->_servers_fd; }
-
-std::map<int, int>			SocketServer::getClientServer() const { return this->_clientServerFds; }
-
 int							SocketServer::getEpollFd() const { return this->_epollFd; }
 
 bool						SocketServer::getErrSocket() const { return this->_errSocket; }
 
-void	SocketServer::errorSocket(std::string s)
-{
-	perror(s.c_str());
-	this->_errSocket = true;
-	return ;
-}
+std::vector<size_t>			SocketServer::getServerFd() const { return this->_servers_fd; }
+
+std::vector<Server>			SocketServer::getVctServer() const { return this->_servers; }
+
+std::map<int, int>			SocketServer::getClientServer() const { return this->_clientServerFds; }
+
 
 std::string		getAddressInfo(const struct sockaddr addr)
 {
@@ -87,7 +87,7 @@ bool	SocketServer::hostExist(std::string host) {
 }
 
 bool	SocketServer::hostAlreadySet(size_t maxIdx) {
-	std::vector<Server>	vctServ = this->getVctServer();
+	std::vector<Server>	vctServ = this->_servers;
 
 	for (size_t j = 0; j < maxIdx; j++)
 	{
@@ -97,6 +97,13 @@ bool	SocketServer::hostAlreadySet(size_t maxIdx) {
 			return true;
 	}
 	return false;
+}
+
+void	SocketServer::errorSocket(std::string s)
+{
+	perror(s.c_str());
+	this->_errSocket = true;
+	return ;
 }
 
 void	SocketServer::initSocket()
@@ -140,6 +147,8 @@ void	SocketServer::initSocket()
 			if (listen(serv_socket, NB_EVENTS) == -1)
 				return (errorSocket("Listen call failed"));
 		}
+		else
+			this->_servers[i].setSocket(serv_socket);
 	}
 }
 
@@ -213,9 +222,9 @@ int		SocketServer::nonBlockFd(int socketFd) {
 }
 
 int		SocketServer::isServerFd(int fd) const {
-	for (size_t index = 0; index < this->_servers_fd.size(); index++)
+	for (size_t index = 0; index < this->_servers.size(); index++)
 	{
-		if (this->_servers_fd[index] == (size_t)fd)
+		if (this->_servers[index].getFd() == (size_t)fd)
 			return index;
 	}
 	return -1;
@@ -235,11 +244,14 @@ void	handler(int signal) {
 	(void)signal;
 }
 
-void	SocketServer::printRequest(Request const &req) const {
-	std::cout << "\033[1;34mNew request: \033[0m";
-	std::cout << "\033[1;37m[" << req.getHost() << ":" << req.getPort() << "]\033[0m";
-	std::cout << "\033[1;37m " << req.getMethod() << "\033[0m";
-	std::cout << "\033[1;37m " << req.getPath() << "\033[0m" << std::endl;
+int		SocketServer::indexServFromFd(int fd)
+{
+	for (size_t i = 0; i < this->_servers.size(); i++)
+	{
+		if ((int)this->_servers[i].getFd() == fd)
+			return (i);
+	}
+	return (-1);
 }
 
 int		SocketServer::epollWait() {
@@ -260,9 +272,13 @@ int		SocketServer::epollWait() {
 	{
 		// std::cout << "EVENT = " << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
+		{
 			return 1;
+		}
 		if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
+		{
 			createConnection(index_serv);
+		}
 		else
 		{			
 			Request		req(event[j].data.fd, this->_servers);
@@ -277,7 +293,9 @@ int		SocketServer::epollWait() {
 					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + index_wreq);
 
 			if (req.getcloseConnection())
+			{
 				this->closeConnection(event[j].data.fd);
+			}
 			else if (req.getAwaitingRequest())
 			{
 				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
@@ -287,8 +305,8 @@ int		SocketServer::epollWait() {
 			}
 			else
 			{
-				this->printRequest(req);
 				Response	rep(req, req.getServBlock(), this->_envp);
+
 				rep.selectLocationBlock();
 				rep.sendData();
 				if (rep.getCloseConnection() && !req.getAwaitingRequest())
@@ -296,10 +314,22 @@ int		SocketServer::epollWait() {
 			}
 		}
 	}
+
 	return 0;
 }
 
+void	SocketServer::displayNewConnection(const Server &serv, const std::string &clientIP) const 
+{
+	time_t		t;
+	std::string	_time;
 
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cout << "\033[1;36m [NEW CONNECTION] \033[0m";
+	std::cout << "\033[1;97m[" << serv.getHost() << ":" << serv.getPort() << "]\033[0m";
+	std::cout << "\033[1;97m - " << clientIP << "\033[0m" << std::endl;
+}
 
 void	SocketServer::createConnection(int index_serv_fd)
 {
@@ -310,8 +340,8 @@ void	SocketServer::createConnection(int index_serv_fd)
 	struct epoll_event	event;
 
 	// std::cout << "////////////	NEW CONNECTION 	///////////\n";
-
-	if ((client_fd = accept(this->_servers_fd[index_serv_fd], (struct sockaddr *)&tmp,
+	
+	if ((client_fd = accept(this->_servers[index_serv_fd].getFd(), (struct sockaddr *)&tmp,
 			&tmp_len)) == -1)
 	{
 		perror("accept() call failed");
@@ -326,6 +356,8 @@ void	SocketServer::createConnection(int index_serv_fd)
 
 	this->_servers[index_serv_fd].addClient(client);
 
+	displayNewConnection(this->_servers[index_serv_fd], client.getIpAddress());
+
 	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv_fd));
 
 	event.events = EPOLLIN;
@@ -339,6 +371,19 @@ void	SocketServer::createConnection(int index_serv_fd)
 	// std::cout << client << std::endl;
 }
 
+void	SocketServer::displayDisconnection(const Server &serv, const std::string &clientIP) const 
+{
+	time_t		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cout << "\033[1;36m [DISCONNECTION] \033[0m";
+	std::cout << "\033[1;97m[" << serv.getHost() << ":" << serv.getPort() << "]\033[0m";
+	std::cout << "\033[1;97m - " << clientIP << "\033[0m" << std::endl;
+}
+
 void	SocketServer::closeConnection(int fd)
 {
 	// std::cout << "//////////// CLOSE CONNECTION ///////////\n";
@@ -350,6 +395,9 @@ void	SocketServer::closeConnection(int fd)
 	// std::cout << "idx Serv Fd = " << index_serv_fd << std::endl;
 	// std::cout << "client[" << fd << "] DISCONNECTED\n";
 	// std::cout << "form: serv[" << index_serv_fd << "] =>" << this->_servers_fd[index_serv_fd] << ":" << this->_servers_fd[index_serv_fd]<< std::endl; 
+
+	displayDisconnection(this->_servers[index_serv_fd],
+							this->_servers[index_serv_fd].getClient(fd).getIpAddress());
 
 	this->_servers[index_serv_fd].eraseClient(fd);
 
