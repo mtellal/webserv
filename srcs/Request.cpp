@@ -361,6 +361,7 @@ int		Request::setServBlock()
 	std::cout << "Idx server: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
+	this->_bodyFilePath = this->_servBlock.getUpload() ;
 	return (0);
 }
 
