@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mtellal <marvin@42.fr>                     +#+  +:+       +#+        */
+/*   By: jdubilla <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/02/16 11:15:04 by mtellal           #+#    #+#             */
-/*   Updated: 2023/02/16 11:15:29 by mtellal          ###   ########.fr       */
+/*   Updated: 2023/03/08 13:09:46 by jdubilla         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,33 +18,29 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-class Client 
+class Client
 {
 
-    public:
+	public:
+		Client();
+		Client(const Client &c);
+		~Client();
 
-        Client();
-        Client(const Client &c);
-        ~Client();
+		Client &operator=(const Client &c);
 
-        Client &operator=(const Client &c);
+		void			setFD(int i);
+		void			setIpAddress(std::string s);
+		void			setAddr(struct sockaddr &addr);
+		void			set(std::string ip, int f, struct sockaddr &addr);
 
-        void                setFD(int i);
-        void                setIpAddress(std::string s);
-        void                setAddr(struct sockaddr &addr);
-        void				set(std::string ip, int f, struct sockaddr &addr);
+		int getFD()		const;
+		std::string		getIpAddress() const;
+		struct sockaddr	getAddr() const;
 
-        int                 getFD() const;
-        std::string         getIpAddress() const;
-        struct sockaddr     getAddr() const;
-    
-
-    private:
-
-        int                 fd;
-        std::string         ip_address;
-        struct sockaddr     addr;
-
+	private:
+		int				fd;
+		std::string		ip_address;
+		struct sockaddr	addr;
 };
 
 std::ostream &operator<<(std::ostream &out, const Client &c);

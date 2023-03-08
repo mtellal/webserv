@@ -29,8 +29,6 @@ class Response
 		Response	&operator=(Response const &rhs);
 
 		void						sendData();
-		void						selectServerBlock();
-		void						selectLocationBlock();
 		bool						getlocBlocSelect() const;
 		bool						getCloseConnection() const;
 		Server						getServ() const;
@@ -67,6 +65,7 @@ class Response
 		bool						methodNotAllowed() const;
 		std::string					rightRoot();
 		std::string					findRightError();
+		std::string					findRightPageError();
 		std::string					deleteResource();
 		std::string					sendContentTypeError();
 		std::string					testAllPaths(bool *err);

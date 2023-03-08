@@ -51,6 +51,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_bodyFileExists = rhs._bodyFileExists;
 		this->_awaitingHeader = rhs._awaitingHeader;
 		this->_closeConnection = rhs._closeConnection;
+		this->_locBlocSelect = rhs._locBlocSelect;
 
 		this->_fd = rhs._fd;
 		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
@@ -76,6 +77,7 @@ Request	&Request::operator=(Request const &rhs) {
 
 		this->_servers = rhs._servers;
 		this->_servBlock = rhs._servBlock;
+		this->_locationBlock = rhs._locationBlock;
 
 	}
 	return *this;
@@ -96,9 +98,10 @@ bool								Request::getErrRequest() const { return this->_errRequest; }
 bool								Request::getRefererSet() const { return this->_refererSet; }
 bool								Request::getBadRequest() const { return this->_badRequest; }
 bool								Request::getConnectionSet() const { return this->_connectionSet; }
-bool								Request::getBodyFileExists() const { return (this->_bodyFileExists); }
+bool								Request::getBodyFileExists() const { return this->_bodyFileExists; }
 bool								Request::getcloseConnection() const { return this->_closeConnection; }
 bool								Request::getAwaitingRequest() const { return (this->_awaitingHeader || this->_awaitingBody); }
+bool								Request::getLocBlocSelect() const { return this->_locBlocSelect; }
 
 int									Request::getFd() const { return this->_fd; }
 
@@ -122,6 +125,76 @@ std::string							Request::getCgiExtension() const { return (this->_cgiExtension
 
 
 Server								Request::getServBlock() const { return (this->_servBlock); }
+Location							Request::getLocationBlock() const { return (this->_locationBlock); }
+
+std::string	Request::rightRoot() {
+	std::string	root;
+
+	if (this->_locBlocSelect and this->_locationBlock.getRootSet())
+		root = this->_locationBlock.getRoot();
+	else
+		root = this->_locationBlock.getRoot();
+
+	return root;
+}
+
+std::string	Request::rightPathErr(bool &pageFind, int statusCode) {
+	std::string									root = rightRoot();
+	std::map<int, std::string>					mapErr;
+	std::map<int, std::string>::const_iterator	it;
+	std::string									rightPath;
+
+	if (this->_locBlocSelect and this->_locationBlock.getErrorPageSet())
+	{
+		mapErr = this->_locationBlock.getErrorPage();
+		it = mapErr.find(statusCode);
+		if (it != mapErr.end())
+		{
+			pageFind = true;
+			rightPath = it->second;
+			if (root[0] == '/')
+				root.erase(0, 1);
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			root += rightPath;
+			rightPath = root;
+		}
+	}
+	if (!pageFind and it != mapErr.end())
+	{
+		mapErr = this->_servBlock.getErrorPage();
+		it = mapErr.find(statusCode);
+		if (it != mapErr.end())
+		{
+			pageFind = true;
+			rightPath = it->second;
+			root = this->_servBlock.getRoot();
+			if (root[0] == '/')
+				root.erase(0, 1);
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			root += rightPath;
+			rightPath = root;
+		}
+	}
+	return rightPath;
+}
+
+std::string	Request::findRightPageError(int statusCode) {
+	bool		pageFind = false;
+	std::string	path;
+	DefaultPage	defaultPage;
+
+	path = this->rightPathErr(pageFind, statusCode);
+
+	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
+
+	if (!tmp or !pageFind)
+		path = defaultPage.createDefaultPage(statusCode);
+	if (tmp)
+		tmp.close();
+	return path;
+}
 
 void								Request::getErrorPage(const std::string &errMsg) {
 	time_t		t;
@@ -156,8 +229,7 @@ void								Request::getErrorPage(const std::string &errMsg) {
 			std::cout << " - \033[1;31m" << statusCode << "\033[0m";
 		std::cout << "\033[1;97m " << getHttpStatusCodeMessage(statusCode) << "\033[1;97m" << std::endl;
 	}
-	DefaultPage	defaultPage;
-	path = defaultPage.createDefaultPage(statusCode);
+	path = findRightPageError(statusCode);
 
 	Header header(path, &statusCode);
 	strHeader = header.getHeaderRequestError();
@@ -361,6 +433,8 @@ int		Request::setServBlock()
 	std::cout << "Idx server: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
+	this->selectLocationBlock();
+
 	return (0);
 }
 
@@ -481,11 +555,46 @@ int		Request::pickServBlock()
 	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
 		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
 		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */
-	// std::cout << "Si l'erreur apparait, c'est peut etre normal, voir commentaire dans le code" << std::endl;
+	std::cout << "CE MESSAGE NE DOIT PLUS APPARAITRE" << std::endl;
 	return -1;
 }
 
+void	Request::selectLocationBlock() {
+	std::vector<Location>	locations = this->_servBlock.getVctLocation();
+	std::string 			strBlocLoc;
+	Location				tmp;
+	std::string				req = this->getPath();
+	size_t j;
 
+	for (size_t i = 0; i < locations.size(); i++)
+	{
+		strBlocLoc = locations[i].getPath();
+		j = 0;
+		if (!strncmp(strBlocLoc.c_str(), this->getPath().c_str(), strBlocLoc.length()))
+		{
+			j += strBlocLoc.length();
+			if (j && strBlocLoc.size() > tmp.getPath().size())
+			{
+				this->_locBlocSelect = true;
+				tmp = locations[i];
+			}
+		}
+	}
+	if (!this->_locBlocSelect)
+	{
+		for (size_t i = 0; i < locations.size(); i++)
+		{
+			if (locations[i].getPath() == "/")
+			{
+				this->_locBlocSelect = true;
+				tmp = locations[i];
+				break ;
+			}
+		}
+	}
+	if (this->_locBlocSelect)
+		this->_locationBlock = tmp;
+}
 
 void						Request::extractContentDisposition(const std::string &line, std::string &name, std::string &filename)
 {

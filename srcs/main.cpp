@@ -29,6 +29,9 @@ int main(int argc, char **argv, char **envp)
 }
 
 /*
+	Tester les pages d'erreur (si elles sont set dans le fichier de conf ou si elles ne
+	sont pas set)
+
 	Pour get et post, checker le format des args envoyes
 
 	Autres codes err ?

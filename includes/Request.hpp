@@ -41,6 +41,7 @@ class Request {
 		bool								getBodyFileExists() const;
 		bool								getcloseConnection() const;
 		bool								getAwaitingRequest() const;
+		bool								getLocBlocSelect() const;
 		int									getFd() const;
 		size_t								getBytesRecievd() const;
 		std::string							getPath() const;
@@ -59,6 +60,7 @@ class Request {
 		std::string							getContentLength() const;
 		std::string							getAuthentification() const;
 		Server								getServBlock() const;
+		Location							getLocationBlock() const;
 
 
 	private:
@@ -78,6 +80,7 @@ class Request {
 		bool								_bodyFileExists;
 		bool								_awaitingHeader;
 		bool								_closeConnection;
+		bool								_locBlocSelect;
 
 		int									_fd;
 		size_t								_bodyBytesRecieved;
@@ -104,6 +107,7 @@ class Request {
 
 		std::vector<Server>					_servers;
 		Server								_servBlock;
+		Location							_locationBlock;
 
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
@@ -133,6 +137,7 @@ class Request {
 		void			addQueryString(const std::string &key, const std::string &value);
 		void			extractContentType(const std::string &line, std::string &contentType);
 		void			extractContentDisposition(const std::string &line, std::string &name, std::string &filename);
+		void			selectLocationBlock();
 
 		int				setServBlock();
 		int				pickServBlock();
@@ -143,7 +148,9 @@ class Request {
 
 		std::string		getRightHost(const std::string& host);
 		std::string		getHostNameFromIP(const std::string& ipAddress);
-
+		std::string		findRightPageError(int statusCode);
+		std::string		rightPathErr(bool &pageFind, int statusCode);
+		std::string		rightRoot();
 };
 
 std::ostream &operator<<( std::ostream & o, Request const & rhs);

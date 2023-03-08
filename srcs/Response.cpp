@@ -11,7 +11,11 @@ _locBlocSelect(false), _closeConnection(false) {}
 Response::Response(const Request &req, const Server &s, char **envp) :
 _isDir(false), _autoindex(false),
 _locBlocSelect(false), _closeConnection(false), 
-_envp(envp), _req(req), _serv(s), _defaultPage(_req, _serv) {}
+_envp(envp), _req(req), _serv(s), _defaultPage(_req, _serv) {
+	this->_locBlocSelect = req.getLocBlocSelect();
+	if (this->_locBlocSelect)
+		this->_locBloc = req.getLocationBlock();
+}
 
 Response::Response(Response const &src) { *this = src; }
 
@@ -226,7 +230,6 @@ std::string	Response::rightPathErr(bool &pageFind) {
 		{
 			pageFind = true;
 			rightPath = it->second;
-			root = this->_locBloc.getRoot();
 			if (root[0] == '/')
 				root.erase(0, 1);
 			if (root[root.size() - 1] != '/')
@@ -298,6 +301,22 @@ std::string	Response::findRightError() {
 	return path;
 }
 
+std::string	Response::findRightPageError() {
+	bool		pageFind = false;
+	std::string	path;
+
+	path = this->rightPathErr(pageFind);
+
+	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
+
+	if (!tmp or !pageFind)
+		path = this->_defaultPage.createDefaultPage(this->_statusCode);
+	if (tmp)
+		tmp.close();
+	return path;
+}
+
+
 void	Response::httpRedir() {
 	std::string	res;
 
@@ -322,7 +341,7 @@ std::string	Response::deleteResource() {
 	else
 	{
 		this->_statusCode = 204;
-		return this->_defaultPage.createDefaultPage(this->_statusCode);
+		return this->findRightPageError();
 	}
  
 	result = stat(path.c_str(), &stat_buf);
@@ -349,7 +368,7 @@ std::string	Response::deleteResource() {
 		this->_statusCode = 204;
 	}
 
-	return this->_defaultPage.createDefaultPage(this->_statusCode);
+	return this->findRightPageError();
 }
 
 void	Response::sendData() {
@@ -378,7 +397,7 @@ std::string	Response::sendContentTypeError() {
 	std::string	res;
 	std::string	path;
 
-	path = this->_defaultPage.createDefaultPage(this->_statusCode);
+	path = this->findRightPageError();
 
 	Header	header(path, &this->_statusCode);
 
@@ -457,43 +476,6 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
-}
-
-void	Response::selectLocationBlock() {
-	std::vector<Location>	locations = this->_serv.getVctLocation();
-	std::string 			strBlocLoc;
-	Location				tmp;
-	std::string				req = this->_req.getPath();
-	size_t j;
-
-	for (size_t i = 0; i < locations.size(); i++)
-	{
-		strBlocLoc = locations[i].getPath();
-		j = 0;
-		if (!strncmp(strBlocLoc.c_str(), this->_req.getPath().c_str(), strBlocLoc.length()))
-		{
-			j += strBlocLoc.length();
-			if (j && strBlocLoc.size() > tmp.getPath().size())
-			{
-				this->_locBlocSelect = true;
-				tmp = locations[i];
-			}
-		}
-	}
-	if (!this->_locBlocSelect)
-	{
-		for (size_t i = 0; i < locations.size(); i++)
-		{
-			if (locations[i].getPath() == "/")
-			{
-				this->_locBlocSelect = true;
-				tmp = locations[i];
-				break ;
-			}
-		}
-	}
-	if (this->_locBlocSelect)
-		this->_locBloc = tmp;
 }
 
 std::ostream	&operator<<(std::ostream &out, const Response &res)
