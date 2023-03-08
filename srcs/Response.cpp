@@ -345,9 +345,7 @@ std::string	Response::deleteResource() {
 			this->_statusCode = 204;
 	}
 	else
-	{
 		this->_statusCode = 204;
-	}
 
 	return this->_defaultPage.createDefaultPage(this->_statusCode);
 }
@@ -356,9 +354,6 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
-	/* std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
-	std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
- */
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
 	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
@@ -383,35 +378,15 @@ std::string	Response::sendContentTypeError() {
 	Header	header(path, &this->_statusCode);
 
 	res = header.getHeaderRequestError();
-	write(this->_req.getFd(), res.c_str(), res.size());
+	if (send(this->_req.getFd(), res.c_str(), res.length(), MSG_NOSIGNAL) == -1)
+		errorMessage("send call failed (content type error)");
 	return path;
-}
-
-void	Response::printResponse() const
-{
-	time_t		t;
-	std::string	_time;
-
-	std::time(&t);
-	_time = std::ctime(&t);
-	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
-	std::cout << "\033[1;36m [RESPONSE] \033[0m";
-	std::cout << "\033[1;97m[" << this->_req.getHost() << ":" << this->_req.getPort() << "]\033[0m";
-	std::cout << "\033[1;97m [" << this->_req.getMethod() << "\033[0m";
-	std::cout << "\033[1;97m " << this->_req.getPath() << "]\033[0m";
-
-	if (this->_statusCode == 200)
-		std::cout << " - \033[1;32m" << this->_statusCode << "\033[0m";
-	else
-		std::cout << " - \033[1;31m" << this->_statusCode << "\033[0m";
-
-	std::cout << "\033[1;97m " << getHttpStatusCodeMessage(this->_statusCode) << "\033[1;97m" << std::endl;
 }
 
 void	Response::sendHeader(std::string path)
 {
 	std::string		res;
-	std::string		body;
+	std::string		cgi_content;
 	Header			header(path, &this->_statusCode, this);
 
 	if (header.getContentType() == "406")
@@ -421,27 +396,22 @@ void	Response::sendHeader(std::string path)
 	}
 	else
 	{
-		if (this->_req.getCgiExtension().length())
+		if (this->_statusCode == 200 && this->_req.getCgiExtension().length())
 		{
 			Cgi	cgi(this->_serv, this->_req, header, this->_envp);
-			
-			std::cout << "/// EXECUTE CGI SCRIPT ///" << std::endl;
-			
-			cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], body);
+			cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], cgi_content);
+			remove(this->_req.getBodyFilePath().c_str());
 		}
 
 		res = header.getHeader();
-
-		/* std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
- */
-		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
+		
+		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) == -1)
+			errorMessage("send call failed (sending header)");
 
 		if (this->_req.getMethod() != "HEAD")
-			this->sendPage(path, body);
+			this->sendPage(path, cgi_content);
 	}
 }
-
 
 void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 {
@@ -453,7 +423,7 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 		body = fileToStr(path_file);
 	
 	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) == -1)
-		perror("send call failed");
+		errorMessage("send call failed (sending body)");
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
@@ -494,6 +464,40 @@ void	Response::selectLocationBlock() {
 	}
 	if (this->_locBlocSelect)
 		this->_locBloc = tmp;
+}
+
+void	Response::printResponse() const
+{
+	time_t		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cout << "\033[1;36m [RESPONSE] \033[0m";
+	std::cout << "\033[1;97m[" << this->_req.getHost() << ":" << this->_req.getPort() << "]\033[0m";
+	std::cout << "\033[1;97m [" << this->_req.getMethod() << "\033[0m";
+	std::cout << "\033[1;97m " << this->_req.getPath() << "]\033[0m";
+
+	if (this->_statusCode == 200)
+		std::cout << " - \033[1;32m" << this->_statusCode << "\033[0m";
+	else
+		std::cout << " - \033[1;31m" << this->_statusCode << "\033[0m";
+
+	std::cout << "\033[1;97m " << getHttpStatusCodeMessage(this->_statusCode) << "\033[1;97m" << std::endl;
+}
+
+void			Response::errorMessage(const std::string &msg)
+{
+	time_t		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cerr << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cerr << "\033[1;36m [RESPONSE]\033[0m";
+	std::cerr << "\033[1;31m [ERROR] \033[0m";
+	std::cerr << msg << std::endl;
 }
 
 std::ostream	&operator<<(std::ostream &out, const Response &res)

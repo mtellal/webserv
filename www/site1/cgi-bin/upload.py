@@ -6,10 +6,10 @@ cgitb.enable()
 
 form = cgi.FieldStorage()
 fileitem = form['fileToUpload']
+pathFile = "./www/site1/uploads/" + fileitem.filename
 data = fileitem.file.read()
-# this is the base name of the file that was uploaded:
-filename = os.path.basename(fileitem.filename) # or just use 'file.xlsx' or whatever
-with open(filename, 'wb') as f:
+with open(pathFile, 'wb') as f:
     f.write(data)
-print('Content-Type: text/plain\r\n\r\n', end='')
-print('Success!')
+print('Content-Type: text/plain\r\n\r\n')
+print('Success! File uploaded')
+print(pathFile)

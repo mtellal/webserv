@@ -55,6 +55,7 @@ class Request {
 		std::string							getServerName() const;
 		std::string							getContentType() const;
 		std::string							getQueryString() const;
+		std::string							getBodyFilePath() const;
 		std::string							getCgiExtension() const;
 		std::string							getContentLength() const;
 		std::string							getAuthentification() const;

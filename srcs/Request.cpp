@@ -116,6 +116,7 @@ std::string							Request::getServerName() const { return this->_serverName; }
 std::string							Request::getContentType() const { return this->_contentType; }
 std::string							Request::getHttpVersion() const { return this->_httpVersion; }
 std::string							Request::getQueryString() const { return this->_queryString; }
+std::string							Request::getBodyFilePath() const { return (this->_bodyFilePath); }
 std::string							Request::getContentLength() const { return this->_contentLength; }
 std::string							Request::getAuthentification() const { return this->_authentification; }
 std::string							Request::getCgiExtension() const { return (this->_cgiExtension); }

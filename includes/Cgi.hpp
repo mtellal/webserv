@@ -69,7 +69,7 @@ class Cgi
         void            addVarEnv();
         void            addCgiVarEnv();
         void            setStatus(int s);
-        void            quitCgi(int status);
+        void			errorMessage(const std::string &msg);
         void            setPoweredBy(const std::string &app);
         void            setContentType(const std::string &ct);
         void            setCgiWarnings(const std::string &err);
@@ -79,6 +79,7 @@ class Cgi
         
         char            **mapToTab();
         char            **execArgs(const std::string &file, const std::string &exe);
+
         
 };
 

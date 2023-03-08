@@ -60,6 +60,7 @@ class Response
 		void						printResponse() const;
 		void						findRightCodeError();
 		void						sendHeader(std::string path);
+		void						errorMessage(const std::string &msg);
 		void						sendPage(std::string path, const std::string &cgi_content);
 		bool						rightPath();
 		bool						rightPathServer();
