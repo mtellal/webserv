@@ -109,11 +109,14 @@ void    Cgi::addCgiVarEnv()
     if (req.getMethod() == "POST")
     {
         _envMap["CONTENT_LENGTH"] = req.getContentLength();
+        std::cout << _envMap["CONTENT_LENGTH"] << std::endl;
         if (req.getContentType().length())
         {
-            std::cout << "content type set" << std::endl;
             _envMap["CONTENT_TYPE"] = req.getContentType();
+            std::cout << _envMap["CONTENT_TYPE"] << std::endl;
         }
+        else 
+            _envMap["CONTENT_TYPE"] = "";
     }
     else
         _envMap["QUERY_STRING"]        =   req.getQueryString();
@@ -264,6 +267,8 @@ void                Cgi::child(int fdin, int pipe[2], char **args)
     if (execve(args[0], args, this->_env) == -1)
     {
         perror("execve call failed");
+        std::cerr << "exe " << args[0] << std::endl;
+        std::cerr << "file " << args[1] << std::endl;
         close(pipe[1]);
         exit(1);
     }
@@ -325,7 +330,7 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
 {
     int             in;
     int             p[2];
-    int             status;
+   // int             status;
     char            **args;
     size_t          index;
     std::string     header;
@@ -347,7 +352,7 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
     if (this->_req.getMethod() == "POST")
     {
         std::cout << "stdin from cgi is a file" << std::endl;
-        if ((in = open("./uploads/bodyfile", 0)) == -1)
+        if ((in = open(".bodyfile", 0)) == -1)
         {
             perror("cgi.execute failed can't open path_file");
             return (quitCgi(500));
@@ -374,27 +379,27 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
         if (in != STDIN_FILENO)
             close(in);
         
-        waitpid(f, &status, 0);
+        /* waitpid(f, &status, 0);
         
         if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
-            return (quitCgi(502));
+            return (quitCgi(502)); */
 
         response = parent(p);
 
         std::cout << "//////////////////////" << std::endl;
-        std::cout << response.substr(0, 100) << std::endl;
+        std::cout << response << std::endl;
         std::cout << "//////////////////////" << std::endl;
 
-        index = response.find("\n\r");
+        index = response.find("\r\n\r\n");
 
         if (index == (size_t)-1)
         {
-            perror("no \\n\\r in cgi response, can't extract header-body: ");
+            perror("no \\r\\n\\r\\n in cgi response, can't extract header-body: ");
             return (quitCgi(502));
         }
 
         header = response.substr(0, index);
-        content = response.substr(index + 2, response.length());
+        content = response.substr(index + 4, response.length());
         extractFields(header);
         this->_header.setContentLength(ft_itos(content.length()));
     }

@@ -120,7 +120,6 @@ std::string							Request::getContentLength() const { return this->_contentLengt
 std::string							Request::getAuthentification() const { return this->_authentification; }
 std::string							Request::getCgiExtension() const { return (this->_cgiExtension); }
 
-
 Server								Request::getServBlock() const { return (this->_servBlock); }
 
 void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
@@ -136,8 +135,6 @@ void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 		statusCode = 413;
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 		statusCode = 400;
-	else
-		statusCode = 500;
 
 	if (errMsg.length())
 	{
@@ -448,8 +445,15 @@ int		Request::pickServBlock()
 	return -1;
 }
 
+void							Request::quitAwaitingRequest()
+{
+	remove(this->_bodyFilePath.c_str());
+	this->_bodyFileExists = false;
+	this->_awaitingBody = false;
+	this->_awaitingHeader = false;
+}
 
-void						Request::extractContentDisposition(const std::string &line, std::string &name, std::string &filename)
+void						Request::extractContentDisposition(const std::string &line, std::string &filename)
 {
 	std::string 				tmp(line);
 	std::vector<std::string>	v;
@@ -457,7 +461,6 @@ void						Request::extractContentDisposition(const std::string &line, std::strin
 	std::vector<std::string>	tmp2;
 
 	v = ft_split(tmp, ";");
-
 	for (size_t i = 1; i < v.size(); i++)
 	{
 		trimSpaceFront(v[i]);
@@ -471,25 +474,7 @@ void						Request::extractContentDisposition(const std::string &line, std::strin
 				trimSpaceBack(filename);
 			}
 		}
-		else if (!memcmp(v[i].c_str(), "name=", 5))
-		{
-			tmp2 = ft_split(v[i], "=");
-			if (tmp2.size() == 2)
-			{
-				name = tmp2[1];
-				name = removeChar(name, '"');
-				trimSpaceBack(filename);
-			}
-		}
 	}
-}
-
-void							Request::quitAwaitingRequest()
-{
-	remove(this->_bodyFilePath.c_str());
-	this->_bodyFileExists = false;
-	this->_awaitingBody = false;
-	this->_awaitingHeader = false;
 }
 
 /*
@@ -502,7 +487,6 @@ void							Request::extractFile(const std::string &bound_data)
 	size_t						index;
 	std::string					contentType;
 	std::string					fileName;
-	std::string					name;
 	std::string					uploadPath;
 	std::string					rootPath;
 	std::ofstream				outfile;
@@ -518,7 +502,7 @@ void							Request::extractFile(const std::string &bound_data)
 	{
 		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
 		{
-			this->extractContentDisposition(fields[i], name, fileName);
+			this->extractContentDisposition(fields[i], fileName);
 		}
 	}
 
@@ -529,16 +513,16 @@ void							Request::extractFile(const std::string &bound_data)
 
 		if (!uploadPath.length())
 			return (this->getErrorPage("Upload path not defined"));
-			
+		
 		if (uploadPath[0] != '/')
-			uploadPath += "/" + uploadPath;
+			uploadPath = "/" + uploadPath;
 		if (uploadPath[0] != '.')
 			uploadPath = "." + uploadPath;
 		if (uploadPath[uploadPath.length() - 1] != '/')
 			uploadPath += "/";
 		
 		if (rootPath[0] != '/')
-			rootPath += "/" + rootPath;
+			rootPath = "/" + rootPath;
 		if (rootPath[0] != '.')
 			rootPath = "." + rootPath;
 		if (rootPath[rootPath.length() - 1] != '/')
@@ -578,6 +562,21 @@ void							Request::verifyFiles()
 	bounds = ft_split_str(request, this->_boundary);
 	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
 		this->extractFile(bounds[i]);
+}
+
+void							Request::checkBodyBytesRecieved()
+{
+	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
+		this->_awaitingBody = true;
+	else
+	{
+		if (!this->_cgiExtension.length())
+		{
+			this->verifyFiles();
+			remove(this->_bodyFilePath.c_str());
+		}
+		this->_awaitingBody = false;
+	}
 }
 
 int							Request::recvToBodyFile(int fd, std::ofstream &out)
@@ -631,56 +630,6 @@ int								Request::openBodyFile(std::ofstream &out)
 	return (0);
 }
 
-int							searchPoint(const std::string &line)
-{
-	for (size_t i = line.length() -1; i > 0; i--)
-	{
-		if (line[i] == '.')
-			return (i);
-	}
-	return (-1);
-}
-
-void							Request::checkCgiPath()
-{
-	int												point;
-	std::map<std::string, std::string>::iterator	it;	
-	std::map<std::string, std::string>				mapCgi;
-
-	mapCgi = this->_servBlock.getCgi();
-	if (!mapCgi.size())
-		return ;
-	point = searchPoint(this->_path);
-	if (point == -1)
-		return ;
-	it = mapCgi.begin();
-	while (it != mapCgi.end())
-	{
-		if (!memcmp(this->_path.c_str() + point + 1, it->first.c_str(), it->first.length())
-				&& (this->_path[point + 1 + it->first.length()] == '\0' || this->_path[point + 1 + it->first.length()] == '?'))
-			{
-				this->_cgiExtension = it->first;
-				return;
-			}
-		it++;
-	}
-}
-
-void							Request::checkBodyBytesRecieved()
-{
-	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
-		this->_awaitingBody = true;
-	else
-	{
-		if (!this->_cgiExtension.length())
-		{
-			this->verifyFiles();
-			remove(this->_bodyFilePath.c_str());
-		}
-		this->_awaitingBody = false;
-	}
-}
-
 /*
 	Save request data in bodyFile,
 	and verify if it is the last request
@@ -699,6 +648,31 @@ void							Request::awaitingBody(int fd)
 	this->checkBodyBytesRecieved();
 
 	return ;
+}
+
+void							Request::checkCgiPath()
+{
+	const char										*point;
+	std::map<std::string, std::string>::iterator	it;	
+	std::map<std::string, std::string>				mapCgi;
+
+	mapCgi = this->_servBlock.getCgi();
+	if (!mapCgi.size())
+		return ;
+	point = strrchr(this->_path.c_str(), '.');
+	if (!point)
+		return ;
+	it = mapCgi.begin();
+	while (it != mapCgi.end())
+	{
+		if (!memcmp(point + 1, it->first.c_str(), it->first.length())
+				&& (*(point + 1 + it->first.length()) == '\0' || *(point + 1 + it->first.length()) == '?'))
+			{
+				this->_cgiExtension = it->first;
+				return;
+			}
+		it++;
+	}
 }
 
 /*

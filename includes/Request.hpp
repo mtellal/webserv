@@ -132,7 +132,7 @@ class Request {
 		void			getErrorPage(const std::string &errMsg, int status = 500);
 		void			addQueryString(const std::string &key, const std::string &value);
 		void			extractContentType(const std::string &line, std::string &contentType);
-		void			extractContentDisposition(const std::string &line, std::string &name, std::string &filename);
+		void			extractContentDisposition(const std::string &line, std::string &filename);
 
 		int				setServBlock();
 		int				pickServBlock();
