@@ -8,12 +8,13 @@
 
 Request::Request() {}
 
-Request::Request(int fd, const std::vector<Server> &servers) : 
+Request::Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds) : 
 _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false), 
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
-_bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), 
-_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers)
+_bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), _locBlocSelect(false),
+_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers),
+_clientServerFds(clientServerFds)
 {
 	this->functPtr[0] = &Request::setHostPort;
 	this->functPtr[1] = &Request::setConnection;
@@ -127,74 +128,6 @@ std::string							Request::getCgiExtension() const { return (this->_cgiExtension
 Server								Request::getServBlock() const { return (this->_servBlock); }
 Location							Request::getLocationBlock() const { return (this->_locationBlock); }
 
-std::string	Request::rightRoot() {
-	std::string	root;
-
-	if (this->_locBlocSelect and this->_locationBlock.getRootSet())
-		root = this->_locationBlock.getRoot();
-	else
-		root = this->_locationBlock.getRoot();
-
-	return root;
-}
-
-std::string	Request::rightPathErr(bool &pageFind, int statusCode) {
-	std::string									root = rightRoot();
-	std::map<int, std::string>					mapErr;
-	std::map<int, std::string>::const_iterator	it;
-	std::string									rightPath;
-
-	if (this->_locBlocSelect and this->_locationBlock.getErrorPageSet())
-	{
-		mapErr = this->_locationBlock.getErrorPage();
-		it = mapErr.find(statusCode);
-		if (it != mapErr.end())
-		{
-			pageFind = true;
-			rightPath = it->second;
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
-		}
-	}
-	if (!pageFind and it != mapErr.end())
-	{
-		mapErr = this->_servBlock.getErrorPage();
-		it = mapErr.find(statusCode);
-		if (it != mapErr.end())
-		{
-			pageFind = true;
-			rightPath = it->second;
-			root = this->_servBlock.getRoot();
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
-		}
-	}
-	return rightPath;
-}
-
-std::string	Request::findRightPageError(int statusCode) {
-	bool		pageFind = false;
-	std::string	path;
-	DefaultPage	defaultPage;
-
-	path = this->rightPathErr(pageFind, statusCode);
-
-	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
-
-	if (!tmp or !pageFind)
-		path = defaultPage.createDefaultPage(statusCode);
-	if (tmp)
-		tmp.close();
-	return path;
-}
 
 void								Request::getErrorPage(const std::string &errMsg) {
 	time_t		t;
@@ -229,7 +162,7 @@ void								Request::getErrorPage(const std::string &errMsg) {
 			std::cout << " - \033[1;31m" << statusCode << "\033[0m";
 		std::cout << "\033[1;97m " << getHttpStatusCodeMessage(statusCode) << "\033[1;97m" << std::endl;
 	}
-	path = findRightPageError(statusCode);
+	path = findRightPageError(statusCode, this->_servBlock, this->_locBlocSelect, this->_locationBlock);
 
 	Header header(path, &statusCode);
 	strHeader = header.getHeaderRequestError();
@@ -327,13 +260,10 @@ bool	checkStrPort(std::string &port)
 
 void							Request::setHostPort(std::vector<std::string> strSplit)
 {
-
-	if (strSplit.size() != 3)
-		return ;
-	if (!checkStrHost(strSplit[1]) || !checkStrPort(strSplit[2]))
-		return ;
-	this->_host = strSplit[1];
-	this->_port = strSplit[2];
+	if (strSplit.size() >= 2)
+		this->_host = strSplit[1];
+	if (strSplit.size() >= 3)
+		this->_port = strSplit[2];
 	this->_hostSet = true;
 }
 
@@ -430,7 +360,6 @@ int		Request::setServBlock()
 
 	if ((idxServBlock = pickServBlock()) == -1)
 		return (-1);
-	std::cout << "Idx server: " << idxServBlock << std::endl;
 	this->_servBlock = this->_servers[idxServBlock];
 	this->_servBlock.setSocket(idxServBlock);
 	this->selectLocationBlock();
@@ -503,17 +432,18 @@ int		Request::pickServBlock()
 	std::vector<Server>	vctServSelect;
 	std::vector<int>	index;
 	std::string			host;
+	std::string			port;
 
-	host = getRightHost(this->getHost());
-
-	if (!host.empty())
+	host = this->_servers[this->_clientServerFds[this->_fd]].getHost();
+	port = this->_servers[this->_clientServerFds[this->_fd]].getPort();
+	if (host != "0.0.0.0")
 	{
 		for (size_t i = 0; i < this->_servers.size(); i++)
 		{
 			if (this->_servers[i].getHostSet() &&
 				(host == getRightHost(this->_servers[i].getHost()) ||
 				host == this->_servers[i].getHost()) &&
-				this->getPort() == this->_servers[i].getPort())
+				port == this->_servers[i].getPort())
 			{
 				vctServSelect.push_back(this->_servers[i]);
 				index.push_back(i);
@@ -527,7 +457,7 @@ int		Request::pickServBlock()
 	for (size_t i = 0; i < this->_servers.size(); i++)
 	{
 		if (!this->_servers[i].getHostSet() &&
-			(this->getPort() == this->_servers[i].getPort()))
+			(port == this->_servers[i].getPort()))
 		{
 			if (ft_split(host.c_str(), ".").size() == 4)
 			{

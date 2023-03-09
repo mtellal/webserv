@@ -61,16 +61,6 @@ Location	Response::getLocBloc() const { return this->_locBloc; }
 //										M E M B E R S   F U N C T I O N S 									  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string	Response::rightRoot() {
-	std::string	root;
-
-	if (this->_locBlocSelect and this->_locBloc.getRootSet())
-		root = this->_locBloc.getRoot();
-	else
-		root = this->_serv.getRoot();
-
-	return root;
-}
 
 std::vector<std::string>	Response::rightIndex() {
 	std::vector<std::string>	index;
@@ -93,7 +83,7 @@ std::vector<std::string>	Response::rightIndex() {
 	- Sinon, on met notre bool a true (donc erreur) */
 bool	Response::rightPathLocation() {
 	struct stat					fileOrDir;
-	std::string					root = this->rightRoot();
+	std::string					root = rightRoot(this->_serv, this->_locBlocSelect, this->_locBloc);
 	std::string					newPath;
 	std::vector<std::string>	index = this->rightIndex();
 
@@ -214,50 +204,6 @@ std::string	Response::testAllPaths(bool *err) {
 	return rightPath;
 }
 
-/*	On regarde par rapport au code erreur si une page a ete set pour ce code erreur
-	dans notre fichier de configuration en reconstituant le path */
-std::string	Response::rightPathErr(bool &pageFind) {
-	std::string									root = rightRoot();
-	std::map<int, std::string>					mapErr;
-	std::map<int, std::string>::const_iterator	it;
-	std::string									rightPath;
-
-	if (this->_locBlocSelect and this->_locBloc.getErrorPageSet())
-	{
-		mapErr = this->_locBloc.getErrorPage();
-		it = mapErr.find(this->_statusCode);
-		if (it != mapErr.end())
-		{
-			pageFind = true;
-			rightPath = it->second;
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
-		}
-	}
-	if (!pageFind and it != mapErr.end())
-	{
-		mapErr = this->_serv.getErrorPage();
-		it = mapErr.find(this->_statusCode);
-		if (it != mapErr.end())
-		{
-			pageFind = true;
-			rightPath = it->second;
-			root = this->_serv.getRoot();
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
-		}
-	}
-	return rightPath;
-}
-
 bool	Response::methodNotAllowed() const {
 	std::vector<std::string>	vctMethods;
 
@@ -288,7 +234,7 @@ std::string	Response::findRightError() {
 	std::string	path;
 
 	this->findRightCodeError();
-	path = this->rightPathErr(pageFind);
+	path = rightPathErr(pageFind, this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 
 	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
@@ -300,22 +246,6 @@ std::string	Response::findRightError() {
 		tmp.close();
 	return path;
 }
-
-std::string	Response::findRightPageError() {
-	bool		pageFind = false;
-	std::string	path;
-
-	path = this->rightPathErr(pageFind);
-
-	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
-
-	if (!tmp or !pageFind)
-		path = this->_defaultPage.createDefaultPage(this->_statusCode);
-	if (tmp)
-		tmp.close();
-	return path;
-}
-
 
 void	Response::httpRedir() {
 	std::string	res;
@@ -341,7 +271,7 @@ std::string	Response::deleteResource() {
 	else
 	{
 		this->_statusCode = 204;
-		return this->findRightPageError();
+		return findRightPageError(this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 	}
  
 	result = stat(path.c_str(), &stat_buf);
@@ -368,7 +298,7 @@ std::string	Response::deleteResource() {
 		this->_statusCode = 204;
 	}
 
-	return this->findRightPageError();
+	return findRightPageError(this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 }
 
 void	Response::sendData() {
@@ -397,7 +327,7 @@ std::string	Response::sendContentTypeError() {
 	std::string	res;
 	std::string	path;
 
-	path = this->findRightPageError();
+	path = findRightPageError(this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 
 	Header	header(path, &this->_statusCode);
 
@@ -451,9 +381,6 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
-		/* std::cout << "\n//////////	HEADER	///////////\n" << res << std::endl;
-		std::cout << "\n//////////	 BODY	///////////\n" << body.substr(0, 200) << std::endl;
- */
 		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
 
 		if (this->_req.getMethod() != "HEAD")

@@ -23,7 +23,7 @@ class Request {
 	public:
 	
 		Request();
-		Request(int fd, const std::vector<Server> &servers);
+		Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds);
 		Request(Request const &src);
 		~Request();
 
@@ -109,6 +109,7 @@ class Request {
 		Server								_servBlock;
 		Location							_locationBlock;
 
+		std::map<int, int>					_clientServerFds;
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			verifyFiles();
@@ -148,9 +149,7 @@ class Request {
 
 		std::string		getRightHost(const std::string& host);
 		std::string		getHostNameFromIP(const std::string& ipAddress);
-		std::string		findRightPageError(int statusCode);
-		std::string		rightPathErr(bool &pageFind, int statusCode);
-		std::string		rightRoot();
+
 };
 
 std::ostream &operator<<( std::ostream & o, Request const & rhs);

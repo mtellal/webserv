@@ -104,6 +104,8 @@ void	SocketServer::initSocket()
 		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
 			return (errorSocket("socket call failed"));
 
+		std::cout << "socket fd: " << serv_socket << " ip -> " << _servers[i].getHost().c_str() << std::endl;
+
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
 		this->_servers[i].setSocket(serv_socket);
@@ -245,11 +247,12 @@ int		SocketServer::epollWait() {
 		}
 		else if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
 		{
+			// std::cout << "FD SERVER: " << event[j].data.fd << std::endl;
 			createConnection(index_serv);
 		}
 		else
 		{
-			Request	req(event[j].data.fd, this->_servers);
+			Request	req(event[j].data.fd, this->_servers, this->_clientServerFds);
 
 			if ((index_wreq = isAwaitingRequest(event[j].data.fd)) != -1)
 				req = this->_awaitingRequest[index_wreq];
@@ -313,6 +316,8 @@ void	SocketServer::createConnection(int index_serv_fd)
 		this->_errSocket = true;
 		return ;
 	}
+
+	// std::cout << "ACCEPT Server: " << index_serv_fd << std::endl;
 
 	if (this->nonBlockFd(client_fd) == 1)
 		return ;

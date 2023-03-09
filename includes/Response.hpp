@@ -63,13 +63,10 @@ class Response
 		bool						rightPathServer();
 		bool						rightPathLocation();
 		bool						methodNotAllowed() const;
-		std::string					rightRoot();
 		std::string					findRightError();
-		std::string					findRightPageError();
 		std::string					deleteResource();
 		std::string					sendContentTypeError();
 		std::string					testAllPaths(bool *err);
-		std::string					rightPathErr(bool &pageFind);
 		std::vector<std::string>	rightIndex();
 };
 
