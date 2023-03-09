@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "DefaultPage.hpp"
 #include <stdlib.h>
 #include <sstream>
 #include <sys/stat.h>
@@ -248,4 +249,72 @@ std::string		getRightHost(const std::string& host) {
 	else if ((res = getIPFromHostName(host)) != "")
 		return res;
 	return "";
+}
+std::string	rightRoot(Server const &serv, bool locBlockSelect, Location const &loc) {
+	std::string	root;
+
+	if (locBlockSelect and loc.getRootSet())
+		root = loc.getRoot();
+	else
+		root = serv.getRoot();
+
+	return root;
+}
+
+std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, bool locBlockSelect, Location const &loc) {
+	std::string									root = rightRoot(serv, locBlockSelect, loc);
+	std::map<int, std::string>					mapErr;
+	std::map<int, std::string>::const_iterator	it;
+	std::string									rightPath;
+
+	if (locBlockSelect and loc.getErrorPageSet())
+	{
+		mapErr = loc.getErrorPage();
+		it = mapErr.find(statusCode);
+		if (it != mapErr.end())
+		{
+			pageFind = true;
+			rightPath = it->second;
+			if (root[0] == '/')
+				root.erase(0, 1);
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			root += rightPath;
+			rightPath = root;
+		}
+	}
+	if (!pageFind and it != mapErr.end())
+	{
+		mapErr = serv.getErrorPage();
+		it = mapErr.find(statusCode);
+		if (it != mapErr.end())
+		{
+			pageFind = true;
+			rightPath = it->second;
+			root = serv.getRoot();
+			if (root[0] == '/')
+				root.erase(0, 1);
+			if (root[root.size() - 1] != '/')
+				root += "/";
+			root += rightPath;
+			rightPath = root;
+		}
+	}
+	return rightPath;
+}
+
+std::string	findRightPageError(int statusCode, Server const &serv, bool locBlockSelect, Location const &loc) {
+	bool		pageFind = false;
+	std::string	path;
+	DefaultPage	defaultPage;
+
+	path = rightPathErr(pageFind, statusCode, serv, locBlockSelect, loc);
+
+	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
+
+	if (!tmp or !pageFind)
+		path = defaultPage.createDefaultPage(statusCode);
+	if (tmp)
+		tmp.close();
+	return path;
 }

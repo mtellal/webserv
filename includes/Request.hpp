@@ -23,7 +23,7 @@ class Request {
 	public:
 	
 		Request();
-		Request(int fd, const std::vector<Server> &servers);
+		Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds);
 		Request(Request const &src);
 		~Request();
 
@@ -41,6 +41,7 @@ class Request {
 		bool								getBodyFileExists() const;
 		bool								getcloseConnection() const;
 		bool								getAwaitingRequest() const;
+		bool								getLocBlocSelect() const;
 		int									getFd() const;
 		size_t								getBytesRecievd() const;
 		std::string							getPath() const;
@@ -60,6 +61,7 @@ class Request {
 		std::string							getContentLength() const;
 		std::string							getAuthentification() const;
 		Server								getServBlock() const;
+		Location							getLocationBlock() const;
 
 
 	private:
@@ -79,6 +81,7 @@ class Request {
 		bool								_bodyFileExists;
 		bool								_awaitingHeader;
 		bool								_closeConnection;
+		bool								_locBlocSelect;
 
 		int									_fd;
 		size_t								_bodyBytesRecieved;
@@ -105,7 +108,9 @@ class Request {
 
 		std::vector<Server>					_servers;
 		Server								_servBlock;
+		Location							_locationBlock;
 
+		std::map<int, int>					_clientServerFds;
 
 		void			(Request::*functPtr[12])(std::vector<std::string>);
 		void			verifyFiles();
@@ -114,6 +119,7 @@ class Request {
 		void			printRequest() const;
 		void			awaitingBody(int fd);
 		void			quitAwaitingRequest();
+		void			selectLocationBlock();
 		void			checkBodyBytesRecieved();
 		void			parsArgs(std::string tmp);
 		void			bodyRequest(size_t index);

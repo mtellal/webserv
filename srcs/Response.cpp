@@ -11,7 +11,11 @@ _locBlocSelect(false), _closeConnection(false) {}
 Response::Response(const Request &req, const Server &s, char **envp) :
 _isDir(false), _autoindex(false),
 _locBlocSelect(false), _closeConnection(false), 
-_envp(envp), _req(req), _serv(s), _defaultPage(_req, _serv) {}
+_envp(envp), _req(req), _serv(s), _defaultPage(_req, _serv) {
+	this->_locBlocSelect = req.getLocBlocSelect();
+	if (this->_locBlocSelect)
+		this->_locBloc = req.getLocationBlock();
+}
 
 Response::Response(Response const &src) { *this = src; }
 
@@ -57,16 +61,6 @@ Location	Response::getLocBloc() const { return this->_locBloc; }
 //										M E M B E R S   F U N C T I O N S 									  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string	Response::rightRoot() {
-	std::string	root;
-
-	if (this->_locBlocSelect and this->_locBloc.getRootSet())
-		root = this->_locBloc.getRoot();
-	else
-		root = this->_serv.getRoot();
-
-	return root;
-}
 
 std::vector<std::string>	Response::rightIndex() {
 	std::vector<std::string>	index;
@@ -89,7 +83,7 @@ std::vector<std::string>	Response::rightIndex() {
 	- Sinon, on met notre bool a true (donc erreur) */
 bool	Response::rightPathLocation() {
 	struct stat					fileOrDir;
-	std::string					root = this->rightRoot();
+	std::string					root = rightRoot(this->_serv, this->_locBlocSelect, this->_locBloc);
 	std::string					newPath;
 	std::vector<std::string>	index = this->rightIndex();
 
@@ -210,51 +204,6 @@ std::string	Response::testAllPaths(bool *err) {
 	return rightPath;
 }
 
-/*	On regarde par rapport au code erreur si une page a ete set pour ce code erreur
-	dans notre fichier de configuration en reconstituant le path */
-std::string	Response::rightPathErr(bool &pageFind) {
-	std::string									root = rightRoot();
-	std::map<int, std::string>					mapErr;
-	std::map<int, std::string>::const_iterator	it;
-	std::string									rightPath;
-
-	if (this->_locBlocSelect and this->_locBloc.getErrorPageSet())
-	{
-		mapErr = this->_locBloc.getErrorPage();
-		it = mapErr.find(this->_statusCode);
-		if (it != mapErr.end())
-		{
-			pageFind = true;
-			rightPath = it->second;
-			root = this->_locBloc.getRoot();
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
-		}
-	}
-	if (!pageFind and it != mapErr.end())
-	{
-		mapErr = this->_serv.getErrorPage();
-		it = mapErr.find(this->_statusCode);
-		if (it != mapErr.end())
-		{
-			pageFind = true;
-			rightPath = it->second;
-			root = this->_serv.getRoot();
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
-		}
-	}
-	return rightPath;
-}
-
 bool	Response::methodNotAllowed() const {
 	std::vector<std::string>	vctMethods;
 
@@ -285,7 +234,7 @@ std::string	Response::findRightError() {
 	std::string	path;
 
 	this->findRightCodeError();
-	path = this->rightPathErr(pageFind);
+	path = rightPathErr(pageFind, this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 
 	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
@@ -322,7 +271,7 @@ std::string	Response::deleteResource() {
 	else
 	{
 		this->_statusCode = 204;
-		return this->_defaultPage.createDefaultPage(this->_statusCode);
+		return findRightPageError(this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 	}
  
 	result = stat(path.c_str(), &stat_buf);
@@ -347,7 +296,7 @@ std::string	Response::deleteResource() {
 	else
 		this->_statusCode = 204;
 
-	return this->_defaultPage.createDefaultPage(this->_statusCode);
+	return findRightPageError(this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 }
 
 void	Response::sendData() {
@@ -373,7 +322,7 @@ std::string	Response::sendContentTypeError() {
 	std::string	res;
 	std::string	path;
 
-	path = this->_defaultPage.createDefaultPage(this->_statusCode);
+	path = findRightPageError(this->_statusCode, this->_serv, this->_locBlocSelect, this->_locBloc);
 
 	Header	header(path, &this->_statusCode);
 
@@ -427,43 +376,6 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
-}
-
-void	Response::selectLocationBlock() {
-	std::vector<Location>	locations = this->_serv.getVctLocation();
-	std::string 			strBlocLoc;
-	Location				tmp;
-	std::string				req = this->_req.getPath();
-	size_t j;
-
-	for (size_t i = 0; i < locations.size(); i++)
-	{
-		strBlocLoc = locations[i].getPath();
-		j = 0;
-		if (!strncmp(strBlocLoc.c_str(), this->_req.getPath().c_str(), strBlocLoc.length()))
-		{
-			j += strBlocLoc.length();
-			if (j && strBlocLoc.size() > tmp.getPath().size())
-			{
-				this->_locBlocSelect = true;
-				tmp = locations[i];
-			}
-		}
-	}
-	if (!this->_locBlocSelect)
-	{
-		for (size_t i = 0; i < locations.size(); i++)
-		{
-			if (locations[i].getPath() == "/")
-			{
-				this->_locBlocSelect = true;
-				tmp = locations[i];
-				break ;
-			}
-		}
-	}
-	if (this->_locBlocSelect)
-		this->_locBloc = tmp;
 }
 
 void	Response::printResponse() const
