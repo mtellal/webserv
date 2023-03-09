@@ -22,7 +22,10 @@ _rawEnv(env), _req(req), _serv(serv), _header(header)
     initEnv();
 }
 
-Cgi::~Cgi() {}
+Cgi::~Cgi()
+{
+    delete [] this->_env;
+}
 
 Cgi     &Cgi::operator=(const Cgi &src)
 {
@@ -77,7 +80,7 @@ void    Cgi::printEnv()
 
 void    Cgi::addVarEnv()
 {
-    char    ** env;
+    char    **env;
     size_t  i;
     size_t  len;
 
@@ -153,22 +156,9 @@ char    **Cgi::mapToTab()
         std::string  tmp;
 
         tmp = it->first + "=" + it->second;
-        try 
-        {
-            e[i] = new char[tmp.length() + 1];
-        }
-        catch (const std::exception &err)
-        {
-            errorMessage("new call failed (mapToTab");
-            while (i > 0)
-            {
-                i--;
-                delete e[i];
-            }
-            return (NULL);
-        }
-        strcpy(e[i], tmp.c_str());
-        e[i][tmp.length()] = '\0';
+
+        e[i] = strdup(tmp.c_str());
+
         i++;
         it++;
     }
@@ -242,28 +232,35 @@ void                Cgi::extractFields(const std::string &cgi_response)
     }
 }
 
-void                Cgi::child(int fdin, int pipe[2], char **args)
+void                Cgi::quitChildProccess(int fdin, int p[2], char **args, const std::string &msg) 
 {
-    if (fdin != STDIN_FILENO && dup2(fdin, 0) == -1)
-    {
-        errorMessage("dup2 call failed");
-        exit(1);
-    }
+    (void)args;
+    close(fdin);
+    errorMessage(msg);
+    close(p[1]);
+    if (args)
+        delete [] args; 
+    exit(EXIT_FAILURE);
+}
 
-    if (dup2(pipe[1], 1) == -1)
-    {
-        errorMessage("dup2 call failed");
-        exit(1);
-    }
+void                Cgi::child(int fdin, int pipe[2], const std::string &file, const std::string &exe)
+{
+    char **args;
 
     close(pipe[0]);
+    args = execArgs(file, exe);
+
+    if (!args)
+        quitChildProccess(fdin, pipe, args, "new call failed (exeArgs)");
+
+    if (fdin != STDIN_FILENO && dup2(fdin, 0) == -1)
+        quitChildProccess(fdin, pipe, args, "dup2 call failed");
+
+    if (dup2(pipe[1], 1) == -1)
+         quitChildProccess(fdin, pipe, args, "dup2 call failed");
     
     if (execve(args[0], args, this->_env) == -1)
-    {
-        errorMessage("execve call failed");
-        close(pipe[1]);
-        exit(1);
-    }
+        quitChildProccess(fdin, pipe, args, "execve call failed");
 }
 
 std::string        parent(int pipe[2])
@@ -318,14 +315,12 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
     int             in;
     int             p[2];
     int             status;
-    char            **args;
     size_t          index;
     std::string     header;
     std::string     response;
     pid_t           f;
 
     in = STDIN_FILENO;
-    args = execArgs(file, exe);
     if (pipe(p) == -1)
     {
         errorMessage("pipe call failed");
@@ -348,14 +343,14 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
         return (this->_header.setStatus(500));
     }
     if (f == 0)
-        child(in, p, args);
+        child(in, p, file, exe);
     else
     {
         if (in != STDIN_FILENO)
             close(in);
         waitpid(f, &status, 0);
         response = parent(p);
-        
+
         if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
         {
             errorMessage("cgi did not execute correctly");

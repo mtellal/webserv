@@ -78,7 +78,7 @@ class Directives {
 		bool								_errorDirectives;
 		bool								_clientMaxBodySizeSet;
 
-		int									_clientMaxBodySize;
+		size_t								_clientMaxBodySize;
 		
 		std::string							_root;
 		std::string							_upload;

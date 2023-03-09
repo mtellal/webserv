@@ -65,7 +65,6 @@ class Cgi
         std::map<std::string, std::string>  _envMap;
         
 
-
         void            addVarEnv();
         void            addCgiVarEnv();
         void            setStatus(int s);
@@ -74,8 +73,9 @@ class Cgi
         void            setContentType(const std::string &ct);
         void            setCgiWarnings(const std::string &err);
         void            setContentLength(const std::string &ct);
-        void            child(int fdin, int pipe[2], char **args);
         void            extractFields(const std::string &cgi_response);
+        void            quitChildProccess(int fdin, int p[2], char **args, const std::string &msg);
+        void            child(int fdin, int pipe[2], const std::string &file, const std::string &exe);
         
         char            **mapToTab();
         char            **execArgs(const std::string &file, const std::string &exe);
