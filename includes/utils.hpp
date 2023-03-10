@@ -13,6 +13,7 @@ void						trimSpaceBack(std::string &line);
 void						trimSpaceFront(std::string &line);
 bool						only_space_or_empty(std::string line);
 bool						infileExists(const std::string &file);
+bool						resolveHost(const std::string& host, std::string& ipAddress);
 int							ft_stoi(const std::string str, bool *err);
 size_t						tab_len(char **env);
 std::string					ft_itos(int nbr);

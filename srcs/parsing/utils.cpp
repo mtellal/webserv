@@ -248,7 +248,7 @@ std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, boo
 			rightPath = root;
 		}
 	}
-	if (!pageFind and it != mapErr.end())
+	if (!pageFind and serv.getErrorPageSet())
 	{
 		mapErr = serv.getErrorPage();
 		it = mapErr.find(statusCode);
@@ -282,4 +282,23 @@ std::string	findRightPageError(int statusCode, Server const &serv, bool locBlock
 	if (tmp)
 		tmp.close();
 	return path;
+}
+
+bool	resolveHost(const std::string& host, std::string& ipAddress) {
+	struct addrinfo hints, *res;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_CANONNAME;
+
+	if (getaddrinfo(host.c_str(), NULL, &hints, &res) != 0)
+	{
+		std::cerr << "Error: Could not resolve host \"" << host << "\"." << std::endl;
+		return false;
+	}
+	struct sockaddr_in* addr = (struct sockaddr_in*)res->ai_addr;
+	ipAddress = inet_ntoa(addr->sin_addr);
+	freeaddrinfo(res);
+
+	return true;
 }

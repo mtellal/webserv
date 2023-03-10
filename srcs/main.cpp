@@ -34,9 +34,5 @@ int main(int argc, char **argv, char **envp)
 
 	Pour get et post, checker le format des args envoyes
 
-	Autres codes err ?
-
-	Method DELETE, code 202 ?
-
 	send call failed: Broken pipe
 */

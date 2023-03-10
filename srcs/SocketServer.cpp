@@ -104,8 +104,6 @@ void	SocketServer::initSocket()
 		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
 			return (errorSocket("socket call failed"));
 
-		std::cout << "socket fd: " << serv_socket << " ip -> " << _servers[i].getHost().c_str() << std::endl;
-
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
 		this->_servers[i].setSocket(serv_socket);
@@ -277,7 +275,6 @@ int		SocketServer::epollWait() {
 			{
 				Response	rep(req, req.getServBlock(), this->_envp);
 
-				// rep.selectLocationBlock();
 				rep.sendData();
 				if (rep.getCloseConnection() && !req.getAwaitingRequest())
 					this->closeConnection(event[j].data.fd);	
@@ -340,7 +337,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 	}
 }
 
-void	SocketServer::displayDisconnection(const Server &serv, const std::string &clientIP) const 
+void	SocketServer::displayDisconnection(const Server &serv, const std::string &clientIP) const
 {
 	time_t		t;
 	std::string	_time;

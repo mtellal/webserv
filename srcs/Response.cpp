@@ -91,6 +91,9 @@ bool	Response::rightPathLocation() {
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
+	if (root.size() > 0 && root[root.size() - 1] != '/' &&
+		newPath.size() > 0 && newPath[0] != '/')
+		root += '/';
 	root += newPath;
 	if (stat(root.c_str(), &fileOrDir) != -1)
 	{
@@ -98,6 +101,7 @@ bool	Response::rightPathLocation() {
 			this->_path.push_back(root);
 		else if (S_ISDIR(fileOrDir.st_mode))
 		{
+			this->_path.push_back(root);
 			if (root[root.size() - 1] != '/')
 				root += "/";
 			for (size_t i = 0; i < index.size(); i++)
@@ -126,6 +130,9 @@ bool	Response::rightPathServer() {
 	if (root[0] == '/')
 		root.erase(0, 1);
 	newPath = this->_req.getPath();
+	if (root.size() > 0 && root[root.size() - 1] != '/' &&
+		newPath.size() > 0 && newPath[0] != '/')
+		root += '/';
 	root += newPath;
 	if (stat(root.c_str(), &fileOrDir) != -1)
 	{
@@ -133,6 +140,7 @@ bool	Response::rightPathServer() {
 			this->_path.push_back(root);
 		else if (S_ISDIR(fileOrDir.st_mode))
 		{
+			this->_path.push_back(root);
 			if (root[root.size() - 1] != '/')
 				root += "/";
 			index = this->_serv.getIndex();
@@ -171,7 +179,6 @@ std::string	Response::testAllPaths(bool *err) {
 	while (i < this->_path.size())
 	{
 		stat(this->_path[i].c_str(), &file);
-
 		if (S_ISREG(file.st_mode))
 		{
 			std::ifstream tmp(this->_path[i].c_str(), std::ios::in | std::ios::binary);
@@ -180,6 +187,7 @@ std::string	Response::testAllPaths(bool *err) {
 			{
 				this->_isDir = true;
 				*err = true;
+				this->_statusCode = 403;
 			}
 			else
 			{
@@ -192,6 +200,7 @@ std::string	Response::testAllPaths(bool *err) {
 		else if (S_ISDIR(file.st_mode))
 		{
 				this->_isDir = true;
+				this->_statusCode = 403;
 				*err = true;
 		}
 		i++;
@@ -239,7 +248,10 @@ std::string	Response::findRightError() {
 	std::ifstream tmp(path.c_str(), std::ios::in | std::ios::binary);
 
 	if (this->_autoindex and !this->methodNotAllowed())
+	{
 		path = this->_defaultPage.createAutoindexPage(this->_path);
+		this->_statusCode = 200;
+	}
 	else if (!tmp or !pageFind)
 		path = this->_defaultPage.createDefaultPage(this->_statusCode);
 	if (tmp)
@@ -305,13 +317,11 @@ void	Response::sendData() {
 	std::string	path;
 	bool		err;
 
-	/* std::cout << "root serv: " << this->_serv.getRoot() << std::endl;
-	std::cout << "path ressource serv: " << this->_serv.getRoot() << this->_req.getPath() << std::endl;
- */
 	if (!(err = this->rightPath()))
 		path = this->testAllPaths(&err);
 	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
+
 
 	if (((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
 		this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
