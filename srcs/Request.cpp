@@ -860,7 +860,7 @@ int						Request::awaitingHeader(int fd)
 		return (-1);
 	}
 
-	this->_request.append(buff);
+	this->_request.append(buff, bytes);
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{

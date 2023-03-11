@@ -277,7 +277,7 @@ int		SocketServer::epollWait() {
 
 				rep.sendData();
 				if (rep.getCloseConnection() && !req.getAwaitingRequest())
-					this->closeConnection(event[j].data.fd);	
+					this->closeConnection(event[j].data.fd);
 			}
 		}
 	}
