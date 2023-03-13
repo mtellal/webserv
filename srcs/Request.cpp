@@ -8,12 +8,12 @@
 
 Request::Request() {}
 
-Request::Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds) : 
+Request::Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds, int epollFd) : 
 _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false), 
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
 _bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), _locBlocSelect(false),
-_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers),
+_fd(fd), _epollFd(epollFd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers),
 _clientServerFds(clientServerFds)
 {
 	this->functPtr[0] = &Request::setHostPort;
@@ -55,6 +55,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_locBlocSelect = rhs._locBlocSelect;
 
 		this->_fd = rhs._fd;
+		this->_epollFd = rhs._epollFd;
 		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
 
 		this->_host = rhs._host;
@@ -105,6 +106,7 @@ bool								Request::getAwaitingRequest() const { return (this->_awaitingHeader 
 bool								Request::getLocBlocSelect() const { return this->_locBlocSelect; }
 
 int									Request::getFd() const { return this->_fd; }
+int									Request::getEpollFd() const { return this->_epollFd; }
 
 size_t								Request::getBytesRecievd() const { return (this->_bodyBytesRecieved); }
 
@@ -915,6 +917,11 @@ void						Request::request(int fd)
 
 		if (!this->_hostSet || this->_badRequest)
 			this->getErrorPage("Bad request");
+
+		struct epoll_event	event;
+		event.events = EPOLLOUT;
+		event.data.fd = this->_fd;
+		epoll_ctl(this->_epollFd, EPOLL_CTL_MOD, this->_fd, &event);
 	}
 }
 

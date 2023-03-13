@@ -413,6 +413,11 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
+
+	struct epoll_event	event;
+	event.events = EPOLLIN;
+	event.data.fd = this->_req.getFd();
+	epoll_ctl(this->_req.getEpollFd(), EPOLL_CTL_MOD, this->_req.getFd(), &event);
 }
 
 std::ostream	&operator<<(std::ostream &out, const Response &res)

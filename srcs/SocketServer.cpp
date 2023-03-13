@@ -41,6 +41,7 @@ SocketServer	&SocketServer::operator=(SocketServer const &rhs) {
 		this->_servers = rhs._servers;
 		this->_awaitingRequest = rhs._awaitingRequest;
 		this->_clientServerFds = rhs._clientServerFds;
+		this->_requests = rhs._requests;
 	}
 	return *this;
 }
@@ -239,44 +240,44 @@ int		SocketServer::epollWait() {
 	}
 	for (int j = 0; j < nbrFd; j++)
 	{
+		// std::cout << "fd = " << event[j].data.fd << std::endl;
 		if (event[j].data.fd == 0)
-		{
 			return 1;
-		}
 		else if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
-		{
-			// std::cout << "FD SERVER: " << event[j].data.fd << std::endl;
 			createConnection(index_serv);
-		}
 		else
 		{
-			Request	req(event[j].data.fd, this->_servers, this->_clientServerFds);
-
-			if ((index_wreq = isAwaitingRequest(event[j].data.fd)) != -1)
-				req = this->_awaitingRequest[index_wreq];
-
-			req.request(event[j].data.fd);
-
-			if (!req.getAwaitingRequest() && index_wreq != -1)
-					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + index_wreq);
-
-			if (req.getcloseConnection())
+			if (event[j].events == EPOLLIN)
 			{
-				this->closeConnection(event[j].data.fd);
+				std::cout << "EPOLLIN" << std::endl;
+				Request	req(event[j].data.fd, this->_servers, this->_clientServerFds, this->_epollFd);
+
+				if ((index_wreq = isAwaitingRequest(event[j].data.fd)) != -1)
+					req = this->_awaitingRequest[index_wreq];
+
+				req.request(event[j].data.fd);
+
+				if (!req.getAwaitingRequest() && index_wreq != -1)
+						this->_awaitingRequest.erase(this->_awaitingRequest.begin() + index_wreq);
+
+				if (req.getcloseConnection())
+					this->closeConnection(event[j].data.fd);
+				else if (req.getAwaitingRequest())
+				{
+					if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
+						this->_awaitingRequest.push_back(req);
+					else
+						this->_awaitingRequest[index_wreq] = req;
+				}
+				this->_requests[event[j].data.fd] = req;
 			}
-			else if (req.getAwaitingRequest())
+			else if (event[j].events == EPOLLOUT)
 			{
-				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
-					this->_awaitingRequest.push_back(req);
-				else
-					this->_awaitingRequest[index_wreq] = req;
-			}
-			else
-			{
-				Response	rep(req, req.getServBlock(), this->_envp);
+				std::cout << "EPOLLOUT" << std::endl;
+				Response	rep(this->_requests[event[j].data.fd], this->_requests[event[j].data.fd].getServBlock(), this->_envp);
 
 				rep.sendData();
-				if (rep.getCloseConnection() && !req.getAwaitingRequest())
+				if (rep.getCloseConnection() && !this->_requests[event[j].data.fd].getAwaitingRequest())
 					this->closeConnection(event[j].data.fd);
 			}
 		}
@@ -329,7 +330,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 
 	event.events = EPOLLIN;
 	event.data.fd = client_fd;
-	if (epoll_ctl(this->_epollFd, EPOLLIN, client_fd, &event) == -1)
+	if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, client_fd, &event) == -1)
 	{
 		perror("err epoll_ctl");
 		this->_errSocket = true;

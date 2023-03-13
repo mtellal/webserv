@@ -52,6 +52,7 @@ class SocketServer {
 		std::vector<Server>		_servers;
 		std::vector<Request>	_awaitingRequest;
 		std::map<int, int>		_clientServerFds;
+		std::map<int, Request>	_requests;
 
 		void					initSocket();
 		void					closeSockets();

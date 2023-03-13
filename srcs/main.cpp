@@ -29,10 +29,16 @@ int main(int argc, char **argv, char **envp)
 }
 
 /*
-	Tester les pages d'erreur (si elles sont set dans le fichier de conf ou si elles ne
-	sont pas set)
+	-Check les valeur de read / recv / send / write (0 ET -1)
+	et un seul appel a une de ces fonctions par epoll_wait;
 
-	Pour get et post, checker le format des args envoyes
+	-Pas le droit de check la valeur de errno juste apres l'appel d'une de ces
+	fonctions ci dessus
+
+	-"poll() (or equivalent) must check read and write at the same time."
+	donc EPOLLIN ET EPOLLOUT ?
+
+	-Leaks avec form
 
 	send call failed: Broken pipe
 */
