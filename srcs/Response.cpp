@@ -391,7 +391,12 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
-		send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL);
+		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) <= 0)
+		{
+			this->_closeConnection = true;
+			std::cout << "Err: send call failed" << std::endl;
+		}
+		fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 		if (this->_req.getMethod() != "HEAD")
 			this->sendPage(path, body);
@@ -408,16 +413,15 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	else
 		body = fileToStr(path_file);
 	
-	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) == -1)
-		perror("send call failed");
+	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) <= 0)
+	{
+		this->_closeConnection = true;
+		std::cout << "Err: send call failed" << std::endl;
+	}
+	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;
-
-	struct epoll_event	event;
-	event.events = EPOLLIN;
-	event.data.fd = this->_req.getFd();
-	epoll_ctl(this->_req.getEpollFd(), EPOLL_CTL_MOD, this->_req.getFd(), &event);
 }
 
 std::ostream	&operator<<(std::ostream &out, const Response &res)

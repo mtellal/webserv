@@ -158,7 +158,7 @@ void								Request::getErrorPage(const std::string &errMsg) {
 		if (this->_methodSet)
 			std::cout << "\033[1;97m [" << this->_method << "\033[0m";
 		std::cout << "\033[1;97m " << this->_path<< "]\033[0m";
-		if (statusCode== 200)
+		if (statusCode == 200)
 			std::cout << " - \033[1;32m" << statusCode << "\033[0m";
 		else
 			std::cout << " - \033[1;31m" << statusCode << "\033[0m";
@@ -918,10 +918,11 @@ void						Request::request(int fd)
 		if (!this->_hostSet || this->_badRequest)
 			this->getErrorPage("Bad request");
 
-		struct epoll_event	event;
-		event.events = EPOLLOUT;
-		event.data.fd = this->_fd;
-		epoll_ctl(this->_epollFd, EPOLL_CTL_MOD, this->_fd, &event);
+		// struct epoll_event	event;
+		// event.events = EPOLLOUT;
+		// event.data.fd = this->_fd;
+		// epoll_ctl(this->_epollFd, EPOLL_CTL_MOD, this->_fd, &event);
+		fdEpollout(this->_epollFd, this->_fd);
 	}
 }
 

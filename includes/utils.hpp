@@ -4,13 +4,14 @@
 # include <string>
 # include <vector>
 # include <fstream>
-// # include "Server.hpp"
-// # include "Location.hpp"
+
 class Server;
 class Location;
 
 void						trimSpaceBack(std::string &line);
 void						trimSpaceFront(std::string &line);
+void						fdEpollout(int epollFd, int fd);
+void						fdEpollin(int epollFd, int fd);
 bool						only_space_or_empty(std::string line);
 bool						infileExists(const std::string &file);
 bool						resolveHost(const std::string& host, std::string& ipAddress);
