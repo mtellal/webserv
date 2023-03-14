@@ -64,6 +64,12 @@ void	Configuration::open_and_check_file(std::string path_file) {
 				file.close();
 				return;
 			}
+			else if (!servPars.getListenSet())
+			{
+				error_msg("Directive Listen must be set");
+				file.close();
+				return;
+			}
 			else if (!servPars.getBlockClose())
 			{
 				error_msg("Block must be terminalet by \"}\"");

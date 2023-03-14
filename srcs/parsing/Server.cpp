@@ -5,7 +5,7 @@
 Server::Server() :
 Directives(), 
 _hostSet(false), _portSet(false), _blockClose(false),
-_errorServer(false), _serverNameSet(false),
+_errorServer(false), _serverNameSet(false), _listenSet(false),
 _host("0.0.0.0"), _port("8080")
 {
 	this->functPtr[0] = &Server::setHost;
@@ -37,6 +37,7 @@ Server	&Server::operator=(Server const &rhs) {
 		this->_blockClose = rhs._blockClose;
 		this->_errorServer = rhs._errorServer;
 		this->_serverNameSet = rhs._serverNameSet;
+		this->_listenSet = rhs._listenSet;
 
 		this->_server_fd = rhs._server_fd;
 
@@ -63,6 +64,7 @@ bool						Server::getHostSet() const { return this->_hostSet; }
 bool						Server::getBlockClose() const { return this->_blockClose; }
 bool						Server::getErrorServer() const { return this->_errorServer; }
 bool						Server::getServerNameSet() const { return this->_serverNameSet; }
+bool						Server::getListenSet() const { return this->_listenSet; }
 
 size_t						Server::getFd() const { return (this->_server_fd); }
 
@@ -120,6 +122,7 @@ void	Server::setHost(std::vector<std::string> host, int &i) {
 
 		if (splitPort.size() == 2)
 		{
+			this->_listenSet = true;
 			this->_hostSet = true;
 			this->_host = splitPort[0];
 			this->setPort(splitPort[1], i);
@@ -128,11 +131,13 @@ void	Server::setHost(std::vector<std::string> host, int &i) {
 		{
 			if (checkHost(host[1]))
 			{
+				this->_listenSet = true;
 				this->_hostSet = true;
 				this->_host = host[1];
 			}
 			else
 			{
+				this->_listenSet = true;
 				ft_stoi(host[1], &err);
 				if (err)
 					error_msg(i, "directive listen, wrong syntaxe");
@@ -204,19 +209,23 @@ void	Server::error_msg(const int &n_line, const std::string &err_msg)
 {
 	this->_errorServer = true;
 	std::cerr << "Error: at line " << n_line << " " << err_msg << std::endl;
-} 
+}
 
 bool	Server::checkHost(std::string host) {
 	std::vector<std::string> splitHost;
+	std::string res;
 
 	splitHost = ft_split(host.c_str(), ".");
 	if ((splitHost.size() == 4 && splitHost[0] == "127") ||
 		host == "0.0.0.0")
 		return true;
 
-	splitHost = ft_split(getIPFromHostName(host), ".");
-	if (splitHost.size() == 4 && splitHost[0] == "127")
-		return true;
+	if (resolveHost(host, res))
+	{
+		splitHost = ft_split(res, ".");
+		if (splitHost.size() == 4 && splitHost[0] == "127")
+				return true;
+	}
 	return false;
 }
 

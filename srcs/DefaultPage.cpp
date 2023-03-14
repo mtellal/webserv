@@ -77,21 +77,32 @@ void            DefaultPage::fileAndDir(std::ofstream &file, bool getDir, std::s
 		closedir(dir);
 	} 
 	else
-		perror("Impossible d'ouvrir le répertoire");
+		perror("Directory");
+}
+
+std::string	DefaultPage::findRightPathAutoindex(std::vector<std::string> p) {
+	struct stat	file;
+
+	memset(&file, 0, sizeof(file));
+	for (size_t i = 0; i < p.size(); i++)
+	{
+		stat(p[i].c_str(), &file);
+		if (S_ISDIR(file.st_mode))
+			return p[i];
+	}
+	return p[0];
 }
 
 /*	Affiche l'autoindex, deja les dossiers puis les ficheirs (comme nginx) */
 std::string     DefaultPage::createAutoindexPage(std::vector<std::string> p) {
-	std::string		path = p[0];
-	size_t			pos = path.find_last_of('/');
+	std::string		path = this->findRightPathAutoindex(p);
 	std::ofstream	file("/tmp/tmpFile.html", std::ios::out | std::ios::trunc);
 
-	path.erase(pos, path.size() - pos);
-	path += "/";
 
 	file << "<!DOCTYPE html>" << std::endl;
 	file << "<html lang=\"en\">" << std::endl;
 	file << "<head>" << std::endl;
+	file <<	"<link rel=\"shortcut icon\" href=\"favicon.png\"/>" << std::endl;
 	file << "	<meta charset=\"UTF-8\">" << std::endl;
 	file << "	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">" << std::endl;
 	file << "	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" << std::endl;

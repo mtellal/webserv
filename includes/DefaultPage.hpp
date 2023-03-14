@@ -35,6 +35,7 @@ class	DefaultPage
         std::string     createResFormPage();
         std::string     createDefaultPage(int statusCode);
         std::string     createAutoindexPage(std::vector<std::string> p);
+        std::string     findRightPathAutoindex(std::vector<std::string> p);
 
 
 

@@ -29,14 +29,13 @@ int main(int argc, char **argv, char **envp)
 }
 
 /*
-	Tester les pages d'erreur (si elles sont set dans le fichier de conf ou si elles ne
-	sont pas set)
+	-Check les valeur de read dans les pipes
 
-	Pour get et post, checker le format des args envoyes
+	-Leaks avec form
 
-	Autres codes err ?
-
-	Method DELETE, code 202 ?
+	-Si on essaye d'upolad un fichier mais que la direrctive n'est pas set
+	dans le fichier de conf => Err 500 et modifier le message affiche dans le
+	terminal.
 
 	send call failed: Broken pipe
 */

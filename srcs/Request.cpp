@@ -8,12 +8,12 @@
 
 Request::Request() {}
 
-Request::Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds) : 
+Request::Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds, int epollFd) : 
 _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false), 
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
 _bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), _locBlocSelect(false),
-_fd(fd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers),
+_fd(fd), _epollFd(epollFd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers),
 _clientServerFds(clientServerFds)
 {
 	this->functPtr[0] = &Request::setHostPort;
@@ -55,6 +55,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_locBlocSelect = rhs._locBlocSelect;
 
 		this->_fd = rhs._fd;
+		this->_epollFd = rhs._epollFd;
 		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
 
 		this->_host = rhs._host;
@@ -105,6 +106,7 @@ bool								Request::getAwaitingRequest() const { return (this->_awaitingHeader 
 bool								Request::getLocBlocSelect() const { return this->_locBlocSelect; }
 
 int									Request::getFd() const { return this->_fd; }
+int									Request::getEpollFd() const { return this->_epollFd; }
 
 size_t								Request::getBytesRecievd() const { return (this->_bodyBytesRecieved); }
 
@@ -138,6 +140,7 @@ void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 
 	std::time(&t);
 	_time = std::ctime(&t);
+
 	if (this->_tooLarge)
 		statusCode = 413;
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
@@ -153,7 +156,7 @@ void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 		if (this->_methodSet)
 			std::cout << "\033[1;97m [" << this->_method << "\033[0m";
 		std::cout << "\033[1;97m " << this->_path<< "]\033[0m";
-		if (statusCode== 200)
+		if (statusCode == 200)
 			std::cout << " - \033[1;32m" << statusCode << "\033[0m";
 		else
 			std::cout << " - \033[1;31m" << statusCode << "\033[0m";
@@ -162,13 +165,13 @@ void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 	path = findRightPageError(statusCode, this->_servBlock, this->_locBlocSelect, this->_locationBlock);
 
 	Header header(path, &statusCode);
-	strHeader = header.getHeaderRequestError();
-	if (send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL) == -1)
-		perror("send call failed");
+	page = header.getHeaderRequestError();
 
-	page = fileToStr(path);
-	if (send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL) == -1)
+	page += fileToStr(path);
+	fdEpollout(this->_epollFd, this->_fd);
+	if (send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL) <= 0)
 		perror("send call failed");
+	fdEpollin(this->_epollFd, this->_fd);
 	this->_closeConnection = true;
 }
 
@@ -625,7 +628,9 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 	char	buff[BUFFLEN_FILE + 1];
 	int		bytes;
 
+	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN_FILE, 0);
+	fdEpollout(this->_epollFd, this->_fd);
 	
 	if (bytes < 1)
 	{
@@ -795,19 +800,20 @@ int						Request::awaitingHeader(int fd)
 	int			bytes;
 	size_t		index;
 
+
+	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN, 0);
+	// fdEpollout(this->_epollFd, this->_fd);
 
 	if (bytes < 1)
 	{
 		if (!bytes)
 			this->_closeConnection = true;
 		else if (bytes == -1)
-		{
 			this->getErrorPage("recv call failed");
-		}
 		return (-1);
 	}
-	
+
 	buff[bytes] = '\0';
 
 	if (!this->_methodSet && bytes == 2 && !memcmp(buff, "\r\n", 2))
@@ -815,7 +821,6 @@ int						Request::awaitingHeader(int fd)
 		this->_awaitingHeader = true;
 		return (-1);
 	}
-
 	if (!this->_methodSet && !setMethodVersionPath(buff))
 	{
 		this->getErrorPage("Invalid HTTP request", 400);
@@ -827,9 +832,11 @@ int						Request::awaitingHeader(int fd)
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
+		fdEpollout(this->_epollFd, this->_fd);
 		this->_awaitingHeader = false;
 		return (bytes);
 	}
+	// else
 
 	this->_awaitingHeader = true;
 	return (-1);

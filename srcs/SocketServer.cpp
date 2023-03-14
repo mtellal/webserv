@@ -104,8 +104,6 @@ void	SocketServer::initSocket()
 		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
 			return (errorSocket("socket call failed"));
 
-		std::cout << "socket fd: " << serv_socket << " ip -> " << _servers[i].getHost().c_str() << std::endl;
-
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
 		this->_servers[i].setSocket(serv_socket);
@@ -242,17 +240,12 @@ int		SocketServer::epollWait() {
 	for (int j = 0; j < nbrFd; j++)
 	{
 		if (event[j].data.fd == 0)
-		{
 			return 1;
-		}
 		else if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
-		{
-			// std::cout << "FD SERVER: " << event[j].data.fd << std::endl;
 			createConnection(index_serv);
-		}
 		else
 		{
-			Request	req(event[j].data.fd, this->_servers, this->_clientServerFds);
+			Request	req(event[j].data.fd, this->_servers, this->_clientServerFds, this->_epollFd);
 
 			if ((index_wreq = isAwaitingRequest(event[j].data.fd)) != -1)
 				req = this->_awaitingRequest[index_wreq];
@@ -263,9 +256,7 @@ int		SocketServer::epollWait() {
 					this->_awaitingRequest.erase(this->_awaitingRequest.begin() + index_wreq);
 
 			if (req.getcloseConnection())
-			{
 				this->closeConnection(event[j].data.fd);
-			}
 			else if (req.getAwaitingRequest())
 			{
 				if (this->isAwaitingRequest(event[j].data.fd) == (size_t)-1)
@@ -277,10 +268,9 @@ int		SocketServer::epollWait() {
 			{
 				Response	rep(req, req.getServBlock(), this->_envp);
 
-				// rep.selectLocationBlock();
 				rep.sendData();
 				if (rep.getCloseConnection() && !req.getAwaitingRequest())
-					this->closeConnection(event[j].data.fd);	
+					this->closeConnection(event[j].data.fd);
 			}
 		}
 	}
@@ -332,7 +322,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 
 	event.events = EPOLLIN;
 	event.data.fd = client_fd;
-	if (epoll_ctl(this->_epollFd, EPOLLIN, client_fd, &event) == -1)
+	if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, client_fd, &event) == -1)
 	{
 		perror("err epoll_ctl");
 		this->_errSocket = true;
@@ -340,7 +330,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 	}
 }
 
-void	SocketServer::displayDisconnection(const Server &serv, const std::string &clientIP) const 
+void	SocketServer::displayDisconnection(const Server &serv, const std::string &clientIP) const
 {
 	time_t		t;
 	std::string	_time;

@@ -35,6 +35,7 @@ class Server : public Directives {
 		bool						getBlockClose() const;
 		bool						getErrorServer() const;
 		bool						getServerNameSet() const;
+		bool						getListenSet() const;
 
 		int							eraseClient(int fd);
 		size_t						getFd() const;
@@ -56,6 +57,7 @@ class Server : public Directives {
 		bool						_blockClose;
 		bool						_errorServer;
 		bool						_serverNameSet;
+		bool						_listenSet;
 
 		size_t						_server_fd;
 		

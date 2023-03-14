@@ -23,7 +23,7 @@ class Request {
 	public:
 	
 		Request();
-		Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds);
+		Request(int fd, const std::vector<Server> &servers, std::map<int, int> clientServerFds, int epollFd);
 		Request(Request const &src);
 		~Request();
 
@@ -43,6 +43,7 @@ class Request {
 		bool								getAwaitingRequest() const;
 		bool								getLocBlocSelect() const;
 		int									getFd() const;
+		int									getEpollFd() const;
 		size_t								getBytesRecievd() const;
 		std::string							getPath() const;
 		std::string							getHost() const;
@@ -84,6 +85,7 @@ class Request {
 		bool								_locBlocSelect;
 
 		int									_fd;
+		int									_epollFd;
 		size_t								_bodyBytesRecieved;
 		
 		std::string							_host;

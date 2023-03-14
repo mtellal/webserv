@@ -19,7 +19,7 @@ SRCS	=	main.cpp \
 			Header.cpp \
 			Cgi.cpp \
 			Client.cpp \
-			DefaultPage.cpp 
+			DefaultPage.cpp
 
 SRCDIR		= srcs
 
