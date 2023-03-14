@@ -838,7 +838,7 @@ int						Request::awaitingHeader(int fd)
 
 	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN, 0);
-	fdEpollout(this->_epollFd, this->_fd);
+	// fdEpollout(this->_epollFd, this->_fd);
 
 
 	if (bytes < 1)
@@ -849,7 +849,7 @@ int						Request::awaitingHeader(int fd)
 			this->getErrorPage("recv call failed");
 		return (-1);
 	}
-	
+
 	buff[bytes] = '\0';
 
 	if (!this->_methodSet && bytes == 2 && !memcmp(buff, "\r\n", 2))
@@ -857,7 +857,6 @@ int						Request::awaitingHeader(int fd)
 		this->_awaitingHeader = true;
 		return (-1);
 	}
-
 	if (!this->_methodSet && !setMethodVersionPath(buff))
 	{
 		this->getErrorPage("Invalid HTTP request");
@@ -869,9 +868,11 @@ int						Request::awaitingHeader(int fd)
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
+		fdEpollout(this->_epollFd, this->_fd);
 		this->_awaitingHeader = false;
 		return (bytes);
 	}
+	// else
 
 	this->_awaitingHeader = true;
 	return (-1);
