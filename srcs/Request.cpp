@@ -834,8 +834,11 @@ void						Request::request(int fd)
 			this->checkBodyBytesRecieved();
 		}
 
+		if (this->_contentLength.length() && ft_stoi(this->_contentLength, NULL) > (this->_servBlock.getClientMaxBodySize() * 1000000))
+			this->getErrorPage("Request Entity Too Large", 413);
+
 		if (!this->_hostSet || this->_badRequest)
-			this->getErrorPage("Bad request", 400);
+			this->getErrorPage("Bad Request", 400);
 	}
 }
 
