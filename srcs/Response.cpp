@@ -420,10 +420,7 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	
 	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) <= 0)
-	{
 		this->_closeConnection = true;
-		std::cout << "Err: send call failed" << std::endl;
-	}
 	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 	if (this->_req.getConnection() == "close")
