@@ -8,6 +8,8 @@
 class Server;
 class Location;
 
+void			            trimSpace(std::string &line);
+void		                lowerCaseStr(std::string &str);
 void						trimSpaceBack(std::string &line);
 void						trimSpaceFront(std::string &line);
 void						fdEpollout(int epollFd, int fd);

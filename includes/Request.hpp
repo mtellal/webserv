@@ -137,6 +137,7 @@ class Request {
 		void			setContentLength(std::vector<std::string> strSplit);
 		void			bodyRequest(const std::string &body, size_t &total);
 		void			setGetParams(std::vector<std::string> vct, size_t *i);
+		void			errMessage(int statusCode, const std::string &errMsg);
 		void			setAuthentification(std::vector<std::string> strSplit);
 		void			getErrorPage(const std::string &errMsg, int status = 500);
 		void			addQueryString(const std::string &key, const std::string &value);
