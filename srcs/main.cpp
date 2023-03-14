@@ -29,16 +29,13 @@ int main(int argc, char **argv, char **envp)
 }
 
 /*
-	-Check les valeur de read / recv / send / write (0 ET -1)
-	et un seul appel a une de ces fonctions par epoll_wait;
-
-	-Pas le droit de check la valeur de errno juste apres l'appel d'une de ces
-	fonctions ci dessus
-
-	-"poll() (or equivalent) must check read and write at the same time."
-	donc EPOLLIN ET EPOLLOUT ?
+	-Check les valeur de read dans les pipes
 
 	-Leaks avec form
+
+	-Si on essaye d'upolad un fichier mais que la direrctive n'est pas set
+	dans le fichier de conf => Err 500 et modifier le message affiche dans le
+	terminal.
 
 	send call failed: Broken pipe
 */

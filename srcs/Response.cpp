@@ -268,7 +268,9 @@ void	Response::httpRedir() {
 	else
 		res += this->_serv.getHttpRedir();
 	res += "\n\n";
+	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	write(this->_req.getFd(), res.c_str(), res.size());
+	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 	this->_closeConnection = true;
 	return ;
 }
@@ -342,7 +344,9 @@ std::string	Response::sendContentTypeError() {
 	Header	header(path, &this->_statusCode);
 
 	res = header.getHeaderRequestError();
+	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	write(this->_req.getFd(), res.c_str(), res.size());
+	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 	return path;
 }
 
@@ -391,6 +395,7 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
+		fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) <= 0)
 		{
 			this->_closeConnection = true;
@@ -413,6 +418,7 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	else
 		body = fileToStr(path_file);
 	
+	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) <= 0)
 	{
 		this->_closeConnection = true;

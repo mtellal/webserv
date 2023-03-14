@@ -141,6 +141,7 @@ void								Request::getErrorPage(const std::string &errMsg) {
 
 	std::time(&t);
 	_time = std::ctime(&t);
+
 	if (this->_tooLarge)
 		statusCode = 413;
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
@@ -167,13 +168,13 @@ void								Request::getErrorPage(const std::string &errMsg) {
 	path = findRightPageError(statusCode, this->_servBlock, this->_locBlocSelect, this->_locationBlock);
 
 	Header header(path, &statusCode);
-	strHeader = header.getHeaderRequestError();
-	if (send(this->_fd, strHeader.c_str(), strHeader.size(), MSG_NOSIGNAL) == -1)
-		perror("send call failed");
+	page = header.getHeaderRequestError();
 
-	page = fileToStr(path);
-	if (send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL) == -1)
+	page += fileToStr(path);
+	fdEpollout(this->_epollFd, this->_fd);
+	if (send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL) <= 0)
 		perror("send call failed");
+	fdEpollin(this->_epollFd, this->_fd);
 	this->_closeConnection = true;
 }
 
@@ -639,7 +640,9 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 	char	buff[BUFFLEN_FILE + 1];
 	int		bytes;
 
+	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN_FILE, 0);
+	fdEpollout(this->_epollFd, this->_fd);
 	
 	if (bytes < 1)
 	{
@@ -833,7 +836,9 @@ int						Request::awaitingHeader(int fd)
 	size_t		index;
 
 
+	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN, 0);
+	fdEpollout(this->_epollFd, this->_fd);
 
 
 	if (bytes < 1)
@@ -841,9 +846,7 @@ int						Request::awaitingHeader(int fd)
 		if (!bytes)
 			this->_closeConnection = true;
 		else if (bytes == -1)
-		{
 			this->getErrorPage("recv call failed");
-		}
 		return (-1);
 	}
 	
@@ -917,12 +920,6 @@ void						Request::request(int fd)
 
 		if (!this->_hostSet || this->_badRequest)
 			this->getErrorPage("Bad request");
-
-		// struct epoll_event	event;
-		// event.events = EPOLLOUT;
-		// event.data.fd = this->_fd;
-		// epoll_ctl(this->_epollFd, EPOLL_CTL_MOD, this->_fd, &event);
-		fdEpollout(this->_epollFd, this->_fd);
 	}
 }
 
