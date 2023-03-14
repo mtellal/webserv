@@ -9,6 +9,8 @@
 class Server;
 class Location;
 
+void			            trimSpace(std::string &line);
+void		                lowerCaseStr(std::string &str);
 void						trimSpaceBack(std::string &line);
 void						trimSpaceFront(std::string &line);
 bool						only_space_or_empty(std::string line);

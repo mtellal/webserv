@@ -130,35 +130,18 @@ Location							Request::getLocationBlock() const { return (this->_locationBlock)
 
 
 void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
-	time_t		t;
 	std::string	path;
 	std::string	strHeader;
 	std::string	page;
-	std::string	_time;
 
-	std::time(&t);
-	_time = std::ctime(&t);
 	if (this->_tooLarge)
 		statusCode = 413;
 	if (!this->_methodSet || !this->_hostSet || this->_badRequest)
 		statusCode = 400;
 
 	if (errMsg.length())
-	{
-		std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
-		std::cout << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
-		std::cout << "\033[1;36m [RESPONSE] \033[0m";
-		if (this->_hostSet)
-			std::cout << "\033[1;97m[" << this->_host << ":" << this->_port << "]\033[0m";
-		if (this->_methodSet)
-			std::cout << "\033[1;97m [" << this->_method << "\033[0m";
-		std::cout << "\033[1;97m " << this->_path<< "]\033[0m";
-		if (statusCode== 200)
-			std::cout << " - \033[1;32m" << statusCode << "\033[0m";
-		else
-			std::cout << " - \033[1;31m" << statusCode << "\033[0m";
-		std::cout << "\033[1;97m " << getHttpStatusCodeMessage(statusCode) << "\033[1;97m" << std::endl;
-	}
+		this->errMessage(statusCode, errMsg);
+
 	path = findRightPageError(statusCode, this->_servBlock, this->_locBlocSelect, this->_locationBlock);
 
 	Header header(path, &statusCode);
@@ -233,30 +216,23 @@ bool							Request::setMethodVersionPath(const std::string &buff)
 	return (true);
 }
 
-bool	checkStrHost(const std::string &host)
+bool							checkUri(const std::string &host)
 {
 	for (size_t i = 0; i < host.length(); i++)
-	{
-		if (!std::isalnum(host[i]) && host[i] != '.')
+		if (host[i] == '/')
 			return (false);
-	}
-	return (true);
-}
-
-bool	checkStrPort(std::string &port)
-{
-	while (port.length() && port[port.length() - 1] == ' ')
-		port.erase(port.length() - 1, 1);
-	for (size_t i = 0; i < port.length(); i++)
-	{
-		if (!std::isdigit(port[i]))
-			return (false);
-	}
 	return (true);
 }
 
 void							Request::setHostPort(std::vector<std::string> strSplit)
 {
+	if (this->_hostSet
+			|| strSplit.size() < 2
+			|| (strSplit.size() >= 2 && !checkUri(strSplit[1])))
+	{
+		this->_hostSet = false;
+		return ;
+	}
 	if (strSplit.size() >= 2)
 		this->_host = strSplit[1];
 	if (strSplit.size() >= 3)
@@ -494,6 +470,7 @@ void	Request::selectLocationBlock() {
 	if (this->_locBlocSelect)
 		this->_locationBlock = tmp;
 }
+
 void						Request::extractContentDisposition(const std::string &line, std::string &filename)
 {
 	std::string 				tmp(line);
@@ -732,24 +709,6 @@ void	Request::bodyRequest(size_t index)
 	out.close();
 }
 
-void		lowerCase(std::string &str)
-{
-	for (size_t i = 0; i < str.length(); i++)
-		str[i] = std::tolower(str[i]);
-}
-
-void		trimSpace(std::string &field)
-{
-	while (field.length() && field[0] == ' ')
-		field.erase(0, 1);
-	while (field.length() && field[field.length() - 1] == ' ')
-		field.erase(field.length() - 1, 1);
-}
-
-/*
-	Extract and set HTTP fields
-*/
-
 void						Request::setHTTPFields(const std::string &header)
 {
 	std::vector<std::string>	vct;
@@ -768,7 +727,7 @@ void						Request::setHTTPFields(const std::string &header)
 		if (index != (size_t)-1)
 		{
 			field = vct[i].substr(0, index + 1);
-			lowerCase(field);
+			lowerCaseStr(field);
 			for (size_t j = 0; j < 8; j++)
 			{
 				if (!memcmp(field.c_str(), key[j].c_str(), key[j].length()))
@@ -895,6 +854,34 @@ void	Request::printRequest() const
 	std::cout << "\033[1;97m " << this->_method << "\033[0m";
 	std::cout << "\033[1;97m " << this->_path << "\033[0m";
 	std::cout << "\033[1;90m - " << this->_agent << "\033[0m" << std::endl;
+}
+
+void	Request::errMessage(int statusCode, const std::string &errMsg)
+{
+	time_t 		t;
+	std::string	_time;
+
+	std::time(&t);
+	_time = std::ctime(&t);
+	std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
+	std::cerr << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
+	std::cerr << "\033[1;36m [RESPONSE] \033[0m";
+
+	if (this->_hostSet)
+		std::cerr << "\033[1;97m[" << this->_host << ":" << this->_port << "]\033[0m";
+
+	if (this->_methodSet)
+	{
+		std::cerr << "\033[1;97m [" << this->_method << "\033[0m";
+		std::cerr << "\033[1;97m " << this->_path << "]\033[0m";
+	}
+
+	if (statusCode == 200)
+		std::cerr << " - \033[1;32m" << statusCode << "\033[0m";
+	else
+		std::cerr << " - \033[1;31m" << statusCode << "\033[0m";
+
+	std::cerr << "\033[1;97m " << getHttpStatusCodeMessage(statusCode) << "\033[1;97m" << std::endl;
 }
 
 std::ostream &operator<<(std::ostream & o, Request const & rhs) {

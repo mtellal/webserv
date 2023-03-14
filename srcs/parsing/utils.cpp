@@ -193,6 +193,12 @@ bool	infileExists(const std::string &file)
 	return (true);
 }
 
+void		lowerCaseStr(std::string &str)
+{
+	for (size_t i = 0; i < str.length(); i++)
+		str[i] = std::tolower(str[i]);
+}
+
 void			trimSpaceFront(std::string &line)
 {
 	while (line.length() && line[0] == ' ')
@@ -203,6 +209,12 @@ void			trimSpaceBack(std::string &line)
 {
 	while (line.length() && line[line.length() - 1] == ' ')
 		line.erase(line.length() - 1, 1);
+}
+
+void			trimSpace(std::string &line)
+{
+	trimSpaceFront(line);
+	trimSpaceBack(line);
 }
 
 std::string		getIPFromHostName(const std::string& hostName) {
