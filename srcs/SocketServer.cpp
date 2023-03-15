@@ -128,6 +128,7 @@ void	SocketServer::createFdEpoll() {
 	struct epoll_event event;
 	int					j = 0;
 
+	memset(&event, 0, sizeof(event));
 	this->_epollFd = epoll_create(NB_EVENTS);
 	if (this->_epollFd == -1)
 	{
@@ -320,6 +321,7 @@ void	SocketServer::createConnection(int index_serv_fd)
 
 	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv_fd));
 
+	memset(&event, 0, sizeof(event));
 	event.events = EPOLLIN;
 	event.data.fd = client_fd;
 	if (epoll_ctl(this->_epollFd, EPOLL_CTL_ADD, client_fd, &event) == -1)

@@ -330,10 +330,7 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
     if (this->_req.getMethod() == "POST")
     {
         if ((in = open(".bodyfile", 0)) == -1)
-        {
-            errorMessage("can't open bodyfile");
-            return (this->_header.setStatus(500));
-        }
+            in = STDIN_FILENO;
     }
 
     f = fork();
