@@ -276,6 +276,22 @@ void                Cgi::extractContentType(const std::string &cgi_header)
     }
 }
 
+int             verifExePath(const std::string &exe)
+{
+    struct stat file;
+    mode_t      t;
+ 
+    stat(exe.c_str(), &file);
+    if (!S_ISREG(file.st_mode))
+        return (-1);
+    t = file.st_mode;
+    t = t << 5;
+    t = t >> 5;
+    if (!(t & S_IXUSR))
+        return (-1);
+    return (0);
+}
+
 int             Cgi::execute(const std::string &file, const std::string &exe, std::string &content)
 {
     int             p[2];
@@ -289,13 +305,22 @@ int             Cgi::execute(const std::string &file, const std::string &exe, st
     time(&begin);
     if (pipe(p) == -1)
     {
+        free_tab(this->_env);
         errorMessage("pipe call failed");
         return (500);
+    }
+
+    if (verifExePath(exe) == -1)
+    {
+        free_tab(this->_env);
+        errorMessage(exe + " can't be executed");
+        return (200);
     }
 
     f = fork();
     if (f == -1)
     {
+        free_tab(this->_env);
         errorMessage("fork call failed");
         return (500);
     }

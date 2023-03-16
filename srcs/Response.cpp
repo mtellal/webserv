@@ -345,7 +345,10 @@ std::string	Response::sendContentTypeError() {
 
 	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	if (send(this->_req.getFd(), res.c_str(), res.length(), MSG_NOSIGNAL) <= 0)
+	{
+		this->_closeConnection = true;
 		errorMessage("send call failed (content type error)");
+	}
 	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 	return path;
