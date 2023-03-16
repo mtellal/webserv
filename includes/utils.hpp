@@ -8,6 +8,7 @@
 class Server;
 class Location;
 
+void                        free_tab(char **tab);
 void			            trimSpace(std::string &line);
 void		                lowerCaseStr(std::string &str);
 void						trimSpaceBack(std::string &line);

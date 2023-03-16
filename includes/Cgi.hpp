@@ -34,16 +34,13 @@ class Cgi
     public:
 
         Cgi(const Cgi &);
-        Cgi(const Server &serv, const Request &req, Header &header, char **env);
+        Cgi(const Server &serv, const Request &req, char **env);
         ~Cgi();
 
         Cgi &operator=(const Cgi &);
         
-        void            initEnv();
-        void            printEnv();
         void            execute(const std::string &file, const std::string &exe, std::string &content);
 
-        Header          getHeader() const;
 
     private:
 
@@ -52,28 +49,26 @@ class Cgi
         bool                                _post;
 
         char                                **_env;
-        char                                **_rawEnv;
+
+        int                                 _infile;
 
         std::string                         _body;
         std::string                         _pathCgiExe;
         std::string                         _cgiWarnings;
 
-        Request                             _req;
-        Server                              _serv;
-        Header                              &_header;
 
         std::map<std::string, std::string>  _envMap;
         
-
-        void            addVarEnv();
-        void            addCgiVarEnv();
+        void            printEnv();
         void            setStatus(int s);
+        void            addVarEnv(char **rawEnv);
         void			errorMessage(const std::string &msg);
         void            setPoweredBy(const std::string &app);
         void            setContentType(const std::string &ct);
         void            setCgiWarnings(const std::string &err);
         void            setContentLength(const std::string &ct);
-        void            extractFields(const std::string &cgi_response);
+        void            addCgiVarEnv(const Server &serv, const Request &req);
+        void            initEnv(const Server &serv, const Request &req, char **rawEnv);
         void            quitChildProccess(int fdin, int p[2], char **args, const std::string &msg);
         void            child(int fdin, int pipe[2], const std::string &file, const std::string &exe);
         

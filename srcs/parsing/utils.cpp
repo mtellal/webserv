@@ -367,3 +367,13 @@ void	fdEpollin(int epollFd, int fd) {
 	event.data.fd = fd;
 	epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &event);
 }
+
+void                free_tab(char **tab)
+{
+    size_t i = 0;
+
+    while (tab && tab[i])
+        free(tab[i++]);
+    if (tab)
+        free(tab);
+}

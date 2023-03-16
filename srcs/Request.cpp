@@ -13,7 +13,7 @@ _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false),
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
 _bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), _locBlocSelect(false),
-_fd(fd), _epollFd(epollFd), _serverName("Webserv/1.0"), _bodyFilePath("./uploads/bodyfile"), _servers(servers),
+_fd(fd), _epollFd(epollFd), _serverName("Webserv/1.0"), _bodyFilePath(".bodyfile"), _servers(servers),
 _clientServerFds(clientServerFds)
 {
 	this->functPtr[0] = &Request::setHostPort;
