@@ -367,7 +367,11 @@ void	Response::sendHeader(std::string path)
 		if (this->_statusCode == 200 && this->_req.getCgiExtension().length())
 		{
 			Cgi	cgi(this->_serv, this->_req, this->_envp);
-			cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], cgi_content);
+			this->_statusCode = cgi.execute(path, this->_serv.getCgi()[this->_req.getCgiExtension()], cgi_content);
+			if (cgi_content.length())
+				header.setContentLength(ft_itos(cgi_content.length()));
+			if (cgi.getContentType().length())
+				header.setContentType(cgi.getContentType());
 			remove(this->_req.getBodyFilePath().c_str());
 		}
 

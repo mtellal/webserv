@@ -39,8 +39,8 @@ class Cgi
 
         Cgi &operator=(const Cgi &);
         
-        void            execute(const std::string &file, const std::string &exe, std::string &content);
-
+        int            execute(const std::string &file, const std::string &exe, std::string &content);
+        std::string    getContentType() const;
 
     private:
 
@@ -54,6 +54,7 @@ class Cgi
 
         std::string                         _body;
         std::string                         _pathCgiExe;
+        std::string                         _contentType;
         std::string                         _cgiWarnings;
 
 
@@ -67,6 +68,7 @@ class Cgi
         void            setContentType(const std::string &ct);
         void            setCgiWarnings(const std::string &err);
         void            setContentLength(const std::string &ct);
+        void            extractContentType(const std::string &cgi_response);
         void            addCgiVarEnv(const Server &serv, const Request &req);
         void            initEnv(const Server &serv, const Request &req, char **rawEnv);
         void            quitChildProccess(int fdin, int p[2], char **args, const std::string &msg);

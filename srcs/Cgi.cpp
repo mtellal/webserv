@@ -23,7 +23,6 @@ _err(false), _get(false), _post(false), _infile(STDIN_FILENO)
     {
         if ((_infile = open(".bodyfile", 0)) == -1)
         {
-            std::cout << "problem with bodyfile" << std::endl;
             _infile = STDIN_FILENO;
         }
     }
@@ -61,6 +60,7 @@ Cgi     &Cgi::operator=(const Cgi &src)
 
 void                Cgi::setCgiWarnings(const std::string &err) { this->_cgiWarnings = err; }
 
+std::string         Cgi::getContentType() const { return (this->_contentType); }
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -174,12 +174,14 @@ void    Cgi::initEnv(const Server &serv, const Request &req, char **rawEnv)
     if (!this->_env)
     {
         //this->_header.setStatus(500);
+        
         this->_err = true;
     }
 }
 
 void                Cgi::quitChildProccess(int fdin, int p[2], char **args, const std::string &msg) 
 {
+    close(_infile);
     close(fdin);
     errorMessage(msg);
     close(p[1]);
@@ -187,6 +189,25 @@ void                Cgi::quitChildProccess(int fdin, int p[2], char **args, cons
     free_tab(this->_env);
     _envMap.clear();
     exit(EXIT_FAILURE);
+}
+
+char                **Cgi::execArgs(const std::string &file, const std::string &exe)
+{
+    char        **args;
+
+    args = NULL;
+    
+    args = (char **)malloc(sizeof(char *) * 3);
+
+    if (!args)
+        errorMessage("new call failed (execArgs)");
+
+    args[0] = strdup(exe.c_str());
+    args[1] = strdup(file.c_str());
+
+    args[2] = NULL;
+
+    return (args);
 }
 
 void                Cgi::child(int fdin, int pipe[2], const std::string &file, const std::string &exe)
@@ -209,13 +230,14 @@ void                Cgi::child(int fdin, int pipe[2], const std::string &file, c
     quitChildProccess(fdin, pipe, args, "execve call failed");
 }
 
-std::string        parent(int pipe[2])
+std::string        parent(int pipe[2], int infile)
 {
     std::string response;
     int         len = 4096;
     char        buff[len];
     int         bytes;
 
+    close(infile);
     close(pipe[1]);
     bytes = read(pipe[0], buff, len - 1);
     buff[bytes] = '\0';
@@ -230,50 +252,52 @@ std::string        parent(int pipe[2])
     return (response);
 }
 
-char                **Cgi::execArgs(const std::string &file, const std::string &exe)
+void                Cgi::extractContentType(const std::string &cgi_header)
 {
-    char        **args;
+    std::string                 header;
+    std::vector<std::string>    lines;
+    std::vector<std::string>    field;
 
-    args = NULL;
-    
-    args = (char **)malloc(sizeof(char *) * 3);
+    header = cgi_header.substr(0, cgi_header.find("\n\r"));
 
-    if (!args)
-        errorMessage("new call failed (execArgs)");
+    lines = ft_split(header, "\n");
+    for (size_t i = 0; i < lines.size(); i++)
+    {
+        field = ft_split(lines[i], ":");
 
-    args[0] = strdup(exe.c_str());
-    args[1] = strdup(file.c_str());
-
-    args[2] = NULL;
-
-    return (args);
+        if (field.size())
+        {
+            for (size_t j = 0; j < 5; j++)
+            {
+                if ("Content-type" == field[0])
+                    this->_contentType = field[1];
+            }
+        }
+    }
 }
 
-/*
-    GET: set data from env var;
-    POST: redirect recv bytes in stdin cgi process
-*/
-
-void             Cgi::execute(const std::string &file, const std::string &exe, std::string &content)
+int             Cgi::execute(const std::string &file, const std::string &exe, std::string &content)
 {
     int             p[2];
     int             status;
     size_t          index;
-    std::string     header;
     std::string     response;
     pid_t           f;
-
+    time_t          begin;
+    time_t          end;
+    
+    time(&begin);
     if (pipe(p) == -1)
     {
         errorMessage("pipe call failed");
-        return ;
+        return (500);
     }
 
     f = fork();
     if (f == -1)
     {
         errorMessage("fork call failed");
-        return ;
+        return (500);
     }
     if (f == 0)
         child(_infile, p, file, exe);
@@ -282,25 +306,35 @@ void             Cgi::execute(const std::string &file, const std::string &exe, s
         free_tab(this->_env);
         if (_infile != STDIN_FILENO)
             close(_infile);
-        waitpid(f, &status, 0);
-        response = parent(p);
+        while (waitpid(f, &status, WNOHANG) == 0)
+        {
+            time(&end);
+            sleep(1);
+            if (difftime(end, begin) > 5)
+            {
+                errorMessage("timeout cgi");
+                kill(f, 0);
+                return (504);
+            }
+        }
 
+        response = parent(p, _infile);
         if (!WIFEXITED(status) || (WIFEXITED(status) && WEXITSTATUS(status) != EXIT_SUCCESS))
         {
-            errorMessage("cgi did not execute correctly");
-            return ;
+            errorMessage("cgi did not execute correctly EXIT_FAILURE");
+            return (502);
         }
 
         index = response.find("\r\n\r\n");
         if (index == (size_t)-1)
-        {
             errorMessage("\\r\\n\\r\\n not found in cgi response");
-            return ;
+        else
+        {
+            extractContentType(response.substr(0, index));
+            content = response.substr(index + 4, response.length());
         }
-        header = response.substr(0, index);
-        content = response.substr(index + 4, response.length());
     }
-    return ;
+    return (200);
 }
 
 void			Cgi::errorMessage(const std::string &msg)

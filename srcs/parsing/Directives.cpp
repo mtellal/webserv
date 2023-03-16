@@ -222,7 +222,10 @@ void	Directives::setCgi(std::vector<std::string> cgi, int &i) {
 	if (cgi.size()!= 3)
 		error_line(i, "Directive cgi, wrong args");
 	else
+	{
+		this->_cgiSet = true;
 		this->_cgi.insert(std::make_pair(cgi[1], cgi[2]));
+	}
 }
 
 void	Directives::setUpload(std::vector<std::string> upload, int &i) {

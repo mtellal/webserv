@@ -132,11 +132,12 @@ std::string	ft_itos(int nbr)
 }
 
 std::string	getHttpStatusCodeMessage(int statusCode) {
-	int			httpCode[9] = {200, 204, 400, 403, 404, 405, 406, 413, 500};
-	std::string	message[9] = {"OK", "No Content", "Bad Request", "Forbidden", "Not Found",
-							"Method Not Allowed", "Not Acceptable","Request Entity Too Large" , "Internal Server Error"};
+	int			httpCode[11] = {200, 204, 400, 403, 404, 405, 406, 413, 500, 502, 504};
+	std::string	message[11] = {"OK", "No Content", "Bad Request", "Forbidden", "Not Found",
+							"Method Not Allowed", "Not Acceptable","Request Entity Too Large" ,
+							"Internal Server Error", "Bad Gateway", "Gateway Timeout"};
 
-	for (size_t i = 0; i < 9; i++)
+	for (size_t i = 0; i < 11; i++)
 	{
 		if (httpCode[i] == statusCode)
 			return message[i];
