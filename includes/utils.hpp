@@ -33,7 +33,6 @@ std::vector<std::string>	ft_split(const std::string &str, const std::string &cha
 
 std::string					findRightPageError(int statusCode, Server const &serv, bool locBlockSelect, Location const &loc);
 std::string					rightPathErr(bool &pageFind, int statusCode, Server const &serv, bool locBlockSelect, Location const &loc);
-std::string					rightRoot(Server const &serv, bool locBlockSelect, Location const &loc);
 
 
 #endif
