@@ -280,7 +280,8 @@ int             verifExePath(const std::string &exe)
 {
     struct stat file;
     mode_t      t;
- 
+    
+    memset(&file, 0, sizeof(file));
     stat(exe.c_str(), &file);
     if (!S_ISREG(file.st_mode))
         return (-1);
