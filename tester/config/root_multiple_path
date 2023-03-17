@@ -1,0 +1,5 @@
+server
+{
+    listen 127.0.200.0:8080;
+    root /dfwfwdf /wdfwfw;
+}

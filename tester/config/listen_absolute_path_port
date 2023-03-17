@@ -1,0 +1,5 @@
+server 
+{
+    listen /usr/bin/ls:8080;
+    root /;
+}

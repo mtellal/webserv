@@ -80,7 +80,7 @@ void	SocketServer::closeFdSocket(int i, int err) {
 	for (int j = 0; j < i; j++)
 		close(this->_servers[j].getFd());
 	this->_errSocket = true;
-	std::cout << gai_strerror(err) << std::endl;
+	std::cerr << gai_strerror(err) << std::endl;
 }
 
 void	SocketServer::initSocket()
@@ -101,6 +101,7 @@ void	SocketServer::initSocket()
 		if ((ret = getaddrinfo(_servers[i].getHost().c_str(), _servers[i].getPort().c_str(), &hints, &res)) != 0)
 			return (this->closeFdSocket(i, ret));
 		
+
 		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
 			return (errorSocket("socket call failed"));
 
