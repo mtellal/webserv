@@ -112,7 +112,7 @@ void	Server::setHost(std::vector<std::string> host, int &i) {
 	std::vector<std::string>	splitPort;
 	bool						err = false;
 
-	if (host.size() != 2)
+	if (host.size() != 2 || (host.size() == 2 && (host[1] == ";" || host[1].empty())))
 		return (error_msg(i, "directive listen, wrong format"));
 	if (!this->checkFormatHost(host[1]))
 		error_msg(i, "directive listen, host and port must be split by one ':'");

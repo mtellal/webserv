@@ -39,10 +39,11 @@ void	Configuration::error_msg(const std::string &msg = "", const int &n_line = -
 }
 
 void	Configuration::open_and_check_file(std::string path_file) {
-	std::ifstream file(path_file.c_str());
-	std::string line;
-	std::vector<std::string> lineSplit;
-	int n_line = 1;
+	std::ifstream				file(path_file.c_str());
+	std::string					line;
+	std::vector<std::string>	lineSplit;
+	int							n_line = 1;
+	bool						server_line = false;
 
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
@@ -52,31 +53,44 @@ void	Configuration::open_and_check_file(std::string path_file) {
 	{
 		lineSplit = ft_split(line.c_str(), " \t");
 
-		if (lineSplit.size() == 2 and lineSplit[0] == "server" and lineSplit[1] == "{")
+		if ((lineSplit.size() == 2 and lineSplit[0] == "server" and lineSplit[1] == "{") ||
+			(lineSplit.size() == 1 && (lineSplit[0] == "server" || lineSplit[0] == "{")))
 		{
-			Server servPars;
+			if (server_line && lineSplit[0] != "{")
+			{
+				error_msg("Error: Incorrect information at line ", n_line);
+				file.close();
+				return ;
+			}
+			else if (!server_line && lineSplit.size() == 1 && lineSplit[0] == "server")
+				server_line = true;
+			else
+			{
+				Server servPars;
+				server_line = false;
 
-			servPars.readServBlock(file, n_line);
+				servPars.readServBlock(file, n_line);
 
-			if (servPars.getErrorServer() or servPars.getErrorDirectives())
-			{
-				error_msg();
-				file.close();
-				return;
+				if (servPars.getErrorServer() or servPars.getErrorDirectives())
+				{
+					error_msg();
+					file.close();
+					return;
+				}
+				else if (!servPars.getListenSet())
+				{
+					error_msg("Directive Listen must be set");
+					file.close();
+					return;
+				}
+				else if (!servPars.getBlockClose())
+				{
+					error_msg("Block must be terminalet by \"}\"");
+					file.close();
+					return;
+				}
+				_servers.push_back(servPars);
 			}
-			else if (!servPars.getListenSet())
-			{
-				error_msg("Directive Listen must be set");
-				file.close();
-				return;
-			}
-			else if (!servPars.getBlockClose())
-			{
-				error_msg("Block must be terminalet by \"}\"");
-				file.close();
-				return;
-			}
-			_servers.push_back(servPars);
 		}
 		else if (!only_space_or_empty(line))
 		{

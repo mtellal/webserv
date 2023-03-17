@@ -316,10 +316,7 @@ bool	resolveHost(const std::string& host, std::string& ipAddress) {
 	hints.ai_flags = AI_CANONNAME;
 
 	if (getaddrinfo(host.c_str(), NULL, &hints, &res) != 0)
-	{
-		std::cerr << "Error: Could not resolve host \"" << host << "\"." << std::endl;
 		return false;
-	}
 	struct sockaddr_in* addr = (struct sockaddr_in*)res->ai_addr;
 	ipAddress = inet_ntoa(addr->sin_addr);
 	freeaddrinfo(res);

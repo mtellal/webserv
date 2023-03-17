@@ -89,7 +89,7 @@ void	Directives::setErrorPage(std::vector<std::string> str, int &i) {
 	bool	err = false;
 	int		nbError;
 
-	if (str.size() != 3)
+	if (str.size() != 3 || (str.size() == 3 && (str[2] == ";" || str[2].empty())))
 		return (error_line(i, "directive error_page, wrong format"));
 	nbError = ft_stoi(str[1], &err);
 	if (err)
@@ -110,7 +110,7 @@ void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int &i
 	bool	err = false;
 	int		nbMaxClient;
 
-	if (maxClient.size() != 2)
+	if (maxClient.size() != 2 || (maxClient.size() == 2 && (maxClient[1] == ";" || maxClient[1].empty())))
 		return (error_line(i, "directive client_max_body_size, wrong format"));
 	nbMaxClient= ft_stoi(maxClient[1], &err);
 	if (err)
@@ -130,7 +130,7 @@ void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int &i
 }
 
 void	Directives::setRoot(std::vector<std::string> root, int &i) {
-	if (root.size() != 2)
+	if (root.size() != 2 || (root.size() == 2 && (root[1] == ";" || root[1].empty())))
 		error_line(i, "directive root, wrong format");
 	else if (!this->_rootSet)
 	{
@@ -142,7 +142,7 @@ void	Directives::setRoot(std::vector<std::string> root, int &i) {
 }
 
 void	Directives::setAutoindex(std::vector<std::string> autoindex, int &i) {
-	if (autoindex.size() != 2)
+	if (autoindex.size() != 2 || (autoindex.size() == 2 && (autoindex[1] == ";" || autoindex[1].empty())))
 		error_line(i, "directive autoindex, wrong format");
 	else if (!this->_autoindexSet and (autoindex[1] == "on" or autoindex[1] == "off"))
 	{
@@ -159,7 +159,7 @@ void	Directives::setAutoindex(std::vector<std::string> autoindex, int &i) {
 }
 
 void	Directives::setIndex(std::vector<std::string> index, int &i) {
-	if (index.size() < 2)
+	if (index.size() < 2 || index[index.size() - 1].empty())
 		error_line(i, "directive index wrong format");
 	else if (!this->_indexSet)
 	{
@@ -176,7 +176,7 @@ void	Directives::setIndex(std::vector<std::string> index, int &i) {
 }
 
 void	Directives::setHttpRedir(std::vector<std::string> redir, int &i) {
-	if (redir.size() != 2)
+	if (redir.size() != 2 || (redir.size() == 2 && (redir[1] == ";" || redir[1].empty())))
 		error_line(i, "directive return wrong format");
 	else if (!this->_httpRedirSet)
 	{
@@ -188,7 +188,7 @@ void	Directives::setHttpRedir(std::vector<std::string> redir, int &i) {
 }
 
 void	Directives::setHttpMethods(std::vector<std::string> methods, int &i) {
-	if (methods.size() < 2)
+	if (methods.size() < 2 || methods[methods.size() - 1].empty())
 		error_line(i, "incorrect directive");
 	else
 	{
@@ -219,7 +219,7 @@ void	Directives::setHttpMethods(std::vector<std::string> methods, int &i) {
 }
 
 void	Directives::setCgi(std::vector<std::string> cgi, int &i) {
-	if (cgi.size()!= 3)
+	if (cgi.size() != 3 || (cgi.size() == 3 && (cgi[2] == ";" || cgi[2].empty())))
 		error_line(i, "Directive cgi, wrong args");
 	else
 	{
@@ -229,7 +229,7 @@ void	Directives::setCgi(std::vector<std::string> cgi, int &i) {
 }
 
 void	Directives::setUpload(std::vector<std::string> upload, int &i) {
-	if (upload.size()!= 2)
+	if (upload.size() != 2 || (upload.size() == 2 && (upload[1] == ";" || upload[1].empty())))
 		error_line(i, "Directive upload, wrong args");
 	else
 	{
