@@ -761,7 +761,6 @@ int						Request::awaitingHeader(int fd)
 
 	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN, 0);
-	// fdEpollout(this->_epollFd, this->_fd);
 
 	if (bytes < 1)
 	{

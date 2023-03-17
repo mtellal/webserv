@@ -288,8 +288,6 @@ std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, boo
 		{
 			pageFind = true;
 			rightPath = it->second;
-			if (root[0] == '/')
-				root.erase(0, 1);
 			if (root[root.size() - 1] != '/')
 				root += "/";
 			root += rightPath;
@@ -305,8 +303,6 @@ std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, boo
 			pageFind = true;
 			rightPath = it->second;
 			root = serv.getRoot();
-			if (root[0] == '/')
-				root.erase(0, 1);
 			if (root[root.size() - 1] != '/')
 				root += "/";
 			root += rightPath;

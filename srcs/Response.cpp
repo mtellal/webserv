@@ -88,8 +88,6 @@ bool	Response::rightPathLocation() {
 	std::vector<std::string>	index = this->rightIndex();
 
 	memset(&fileOrDir, 0, sizeof(fileOrDir));
-	if (root[0] == '/')
-		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	if (root.size() > 0 && root[root.size() - 1] != '/' &&
 		newPath.size() > 0 && newPath[0] != '/')
@@ -127,8 +125,6 @@ bool	Response::rightPathServer() {
 	std::vector<std::string>	index;
 
 	memset(&fileOrDir, 0, sizeof(fileOrDir));
-	if (root[0] == '/')
-		root.erase(0, 1);
 	newPath = this->_req.getPath();
 	if (root.size() > 0 && root[root.size() - 1] != '/' &&
 		newPath.size() > 0 && newPath[0] != '/')
@@ -269,7 +265,8 @@ void	Response::httpRedir() {
 		res += this->_serv.getHttpRedir();
 	res += "\n\n";
 	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
-	write(this->_req.getFd(), res.c_str(), res.size());
+	if (write(this->_req.getFd(), res.c_str(), res.size()) <= 0)
+		this->_closeConnection = true;
 	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 	this->_closeConnection = true;
 	return ;
