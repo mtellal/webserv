@@ -289,8 +289,14 @@ void	Server::readServBlock(std::ifstream &file, int &i) {
 }
 
 bool	Server::isLocationBlock(std::vector<std::string> splitLine) {
-	if (splitLine.size() != 3 or splitLine[0] != "location"
-		or splitLine[2] != "{")
+	if (splitLine.size() == 2 || splitLine.size() == 3)
+	{
+		if (splitLine[0] != "location")
+			return false;
+		if (splitLine.size() == 3 && splitLine[2] != "{")
+			return false;
+	}
+	else
 		return false;
 	for (size_t i = 0; i < splitLine[1].size(); i++)
 	{

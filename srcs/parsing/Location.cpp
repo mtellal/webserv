@@ -2,7 +2,7 @@
 
 Location::Location() {}
 
-Location::Location(int &i, std::vector<std::string> loc) : _errorLoc(false) {
+Location::Location(int &i, std::vector<std::string> loc) : _errorLoc(false), _loc(loc) {
 	this->functPtr[0] = &Directives::setHttpMethods;
 	this->functPtr[1] = &Directives::setErrorPage;
 	this->functPtr[2] = &Directives::setClientMaxBodySize;
@@ -28,6 +28,7 @@ Location	&Location::operator=(Location const &rhs) {
 	{
 		this->_path = rhs._path;
 		this->_errorLoc = rhs._errorLoc;
+		this->_loc = rhs._loc;
 	}
 	return *this;
 }
@@ -58,6 +59,7 @@ void	Location::error_line(const int &n_line, const std::string &err_msg)
 
 void	Location::readLocationBlock(std::ifstream &file, int &i) {
 	int j;
+	bool first_line = true;
 	std::string line;
 	std::string directives[9] = { "http_methods", "error_page", "client_max_body_size",
 						 "root", "autoindex", "index", "return", "cgi", "upload" };
@@ -72,23 +74,32 @@ void	Location::readLocationBlock(std::ifstream &file, int &i) {
 
 			if (tmp.size() == 1 and tmp[0] == "}")
 				return ;
-			while (j < 9)
+			else if (first_line && this->_loc.size() == 2)
 			{
-				if (tmp[0] == directives[j])
-				{
-					if (!this->checkFormatDir(tmp, i))
-					{
-						this->_errorLoc = true;
-						return ;
-					}
-					tmp[tmp.size() - 1].erase(tmp[tmp.size() - 1].size() - 1, 1);
-					(this->*functPtr[j])(tmp, i);
-					break ;
-				}
-				j++;
+				if (tmp.size() != 1 && tmp[0] != "{")
+					error_line(i, " Block must be open with {");
+				first_line = false;
 			}
-			if (j == 9)
-				error_line(i, " incorrect directive");
+			else
+			{
+				while (j < 9)
+				{
+					if (tmp[0] == directives[j])
+					{
+						if (!this->checkFormatDir(tmp, i))
+						{
+							this->_errorLoc = true;
+							return ;
+						}
+						tmp[tmp.size() - 1].erase(tmp[tmp.size() - 1].size() - 1, 1);
+						(this->*functPtr[j])(tmp, i);
+						break ;
+					}
+					j++;
+				}
+				if (j == 9)
+					error_line(i, " incorrect directive");
+			}
 			if (this->_errorLoc or this->_errorDirectives)
 			{
 				this->_errorLoc = true;

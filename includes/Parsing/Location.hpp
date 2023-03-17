@@ -25,6 +25,7 @@ class Location : public Directives {
 		
 			bool						_errorLoc;
 			std::string					_path;
+			std::vector<std::string>	_loc;
 
 
 	private:
