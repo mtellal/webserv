@@ -420,11 +420,6 @@ int		Request::pickServBlock()
 		return index[0];
 	else if (vctServSelect.size() > 1)
 		return selectBlockWithServerName(vctServSelect, index);
-	// }
-	/* Si ce message d'err apparait, c'est peut etre par ce que l'adresse recherchee ne correspond
-		pas a un bloc serveur mais qu'une adress precise est set avec ce port. Si l'adresse est
-		presnte dans le fichier de conf, il y a vraiment une erreur dans le code */
-	std::cout << "CE MESSAGE NE DOIT PLUS APPARAITRE" << std::endl;
 	return -1;
 }
 
@@ -579,9 +574,13 @@ void							Request::verifyFiles()
 	request = fileToStr(this->_bodyFilePath);
 	if (!request.length())
 		return ;
-	bounds = ft_split_str(request, this->_boundary);
-	for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
-		this->extractFile(bounds[i]);
+	if (!memcmp("multipart/form-data", this->_contentType.c_str(), 19)
+			&& this->_boundarySet)
+	{
+		bounds = ft_split_str(request, this->_boundary);
+		for (size_t i = 0; i < bounds.size() && bounds[i] != "--\r\n"; i++)
+			this->extractFile(bounds[i]);
+	}
 }
 
 void							Request::checkBodyBytesRecieved()
@@ -761,7 +760,6 @@ int						Request::awaitingHeader(int fd)
 
 	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN, 0);
-	// fdEpollout(this->_epollFd, this->_fd);
 
 	if (bytes < 1)
 	{
@@ -794,7 +792,6 @@ int						Request::awaitingHeader(int fd)
 		this->_awaitingHeader = false;
 		return (bytes);
 	}
-	// else
 
 	this->_awaitingHeader = true;
 	return (-1);
