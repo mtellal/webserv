@@ -263,19 +263,8 @@ std::string		getRightHost(const std::string& host) {
 		return res;
 	return "";
 }
-std::string	rightRoot(Server const &serv, bool locBlockSelect, Location const &loc) {
-	std::string	root;
-
-	if (locBlockSelect and loc.getRootSet())
-		root = loc.getRoot();
-	else
-		root = serv.getRoot();
-
-	return root;
-}
 
 std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, bool locBlockSelect, Location const &loc) {
-	std::string									root = rightRoot(serv, locBlockSelect, loc);
 	std::map<int, std::string>					mapErr;
 	std::map<int, std::string>::const_iterator	it;
 	std::string									rightPath;
@@ -288,12 +277,6 @@ std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, boo
 		{
 			pageFind = true;
 			rightPath = it->second;
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
 		}
 	}
 	if (!pageFind and serv.getErrorPageSet())
@@ -304,13 +287,6 @@ std::string	rightPathErr(bool &pageFind, int statusCode, Server const &serv, boo
 		{
 			pageFind = true;
 			rightPath = it->second;
-			root = serv.getRoot();
-			if (root[0] == '/')
-				root.erase(0, 1);
-			if (root[root.size() - 1] != '/')
-				root += "/";
-			root += rightPath;
-			rightPath = root;
 		}
 	}
 	return rightPath;

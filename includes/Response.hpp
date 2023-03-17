@@ -68,7 +68,9 @@ class Response
 		std::string					deleteResource();
 		std::string					sendContentTypeError();
 		std::string					testAllPaths(bool *err);
+		std::string					rightRoot(Server const &serv, bool locBlockSelect, Location const &loc);
 		std::vector<std::string>	rightIndex();
+
 };
 
 

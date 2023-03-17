@@ -73,6 +73,17 @@ std::vector<std::string>	Response::rightIndex() {
 	return index;
 }
 
+std::string	Response::rightRoot(Server const &serv, bool locBlockSelect, Location const &loc) {
+	std::string	root;
+
+	if (locBlockSelect and loc.getRootSet())
+		root = loc.getRoot();
+	else
+		root = serv.getRoot();
+
+	return root;
+}
+
 /*	Reconstitue le chemin complet du fichier avec la directive root + 
 	l'url qu'a entre l'utilisateur. Une fois le chemin reconstitue :
 	- Si c'est un fichier, on l'ajoute a notre vct de path.
@@ -83,13 +94,11 @@ std::vector<std::string>	Response::rightIndex() {
 	- Sinon, on met notre bool a true (donc erreur) */
 bool	Response::rightPathLocation() {
 	struct stat					fileOrDir;
-	std::string					root = rightRoot(this->_serv, this->_locBlocSelect, this->_locBloc);
+	std::string					root = this->rightRoot(this->_serv, this->_locBlocSelect, this->_locBloc);
 	std::string					newPath;
 	std::vector<std::string>	index = this->rightIndex();
 
 	memset(&fileOrDir, 0, sizeof(fileOrDir));
-	if (root[0] == '/')
-		root.erase(0, 1);
 	newPath = this->_req.getPath().erase(0, this->_locBloc.getPath().size());
 	if (root.size() > 0 && root[root.size() - 1] != '/' &&
 		newPath.size() > 0 && newPath[0] != '/')
@@ -127,8 +136,6 @@ bool	Response::rightPathServer() {
 	std::vector<std::string>	index;
 
 	memset(&fileOrDir, 0, sizeof(fileOrDir));
-	if (root[0] == '/')
-		root.erase(0, 1);
 	newPath = this->_req.getPath();
 	if (root.size() > 0 && root[root.size() - 1] != '/' &&
 		newPath.size() > 0 && newPath[0] != '/')
@@ -269,7 +276,8 @@ void	Response::httpRedir() {
 		res += this->_serv.getHttpRedir();
 	res += "\n\n";
 	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
-	write(this->_req.getFd(), res.c_str(), res.size());
+	if (write(this->_req.getFd(), res.c_str(), res.size()) <= 0)
+		this->_closeConnection = true;
 	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 	this->_closeConnection = true;
 	return ;
