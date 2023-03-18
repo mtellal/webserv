@@ -14,9 +14,9 @@
 
 # include "Server.hpp"
 
-
 # define BUFFLEN 4096
 # define BUFFLEN_FILE 65536
+# define MAX_BYTES_UPLOAD 1000000000
 
 class Request {
 

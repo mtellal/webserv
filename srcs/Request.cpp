@@ -130,7 +130,6 @@ std::string							Request::getCgiExtension() const { return (this->_cgiExtension
 Server								Request::getServBlock() const { return (this->_servBlock); }
 Location							Request::getLocationBlock() const { return (this->_locationBlock); }
 
-
 void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 	std::string	path;
 	std::string	strHeader;
@@ -610,7 +609,6 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 			this->getErrorPage("recv failed");
 		if (!bytes)
 		{
-			this->getErrorPage("recv 0 bytes");
 			this->_closeConnection = true;
 		}
 		this->quitAwaitingRequest();
@@ -761,7 +759,6 @@ int						Request::awaitingHeader(int fd)
 	{
 		if (!bytes)
 		{
-			this->getErrorPage("recv 0 bytes");
 			this->_closeConnection = true;
 		}
 		else if (bytes == -1)
@@ -835,8 +832,9 @@ void						Request::request(int fd)
 		}
 
 		if (this->_contentLength.length()
-				&& (this->_servBlock.getClientMaxBodySize()
-				&& ft_stoi(this->_contentLength, NULL) > (this->_servBlock.getClientMaxBodySize() * 1000000)))
+				&& (ft_stoi(this->_contentLength, NULL) > MAX_BYTES_UPLOAD
+					|| ((this->_servBlock.getClientMaxBodySize()
+						&& ft_stoi(this->_contentLength, NULL) > (this->_servBlock.getClientMaxBodySize() * 1000000)))))
 			this->getErrorPage("Request Entity Too Large", 413);
 
 		if (!this->_hostSet || this->_badRequest)
