@@ -57,7 +57,7 @@ class SocketServer {
 		void					closeSockets();
 		void					createFdEpoll();
 		void					closeConnection(int fd);
-		void					errorSocket(std::string s);
+		void					errorSocket(std::string s, struct addrinfo *res);
 		void					closeFdSocket(int i, int err);
 		void					createConnection(int index_serv_fd);
 		void					displayNewConnection(const Server &serv, const std::string &clientIP) const; 

@@ -69,8 +69,12 @@ std::string		getAddressInfo(const struct sockaddr addr)
 	return (address);
 }
 
-void	SocketServer::errorSocket(std::string s)
+void	SocketServer::errorSocket(std::string s, struct addrinfo *res)
 {
+	if (res)
+		freeaddrinfo((struct addrinfo *)res);
+	for (size_t j = 0; j < this->_servers_fd.size(); j++)
+		close(this->_servers_fd[j]);
 	perror(s.c_str());
 	this->_errSocket = true;
 	return ;
@@ -103,7 +107,7 @@ void	SocketServer::initSocket()
 		
 
 		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
-			return (errorSocket("socket call failed"));
+			return (errorSocket("socket call failed", res));
 
 		setsockopt(serv_socket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 
@@ -113,7 +117,7 @@ void	SocketServer::initSocket()
 		this->_servers_fd.push_back(serv_socket);
 
 		if (bind(serv_socket, res->ai_addr, res->ai_addrlen) == -1)
-			return (errorSocket("bind call failed"));
+			return (errorSocket("bind call failed", res));
 		
 		freeaddrinfo((struct addrinfo *)res);
 		res = NULL;
@@ -121,7 +125,7 @@ void	SocketServer::initSocket()
 		if (nonBlockFd(serv_socket))
 			return ;
 		if (listen(serv_socket, NB_EVENTS) == -1)
-			return (errorSocket("Listen call failed"));
+			return (errorSocket("Listen call failed", res));
 	}
 }
 

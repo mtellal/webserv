@@ -84,7 +84,7 @@ std::map<std::string, std::string>	Directives::getCgi() const { return this->_cg
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //												S E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// A MODIFIER
 void	Directives::setErrorPage(std::vector<std::string> str, int &i) {
 	bool	err = false;
 	int		nbError;
@@ -159,7 +159,9 @@ void	Directives::setAutoindex(std::vector<std::string> autoindex, int &i) {
 }
 
 void	Directives::setIndex(std::vector<std::string> index, int &i) {
-	if (index.size() < 2 || index[index.size() - 1].empty())
+	if (this->_indexSet)
+		error_line(i, "index is already set");
+	else if (index.size() < 2 || index[index.size() - 1].empty())
 		error_line(i, "directive index wrong format");
 	else if (!this->_indexSet)
 	{
@@ -188,7 +190,9 @@ void	Directives::setHttpRedir(std::vector<std::string> redir, int &i) {
 }
 
 void	Directives::setHttpMethods(std::vector<std::string> methods, int &i) {
-	if (methods.size() < 2 || methods[methods.size() - 1].empty())
+	if (this->_httpMethodsSet)
+		error_line(i, "http_methods is already set");
+	else if (methods.size() < 2 || methods[methods.size() - 1].empty())
 		error_line(i, "incorrect directive");
 	else
 	{
@@ -229,7 +233,9 @@ void	Directives::setCgi(std::vector<std::string> cgi, int &i) {
 }
 
 void	Directives::setUpload(std::vector<std::string> upload, int &i) {
-	if (upload.size() != 2 || (upload.size() == 2 && (upload[1] == ";" || upload[1].empty())))
+	if (this->_uploadSet)
+		error_line(i, "directive upload is already set");
+	else if (upload.size() != 2 || (upload.size() == 2 && (upload[1] == ";" || upload[1].empty())))
 		error_line(i, "Directive upload, wrong args");
 	else
 	{
