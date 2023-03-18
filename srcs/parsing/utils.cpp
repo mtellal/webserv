@@ -323,24 +323,6 @@ bool	resolveHost(const std::string& host, std::string& ipAddress) {
 	return true;
 }
 
-void	fdEpollout(int epollFd, int fd) {
-	struct epoll_event	event;
-
-	memset(&event, 0, sizeof(event));
-	event.events = EPOLLOUT;
-	event.data.fd = fd;
-	epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &event);
-}
-
-void	fdEpollin(int epollFd, int fd) {
-	struct epoll_event	event;
-
-	memset(&event, 0, sizeof(event));
-	event.events = EPOLLIN;
-	event.data.fd = fd;
-	epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &event);
-}
-
 void                free_tab(char **tab)
 {
     size_t i = 0;

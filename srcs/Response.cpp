@@ -275,10 +275,8 @@ void	Response::httpRedir() {
 	else
 		res += this->_serv.getHttpRedir();
 	res += "\n\n";
-	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	if (write(this->_req.getFd(), res.c_str(), res.size()) <= 0)
 		this->_closeConnection = true;
-	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 	this->_closeConnection = true;
 	return ;
 }
@@ -351,13 +349,11 @@ std::string	Response::sendContentTypeError() {
 
 	res = header.getHeaderRequestError();
 
-	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	if (send(this->_req.getFd(), res.c_str(), res.length(), MSG_NOSIGNAL) <= 0)
 	{
 		this->_closeConnection = true;
 		errorMessage("send call failed (content type error)");
 	}
-	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 	return path;
 }
@@ -388,13 +384,11 @@ void	Response::sendHeader(std::string path)
 
 		res = header.getHeader();
 
-		fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) <= 0)
 		{
 			this->_closeConnection = true;
 			errorMessage("send call failed (sending header)");
 		}
-		fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 		if (this->_req.getMethod() != "HEAD")
 			this->sendPage(path, cgi_content);
@@ -410,13 +404,11 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	else
 		body = fileToStr(path_file);
 	
-	fdEpollout(this->_req.getEpollFd(), this->_req.getFd());
 	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) <= 0)
 	{
 		this->_closeConnection = true;
 		errorMessage("send call failed (sending body)");
 	}
-	fdEpollin(this->_req.getEpollFd(), this->_req.getFd());
 
 	if (this->_req.getConnection() == "close")
 		this->_closeConnection = true;

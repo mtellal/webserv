@@ -150,10 +150,8 @@ void								Request::getErrorPage(const std::string &errMsg, int statusCode) {
 	page = header.getHeaderRequestError();
 
 	page += fileToStr(path);
-	fdEpollout(this->_epollFd, this->_fd);
 	if (send(this->_fd, page.c_str(), page.size(), MSG_NOSIGNAL) <= 0)
 		perror("send call failed");
-	fdEpollin(this->_epollFd, this->_fd);
 	this->_closeConnection = true;
 }
 
@@ -603,9 +601,7 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 	char	buff[BUFFLEN_FILE + 1];
 	int		bytes;
 
-	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN_FILE, 0);
-	fdEpollout(this->_epollFd, this->_fd);
 	
 	if (bytes < 1)
 	{
@@ -759,7 +755,6 @@ int						Request::awaitingHeader(int fd)
 	size_t		index;
 
 
-	fdEpollin(this->_epollFd, this->_fd);
 	bytes = recv(fd, buff, BUFFLEN, 0);
 
 	if (bytes < 1)
@@ -792,7 +787,6 @@ int						Request::awaitingHeader(int fd)
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
-		fdEpollout(this->_epollFd, this->_fd);
 		this->_awaitingHeader = false;
 		return (bytes);
 	}

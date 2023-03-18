@@ -16,7 +16,7 @@
 
 
 # define BUFFLEN 4096
-# define BUFFLEN_FILE 1048576
+# define BUFFLEN_FILE 65536
 
 class Request {
 
