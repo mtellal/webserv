@@ -1,5 +1,8 @@
 #include "Configuration.hpp"
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 Configuration::Configuration() {}
 
@@ -44,11 +47,16 @@ void	Configuration::open_and_check_file(std::string path_file) {
 	std::vector<std::string>	lineSplit;
 	int							n_line = 1;
 	bool						server_line = false;
+	struct stat check_file;
 
+	memset(&check_file, 0, sizeof(check_file));
+	stat(path_file.c_str(), &check_file);
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	if (!file)
-		return (error_msg("Error: File not found"));
+		return (error_msg("Error: File not found or permission deny"));
+	else if (S_ISDIR(check_file.st_mode))
+		return (error_msg("Error: arg is directory"));
 	while (std::getline(file, line))
 	{
 		lineSplit = ft_split(line.c_str(), " \t");

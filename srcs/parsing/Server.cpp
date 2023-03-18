@@ -101,6 +101,8 @@ void	Server::setAddress(std::string a) { this->_address = a; }
 void	Server::setDomain(std::string d) { this->_domain = d; }
 
 void	Server::setServerName(std::vector<std::string> serverName, int &i) {
+	if (this->_serverNameSet)
+		return (error_msg(i, " directive server_name already set"));
 	this->_serverNameSet = true;
 	if (serverName.size() < 2)
 		return (error_msg(i, " directive server_name, wrong format"));
@@ -111,7 +113,10 @@ void	Server::setServerName(std::vector<std::string> serverName, int &i) {
 void	Server::setHost(std::vector<std::string> host, int &i) {
 	std::vector<std::string>	splitPort;
 	bool						err = false;
+	int							port;
 
+	if (this->_hostSet || this->_portSet)
+		return (error_msg(i, "directive listen already set"));
 	if (host.size() != 2 || (host.size() == 2 && (host[1] == ";" || host[1].empty())))
 		return (error_msg(i, "directive listen, wrong format"));
 	if (!this->checkFormatHost(host[1]))
@@ -125,6 +130,11 @@ void	Server::setHost(std::vector<std::string> host, int &i) {
 			this->_listenSet = true;
 			this->_hostSet = true;
 			this->_host = splitPort[0];
+			port = ft_stoi(splitPort[1], &err);
+			if (err)
+				return error_msg(i, "directive listen, wrong syntaxe");
+			else if (port < 1 || port > 65535)
+				return error_msg(i, "incorrect port");
 			this->setPort(splitPort[1], i);
 		}
 		else
@@ -138,9 +148,11 @@ void	Server::setHost(std::vector<std::string> host, int &i) {
 			else
 			{
 				this->_listenSet = true;
-				ft_stoi(host[1], &err);
+				port = ft_stoi(host[1], &err);
 				if (err)
 					error_msg(i, "directive listen, wrong syntaxe");
+				else if (port < 1 || port > 65535)
+					return error_msg(i, "incorrect port");
 				else
 				{
 					this->_host = "0.0.0.0";
