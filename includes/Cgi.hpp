@@ -39,12 +39,13 @@ class Cgi
 
         Cgi &operator=(const Cgi &);
         
-        int            execute(const std::string &file, const std::string &exe, std::string &content);
-        std::string    getContentType() const;
+        int             execute(const std::string &file, const std::string &exe, std::string &content);
+        bool            getErrInit() const;
+        std::string     getContentType() const;
 
     private:
 
-        bool                                _err;
+        bool                                _errInit;
         bool                                _get;
         bool                                _post;
 

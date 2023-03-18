@@ -37,10 +37,7 @@ class SocketServer {
 		SocketServer	&operator=(SocketServer const &rhs);
 
 		bool					getErrSocket() const;
-		int						getEpollFd() const;
-		std::vector<size_t>		getServerFd() const;
 		std::vector<Server>		getVctServer() const;
-		std::map<int, int>		getClientServer() const;
 
 
 	private:
