@@ -1,0 +1,7 @@
+server
+{
+    listen 8080;
+    root www/site1;
+    http_methods GET;
+    wfwf cgi php /usr/bin/cgi;
+}

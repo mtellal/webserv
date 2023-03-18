@@ -248,7 +248,7 @@ bool	Directives::checkFormatDir(std::vector<std::string> host, int &i) {
 
 	if (tmp[len - 1] != ';' || (len > 1 && tmp[len - 2] == ';'))
 	{
-		std::cout << "Error: at line " << i << " directive must be terminated by one \';\'" << std::endl;
+		std::cerr << "Error: at line " << i << " directive must be terminated by one \';\'" << std::endl;
 		return false;
 	}
 	return true;

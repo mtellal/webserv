@@ -1,0 +1,13 @@
+server
+{
+    listen 8080;
+    root www/site1;
+    http_methods GET;
+    cgi php /usr/bin/;
+    error_page	404 www/site1/404.html;
+    client_max_body_size 10;
+    autoindex    on;
+
+    location /wdf
+    {}
+}

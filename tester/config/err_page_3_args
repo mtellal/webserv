@@ -1,0 +1,8 @@
+server
+{
+    listen 8080;
+    root www/site1;
+    http_methods GET;
+    cgi php /usr/bin/;
+    error_page	404 www/site1/404.html wdf;
+}

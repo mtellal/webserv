@@ -85,7 +85,7 @@ void	Configuration::open_and_check_file(std::string path_file) {
 				}
 				else if (!servPars.getBlockClose())
 				{
-					error_msg("Block must be terminalet by \"}\"");
+					error_msg("Block must be terminated by \"}\"");
 					file.close();
 					return;
 				}

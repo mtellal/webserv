@@ -614,6 +614,7 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 			this->getErrorPage("recv failed");
 		if (!bytes)
 		{
+			this->getErrorPage("recv 0 bytes");
 			this->_closeConnection = true;
 		}
 		this->quitAwaitingRequest();
@@ -764,7 +765,10 @@ int						Request::awaitingHeader(int fd)
 	if (bytes < 1)
 	{
 		if (!bytes)
+		{
+			this->getErrorPage("recv 0 bytes");
 			this->_closeConnection = true;
+		}
 		else if (bytes == -1)
 			this->getErrorPage("recv call failed");
 		return (-1);
@@ -836,7 +840,8 @@ void						Request::request(int fd)
 			this->checkBodyBytesRecieved();
 		}
 
-		if (this->_contentLength.length() && ft_stoi(this->_contentLength, NULL) > (this->_servBlock.getClientMaxBodySize() * 1000000))
+		if (this->_contentLength.length()
+				&& ft_stoi(this->_contentLength, NULL) > (this->_servBlock.getClientMaxBodySize() * 1000000))
 			this->getErrorPage("Request Entity Too Large", 413);
 
 		if (!this->_hostSet || this->_badRequest)

@@ -240,7 +240,7 @@ std::string        parent(int pipe[2], int infile)
     close(infile);
     close(pipe[1]);
     bytes = read(pipe[0], buff, len - 1);
-    if (bytes == -1)
+    if (bytes < 1)
     {
         close(pipe[0]);
         return (response);
@@ -250,7 +250,7 @@ std::string        parent(int pipe[2], int infile)
     while (bytes > 0)
     {
         bytes = read(pipe[0], buff, len - 1);
-        if (bytes == -1)
+        if (bytes < 1)
         {
             close(pipe[0]);
             return (response);
