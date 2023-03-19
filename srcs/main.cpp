@@ -17,9 +17,12 @@ int main(int argc, char **argv, char **envp)
 	if (conf.getErrorConf())
 		return 1;
 
-	SocketServer	serv(conf, envp);
-	if (serv.getErrSocket())
-		return 1;
+	(void)envp;
+	std::cout << conf << std::endl;
+
+	// SocketServer	serv(conf, envp);
+	// if (serv.getErrSocket())
+	// 	return 1;
 
 	return 0;
 }

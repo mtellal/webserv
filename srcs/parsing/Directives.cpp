@@ -84,7 +84,7 @@ std::map<std::string, std::string>	Directives::getCgi() const { return this->_cg
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //												S E T T E R													  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// A MODIFIER
+
 void	Directives::setErrorPage(std::vector<std::string> str, int &i) {
 	bool	err = false;
 	int		nbError;
@@ -94,16 +94,9 @@ void	Directives::setErrorPage(std::vector<std::string> str, int &i) {
 	nbError = ft_stoi(str[1], &err);
 	if (err)
 		error_line(i, "code error_page is incorrect");
-	else if ((nbError >= 400 and nbError <= 418) or (nbError >= 421 and nbError <= 426)
-		or (nbError >= 428 and nbError <= 429) or nbError == 431 or (nbError >= 449 and nbError <= 451)
-		or nbError == 456)
-	{
-		if (!this->_errorPageSet)
-			this->_errorPageSet = true;
-		this->_errorPage[nbError] = str[2];
-	}
-	else
-		error_line(i, "code error_page don't exist");
+	if (!this->_errorPageSet)
+		this->_errorPageSet = true;
+	this->_errorPage[nbError] = str[2];
 }
 
 void	Directives::setClientMaxBodySize(std::vector<std::string> maxClient, int &i) {

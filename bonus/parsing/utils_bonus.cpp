@@ -10,27 +10,17 @@
 
 int	ft_stoi(const std::string str, bool *err)
 {
-	int	i = 0;
 	int	sign = 1;
 	int	res = 0;
 
-	while ((str[i] >= '\t' && str[i] <= '\r') or str[i] == ' ')
-		i++;
-	if (str[i] == '+' or str[i] == '-')
+	for (size_t i = 0; i < str.size(); i++)
 	{
-		if (str[i] == '-')
-			sign = -1;
-		i++;
-	}
-	if (str[i] < '0' and str[i] > '9')
-	{
-		*err = true;
-		return 0;
-	}
-	while ((str[i] >= '0' and str[i] <= '9') and str[i])
-	{
+		if (str[i] < '0' or str[i] > '9')
+		{
+			*err = true;
+			return 0;
+		}
 		res = res * 10 + str[i] - 48;
-		i++;
 	}
 	return res * sign;
 }
