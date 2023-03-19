@@ -126,6 +126,7 @@ class Request {
 		void			parsArgs(std::string tmp);
 		void			bodyRequest(size_t index);
 		void			setHTTPFields(const std::string &header);
+		void			errInfoMessage(const std::string &errMsg);
 		void			extractFile(const std::string &bound_data);
 		void			setAgent(std::vector<std::string> strSplit);
 		void			setAccept(std::vector<std::string> strSplit);

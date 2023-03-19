@@ -486,6 +486,16 @@ void						Request::extractContentDisposition(const std::string &line, std::strin
 	}
 }
 
+void							formatPath(std::string &path)
+{
+	if (path[0] != '/')
+		path = "/" + path;
+	if (path[0] != '.')
+		path = "." + path;
+	if (path[path.length() - 1] != '/')
+		path += "/";
+}
+
 /*
 	Verify if the data inside boundaries need to be save via the contentType, 
 	then parse and save it with the proper file name
@@ -520,19 +530,8 @@ void							Request::extractFile(const std::string &bound_data)
 		if (!uploadPath.length())
 			return (this->getErrorPage("Upload path not defined"));
 		
-		if (uploadPath[0] != '/')
-			uploadPath = "/" + uploadPath;
-		if (uploadPath[0] != '.')
-			uploadPath = "." + uploadPath;
-		if (uploadPath[uploadPath.length() - 1] != '/')
-			uploadPath += "/";
-		
-		if (rootPath[0] != '/')
-			rootPath = "/" + rootPath;
-		if (rootPath[0] != '.')
-			rootPath = "." + rootPath;
-		if (rootPath[rootPath.length() - 1] != '/')
-			rootPath += "/";
+		formatPath(uploadPath);
+		formatPath(rootPath);
 
 		if (memcmp(uploadPath.c_str(), rootPath.c_str(), rootPath.length()))
 			return (this->getErrorPage("Upload path not in " + this->_servBlock.getRoot() + " folder", 403));
@@ -574,17 +573,34 @@ void							Request::verifyFiles()
 	}
 }
 
+bool							validUploadPath(const std::string &path)
+{
+	struct stat f;
+	std::string	p(path);
+
+	formatPath(p);
+	memset(&f, 0, sizeof(f));
+	if (stat(p.c_str(), &f) == -1)
+		return (false);
+	if (S_ISDIR(f.st_mode))
+		return (true);
+	return (false);
+}
+
 void							Request::checkBodyBytesRecieved()
 {
 	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
 		this->_awaitingBody = true;
 	else
 	{
-		if (!this->_cgiExtension.length())
+		if (!this->_cgiExtension.length()
+			&& validUploadPath(this->_servBlock.getUpload()))
 		{
 			this->verifyFiles();
 			remove(this->_bodyFilePath.c_str());
 		}
+		else
+			this->errInfoMessage("invalid path upload");
 		this->_awaitingBody = false;
 	}
 }
@@ -845,6 +861,11 @@ void	Request::printRequest() const
 	std::cout << "\033[1;90m - " << this->_agent << "\033[0m" << std::endl;
 }
 
+void	Request::errInfoMessage(const std::string &errMsg)
+{
+	std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
+}
+
 void	Request::errMessage(int statusCode, const std::string &errMsg)
 {
 	time_t 		t;
@@ -852,7 +873,7 @@ void	Request::errMessage(int statusCode, const std::string &errMsg)
 
 	std::time(&t);
 	_time = std::ctime(&t);
-	std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
+	errInfoMessage(errMsg);
 	std::cerr << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
 	std::cerr << "\033[1;36m [RESPONSE] \033[0m";
 

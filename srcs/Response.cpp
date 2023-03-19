@@ -371,8 +371,8 @@ void	Response::sendHeader(std::string path)
 				if (cgi.getContentType().length())
 					header.setContentType(cgi.getContentType());
 			}
-			remove(this->_req.getBodyFilePath().c_str());
 		}
+		remove(this->_req.getBodyFilePath().c_str());
 
 		res = header.getHeader();
 		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) <= 0)
