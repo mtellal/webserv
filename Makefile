@@ -78,7 +78,7 @@ fclean: clean
 
 re: fclean all
 
--include (DEPS)
--include (DEPS_BONUS)
+-include $(DEPS)
+-include $(DEPS_BONUS)
 
 .PHONY: all clean fclean re
