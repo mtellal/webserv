@@ -40,20 +40,20 @@ SRCDIR_BONUS	= bonus
 
 OBJDIR		= obj
 
-OBJDIR_BONUS		= $(OBJDIR)/bonus
-
 OBJS		= $(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
 
-OBJS_BONUS	= $(addprefix $(OBJDIR_BONUS)/, $(SRCS_BONUS:.cpp=.o))
+OBJS_BONUS	= $(addprefix $(SRCDIR_BONUS)/, $(SRCS_BONUS:.cpp=.o))
 
 DEPS		= $(OBJS:.o=.d)
+
+DEPS_BONUS	= $(OBJS_BONUS:.o=.d)
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
 	$(CC) $(CPPFLAGS) $(INC) $(OBJS) -o $(NAME)
 
-bonus: | $(OBJS_BONUS)
+bonus: $(OBJS_BONUS)
 	$(CC) $(CPPFLAGS) $(INC) $(OBJS_BONUS) -o $(NAME)_bonus
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
@@ -61,15 +61,14 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(INC) -MMD -c $< -o $@ -I include
 
-$(OBJDIR_BONUS)/%.o: $(SRCDIR_BONUS)/%.cpp
-	@mkdir -p $(OBJDIR_BONUS)
-	@mkdir -p $(@D)
+$(SRCDIR_BONUS)/%.o: $(SRCDIR_BONUS)/%.cpp
 	$(CC) $(CPPFLAGS) $(INC) -MMD -c $< -o $@ -I include
 
 clean:
 	rm -f $(OBJS)
 	rm -f $(OBJS_BONUS)
 	rm -f $(DEPS)
+	rm -f $(DEPS_BONUS)
 	@rm -rf $(OBJDIR)
 	@rm -rf $(OBJDIR_BONUS)
 
@@ -79,6 +78,7 @@ fclean: clean
 
 re: fclean all
 
--include $(DEPS)
+-include (DEPS)
+-include (DEPS_BONUS)
 
 .PHONY: all clean fclean re
