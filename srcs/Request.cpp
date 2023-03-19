@@ -486,16 +486,6 @@ void						Request::extractContentDisposition(const std::string &line, std::strin
 	}
 }
 
-void							formatPath(std::string &path)
-{
-	if (path[0] != '/')
-		path = "/" + path;
-	if (path[0] != '.')
-		path = "." + path;
-	if (path[path.length() - 1] != '/')
-		path += "/";
-}
-
 /*
 	Verify if the data inside boundaries need to be save via the contentType, 
 	then parse and save it with the proper file name
@@ -593,14 +583,16 @@ void							Request::checkBodyBytesRecieved()
 		this->_awaitingBody = true;
 	else
 	{
-		if (!this->_cgiExtension.length()
-			&& validUploadPath(this->_servBlock.getUpload()))
+		if (!this->_cgiExtension.length())
 		{
-			this->verifyFiles();
-			remove(this->_bodyFilePath.c_str());
+			if (validUploadPath(this->_servBlock.getUpload()))
+			{
+				this->verifyFiles();
+				remove(this->_bodyFilePath.c_str());
+			}
+			else
+				this->errInfoMessage("invalid path upload");
 		}
-		else
-			this->errInfoMessage("invalid path upload");
 		this->_awaitingBody = false;
 	}
 }
@@ -734,7 +726,7 @@ void						Request::setHTTPFields(const std::string &header)
 			lowerCaseStr(field);
 			for (size_t j = 0; j < 8; j++)
 			{
-				if (!memcmp(field.c_str(), key[j].c_str(), key[j].length()))
+				if (field.length() && !memcmp(field.c_str(), key[j].c_str(), key[j].length()))
 				{
 					strSplit = ft_split(vct[i], ":");
 					if (strSplit.size() < 2)

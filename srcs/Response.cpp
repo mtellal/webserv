@@ -394,7 +394,7 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 		body =  cgi_content;
 	else
 		body = fileToStr(path_file);
-	
+
 	if (send(this->_req.getFd(), body.c_str(), body.length(), MSG_NOSIGNAL) <= 0)
 	{
 		this->_closeConnection = true;
@@ -402,7 +402,9 @@ void		Response::sendPage(std::string path_file, const std::string &cgi_content)
 	}
 
 	if (this->_req.getConnection() == "close")
+	{
 		this->_closeConnection = true;
+	}
 }
 
 void	Response::printResponse() const

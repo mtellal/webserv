@@ -10,6 +10,7 @@ class Location;
 
 void                        free_tab(char **tab);
 void			            trimSpace(std::string &line);
+void						formatPath(std::string &path);
 void		                lowerCaseStr(std::string &str);
 void						trimSpaceBack(std::string &line);
 void						trimSpaceFront(std::string &line);

@@ -100,6 +100,10 @@ void    Cgi::addVarEnv(char **rawEnv)
 
 void    Cgi::addCgiVarEnv(const Server &serv, const Request &req)
 {
+    std::string script;
+
+    script = serv.getRoot() + req.getPath();
+    formatPath(script);
     _envMap["REDIRECT_STATUS"]     =   "200";
     _envMap["AUTH_TYPE"]           =   req.getAuthentification();
     if (req.getMethod() == "POST")
@@ -109,13 +113,15 @@ void    Cgi::addCgiVarEnv(const Server &serv, const Request &req)
             _envMap["CONTENT_TYPE"] = req.getContentType();
     }
     else
+    {
         _envMap["QUERY_STRING"]    =    req.getQueryString();
+    }
     _envMap["GATEWAY_INTERFACE"]   =    "Cgi/1.1";
     _envMap["PATH_INFO"]           =    req.getPath();
     _envMap["PATH_TRANSLATED"]     =    req.getPath();
     _envMap["REQUEST_METHOD"]      =    req.getMethod();
-    _envMap["SCRIPT_NAME"]         =    "." + serv.getRoot() + req.getPath();
-    _envMap["SCRIPT_FILENAME"]     =    "." + serv.getRoot() + req.getPath();
+    _envMap["SCRIPT_NAME"]         =    script;
+    _envMap["SCRIPT_FILENAME"]     =    script;
     _envMap["SERVER_NAME"]         =    req.getServerName();
     _envMap["SERVER_PORT"]         =    req.getPort();
     _envMap["SERVER_PROTOCOL"]     =    "HTTP/1.1";

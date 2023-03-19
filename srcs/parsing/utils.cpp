@@ -172,6 +172,16 @@ size_t    tab_len(char **env)
     return (i);
 }
 
+void							formatPath(std::string &path)
+{
+	if (path[0] != '/')
+		path = "/" + path;
+	if (path[0] != '.')
+		path = "." + path;
+	if (path[path.length() - 1] != '/')
+		path += "/";
+}
+
 bool	infileExists(const std::string &file)
 {
 	std::ifstream in(file.c_str(), std::ifstream::in | std::ifstream::binary);
