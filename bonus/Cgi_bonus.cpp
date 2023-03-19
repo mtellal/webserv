@@ -13,6 +13,8 @@
 #include "Cgi.hpp"
 #include "utils.hpp"
 
+Cgi::Cgi(): 
+_errInit(false), _get(false), _post(false), _infile(STDIN_FILENO) {}
 
 Cgi::Cgi(const Server &serv, const Request &req, char **env):
 _errInit(false), _get(false), _post(false), _infile(STDIN_FILENO)
@@ -76,18 +78,17 @@ void    Cgi::printEnv()
 
 void    Cgi::addVarEnv(char **rawEnv)
 {
-    size_t  i;
-    size_t  len;
+    size_t      i;
+    size_t      len;
+    size_t      index;
+    std::string key;
+    std::string value;
+    std::string var_envMap;
 
     i = 0;
     len = tab_len(rawEnv);
     while (i < len)
     {
-        std::string var_envMap;
-        size_t      index;
-        std::string key;
-        std::string value;
-
         var_envMap = rawEnv[i];
         index = var_envMap.find("=");
         key = var_envMap.substr(0, index);

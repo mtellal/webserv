@@ -7,7 +7,7 @@ int main(int argc, char **argv, char **envp)
 
 	if (argc != 2)
 	{
-		std::cout << "Error: 1 config file expected" << std::endl;
+		std::cerr << "Error: 1 config file expected" << std::endl;
 		return 1;
 	}
 

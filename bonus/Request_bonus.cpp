@@ -280,9 +280,7 @@ void							Request::setContentLength(std::vector<std::string> strSplit) {
 void							Request::setContentType(std::vector<std::string> strSplit) {
 
 	this->_contentType = strSplit[1];
-
 	strSplit = ft_split(strSplit[1], " ");
-
 	if (strSplit.size() == 2 and strSplit[0] == "multipart/form-data;" and
 		strSplit[1].find("boundary=") != std::string::npos)
 	{
@@ -311,7 +309,6 @@ void							Request::setGetParams(std::vector<std::string> vct, size_t *i) {
 			{
 				if (strSplit[j].find("name=") != std::string::npos)
 				{
-					// Tester si dans le code html, il n'y a pas de name ou que le name est vide
 					name = ft_split(strSplit[j].c_str(), "=\"")[1];
 					break ;
 				}
@@ -497,15 +494,14 @@ void						Request::extractContentDisposition(const std::string &line, std::strin
 void							Request::extractFile(const std::string &bound_data)
 {
 	size_t						index;
-	std::string					contentType;
 	std::string					fileName;
-	std::string					uploadPath;
 	std::string					rootPath;
+	std::string					uploadPath;
+	std::string					contentType;
 	std::ofstream				outfile;
 	std::vector<std::string>	fields;
 
 	index = bound_data.find("\r\n\r\n");
-
 	if (index == (size_t)-1)
 		return ;
 
@@ -513,9 +509,7 @@ void							Request::extractFile(const std::string &bound_data)
 	for (size_t i = 0; i < fields.size(); i++)
 	{
 		if (!memcmp(fields[i].c_str(), "Content-Disposition:", 20))
-		{
 			this->extractContentDisposition(fields[i], fileName);
-		}
 	}
 
 	if (fileName.length())
@@ -608,9 +602,7 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 		if (bytes == -1)
 			this->getErrorPage("recv failed");
 		if (!bytes)
-		{
 			this->_closeConnection = true;
-		}
 		this->quitAwaitingRequest();
 		return (-1);
 	}
@@ -618,7 +610,6 @@ int							Request::recvToBodyFile(int fd, std::ofstream &out)
 	buff[bytes] = '\0';
 	out.write(buff, bytes);
 	out.close();
-
 	this->_bodyBytesRecieved += bytes;
 	return (0);
 }
@@ -721,7 +712,6 @@ void						Request::setHTTPFields(const std::string &header)
 	for (size_t i = 0; i < vct.size(); i++)
 	{
 		index = vct[i].find(':');
-		
 		if (index != (size_t)-1)
 		{
 			field = vct[i].substr(0, index + 1);
@@ -758,9 +748,7 @@ int						Request::awaitingHeader(int fd)
 	if (bytes < 1)
 	{
 		if (!bytes)
-		{
 			this->_closeConnection = true;
-		}
 		else if (bytes == -1)
 			this->getErrorPage("recv call failed");
 		return (-1);

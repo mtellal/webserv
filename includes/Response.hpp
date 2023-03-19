@@ -73,7 +73,4 @@ class Response
 
 };
 
-
-std::ostream	&operator<<(std::ostream &out, const Response &res);
-
 #endif

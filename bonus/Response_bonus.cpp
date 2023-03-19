@@ -84,14 +84,6 @@ std::string	Response::rightRoot(Server const &serv, bool locBlockSelect, Locatio
 	return root;
 }
 
-/*	Reconstitue le chemin complet du fichier avec la directive root + 
-	l'url qu'a entre l'utilisateur. Une fois le chemin reconstitue :
-	- Si c'est un fichier, on l'ajoute a notre vct de path.
-	- Si c'est un dossier, on ajoute un a un a notre vct de path, le path
-	des fichiers indiques dans la directive index du fichier de conf
-	et on regardera plus tard si ces fichiers existent ou pas. On regarde aussi si l'
-	autoindex est "on" pour pouvoir l'afficher en cas de besoin.
-	- Sinon, on met notre bool a true (donc erreur) */
 bool	Response::rightPathLocation() {
 	struct stat					fileOrDir;
 	std::string					root = this->rightRoot(this->_serv, this->_locBlocSelect, this->_locBloc);
@@ -128,7 +120,6 @@ bool	Response::rightPathLocation() {
 	return false;
 }
 
-/*	Pareil que au dessus mais si un aucun bloc de Location est selectionne */
 bool	Response::rightPathServer() {
 	struct stat					fileOrDir;
 	std::string					root = this->_serv.getRoot();
@@ -175,8 +166,6 @@ bool	Response::rightPath() {
 	return err;
 }
 
-/*	On va regarder parmis tous les paths selectionnes si au moins un existe, si c'est le cas,
-	on renvoie le bon path sinon, on met notre bool err a true. */
 std::string	Response::testAllPaths(bool *err) {
 	size_t		i = 0;
 	std::string	rightPath;
@@ -328,7 +317,6 @@ void	Response::sendData() {
 	if ((err or this->methodNotAllowed()) && this->_req.getMethod() != "DELETE")
 		path = findRightError();
 
-
 	if (((this->_locBlocSelect and this->_locBloc.getHttpRedirSet()) or
 		this->_serv.getHttpRedirSet()) and this->_statusCode != 405)
 		return this->httpRedir();
@@ -348,7 +336,6 @@ std::string	Response::sendContentTypeError() {
 	Header	header(path, &this->_statusCode);
 
 	res = header.getHeaderRequestError();
-
 	if (send(this->_req.getFd(), res.c_str(), res.length(), MSG_NOSIGNAL) <= 0)
 	{
 		this->_closeConnection = true;
@@ -388,7 +375,6 @@ void	Response::sendHeader(std::string path)
 		}
 
 		res = header.getHeader();
-
 		if (send(this->_req.getFd(), res.c_str(), res.size(), MSG_NOSIGNAL) <= 0)
 		{
 			this->_closeConnection = true;
@@ -453,10 +439,3 @@ void			Response::errorMessage(const std::string &msg)
 	std::cerr << msg << std::endl;
 }
 
-std::ostream	&operator<<(std::ostream &out, const Response &res)
-{
-	(void)res;
-	out << "///////////////		REPONSE		////////////////\n";
-	
-	return (out);
-}

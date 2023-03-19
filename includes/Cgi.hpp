@@ -33,6 +33,7 @@ class Cgi
 {
     public:
 
+        Cgi();
         Cgi(const Cgi &);
         Cgi(const Server &serv, const Request &req, char **env);
         ~Cgi();

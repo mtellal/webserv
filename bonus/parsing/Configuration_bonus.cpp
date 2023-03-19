@@ -47,7 +47,8 @@ void	Configuration::open_and_check_file(std::string path_file) {
 	std::vector<std::string>	lineSplit;
 	int							n_line = 1;
 	bool						server_line = false;
-	struct stat check_file;
+	bool						block_server = false;
+	struct stat					check_file;
 
 	memset(&check_file, 0, sizeof(check_file));
 	stat(path_file.c_str(), &check_file);
@@ -61,21 +62,28 @@ void	Configuration::open_and_check_file(std::string path_file) {
 	{
 		lineSplit = ft_split(line.c_str(), " \t");
 
-		if ((lineSplit.size() == 2 and lineSplit[0] == "server" and lineSplit[1] == "{") ||
-			(lineSplit.size() == 1 && (lineSplit[0] == "server" || lineSplit[0] == "{")))
+		if (lineSplit.size() == 1 && (lineSplit[0] == "server" || lineSplit[0] == "{"))
 		{
-			if (server_line && lineSplit[0] != "{")
+			if (lineSplit[0] == "server" && !server_line)
+			{
+				server_line = true;
+				continue ;
+			}
+			else if (lineSplit[0] == "{" && server_line)
+				block_server = true;
+			else
 			{
 				error_msg("Error: Incorrect information at line ", n_line);
 				file.close();
 				return ;
 			}
-			else if (!server_line && lineSplit.size() == 1 && lineSplit[0] == "server")
-				server_line = true;
-			else
-			{
+		}
+		if ((lineSplit.size() == 2 and lineSplit[0] == "server" and lineSplit[1] == "{") ||
+				block_server)
+		{
 				Server servPars;
 				server_line = false;
+				block_server = false;
 
 				servPars.readServBlock(file, n_line);
 
@@ -98,9 +106,8 @@ void	Configuration::open_and_check_file(std::string path_file) {
 					return;
 				}
 				_servers.push_back(servPars);
-			}
 		}
-		else if (!only_space_or_empty(line))
+		else if (!only_space_or_empty(line) || server_line)
 		{
 			error_msg("Error: Incorrect information at line ", n_line);
 			file.close();

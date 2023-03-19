@@ -98,7 +98,6 @@ void	SocketServer::initSocket()
 		if ((ret = getaddrinfo(_servers[i].getHost().c_str(), _servers[i].getPort().c_str(), &hints, &res)) != 0)
 			return (this->closeFdSocket(i, ret));
 		
-
 		if ((serv_socket = socket((int)res->ai_family, (int)res->ai_socktype, (int)res->ai_protocol)) == -1)
 			return (errorSocket("socket call failed", res));
 
@@ -170,7 +169,6 @@ void	SocketServer::closeSockets() {
 	close(this->_epollFd);
 }
 
-// fcntl seulement pour macos ou ok pour linux ?
 int		SocketServer::nonBlockFd(int socketFd) {
 	int arg = fcntl(socketFd, F_GETFL);
 
@@ -306,17 +304,12 @@ void	SocketServer::createConnection(int index_serv_fd)
 		return ;
 	}
 
-	// std::cout << "ACCEPT Server: " << index_serv_fd << std::endl;
-
 	if (this->nonBlockFd(client_fd) == 1)
 		return ;
 
 	client.set(getAddressInfo(tmp), client_fd, tmp);
-
 	this->_servers[index_serv_fd].addClient(client);
-
 	displayNewConnection(this->_servers[index_serv_fd], client.getIpAddress());
-
 	this->_clientServerFds.insert(std::make_pair(client_fd, index_serv_fd));
 
 	memset(&event, 0, sizeof(event));
