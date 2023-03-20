@@ -1,1 +1,1 @@
-Error: at line 3 directive listen wrong host or port
+./tester.sh: line 22: ../webserv: No such file or directory

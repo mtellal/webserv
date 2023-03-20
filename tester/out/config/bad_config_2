@@ -1,1 +1,1 @@
-Error: Incorrect information at line 1
+./tester.sh: line 22: ../webserv: No such file or directory

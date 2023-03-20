@@ -237,7 +237,9 @@ int		SocketServer::epollWait() {
 	for (int j = 0; j < nbrFd; j++)
 	{
 		if (event[j].data.fd == 0)
+		{
 			return 1;
+		}
 		else if ((index_serv = isServerFd(event[j].data.fd)) >= 0)
 			createConnection(index_serv);
 		else
@@ -271,7 +273,6 @@ int		SocketServer::epollWait() {
 			}
 		}
 	}
-
 	return 0;
 }
 
@@ -305,8 +306,9 @@ void	SocketServer::createConnection(int index_serv_fd)
 	}
 
 	if (this->nonBlockFd(client_fd) == 1)
+	{
 		return ;
-
+	}
 	client.set(getAddressInfo(tmp), client_fd, tmp);
 	this->_servers[index_serv_fd].addClient(client);
 	displayNewConnection(this->_servers[index_serv_fd], client.getIpAddress());

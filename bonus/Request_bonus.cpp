@@ -13,7 +13,7 @@ _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false),
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
 _bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), _locBlocSelect(false),
-_fd(fd), _epollFd(epollFd), _serverName("Webserv/1.0"), _bodyFilePath(".bodyfile"), _servers(servers),
+_fd(fd), _epollFd(epollFd), _firstReqBytesRecieved(0), _serverName("Webserv/1.0"), _bodyFilePath(".bodyfile"), _servers(servers),
 _clientServerFds(clientServerFds)
 {
 	this->functPtr[0] = &Request::setHostPort;
@@ -57,6 +57,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_fd = rhs._fd;
 		this->_epollFd = rhs._epollFd;
 		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
+		this->_firstReqBytesRecieved = rhs._firstReqBytesRecieved;
 
 		this->_host = rhs._host;
 		this->_path = rhs._path;
@@ -520,19 +521,8 @@ void							Request::extractFile(const std::string &bound_data)
 		if (!uploadPath.length())
 			return (this->getErrorPage("Upload path not defined"));
 		
-		if (uploadPath[0] != '/')
-			uploadPath = "/" + uploadPath;
-		if (uploadPath[0] != '.')
-			uploadPath = "." + uploadPath;
-		if (uploadPath[uploadPath.length() - 1] != '/')
-			uploadPath += "/";
-		
-		if (rootPath[0] != '/')
-			rootPath = "/" + rootPath;
-		if (rootPath[0] != '.')
-			rootPath = "." + rootPath;
-		if (rootPath[rootPath.length() - 1] != '/')
-			rootPath += "/";
+		formatPath(uploadPath);
+		formatPath(rootPath);
 
 		if (memcmp(uploadPath.c_str(), rootPath.c_str(), rootPath.length()))
 			return (this->getErrorPage("Upload path not in " + this->_servBlock.getRoot() + " folder", 403));
@@ -574,6 +564,20 @@ void							Request::verifyFiles()
 	}
 }
 
+bool							validUploadPath(const std::string &path)
+{
+	struct stat f;
+	std::string	p(path);
+
+	formatPath(p);
+	memset(&f, 0, sizeof(f));
+	if (stat(p.c_str(), &f) == -1)
+		return (false);
+	if (S_ISDIR(f.st_mode))
+		return (true);
+	return (false);
+}
+
 void							Request::checkBodyBytesRecieved()
 {
 	if (ft_stoi(this->_contentLength, NULL) != (int)this->_bodyBytesRecieved)
@@ -582,8 +586,13 @@ void							Request::checkBodyBytesRecieved()
 	{
 		if (!this->_cgiExtension.length())
 		{
-			this->verifyFiles();
-			remove(this->_bodyFilePath.c_str());
+			if (validUploadPath(this->_servBlock.getUpload()))
+			{
+				this->verifyFiles();
+				remove(this->_bodyFilePath.c_str());
+			}
+			else
+				this->errInfoMessage("invalid path upload");
 		}
 		this->_awaitingBody = false;
 	}
@@ -718,7 +727,7 @@ void						Request::setHTTPFields(const std::string &header)
 			lowerCaseStr(field);
 			for (size_t j = 0; j < 8; j++)
 			{
-				if (!memcmp(field.c_str(), key[j].c_str(), key[j].length()))
+				if (field.length() && !memcmp(field.c_str(), key[j].c_str(), key[j].length()))
 				{
 					strSplit = ft_split(vct[i], ":");
 					if (strSplit.size() < 2)
@@ -761,6 +770,7 @@ int						Request::awaitingHeader(int fd)
 		this->_awaitingHeader = true;
 		return (-1);
 	}
+
 	if (!this->_methodSet && !setMethodVersionPath(buff))
 	{
 		this->getErrorPage("Invalid HTTP request", 400);
@@ -768,12 +778,13 @@ int						Request::awaitingHeader(int fd)
 		return (-1);
 	}
 
+	this->_firstReqBytesRecieved += bytes;
 	this->_request.append(buff, bytes);
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
 		this->_awaitingHeader = false;
-		return (bytes);
+		return (this->_firstReqBytesRecieved);
 	}
 
 	this->_awaitingHeader = true;
@@ -797,6 +808,8 @@ void						Request::request(int fd)
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
+		std::cout << "/////	H E A D E R 	/////\n" << header << std::endl;
+
 		this->setHTTPFields(header);
 
 		printRequest();
@@ -808,10 +821,16 @@ void						Request::request(int fd)
 
 		if (this->_methodSet && this->_method == "POST")
 		{
+			if (!this->_contentLength.length())
+				return (this->getErrorPage("Bad Request", 411));
 			if (bytesRecievd > (int)index + 4)
 				body = this->_request.substr(index + 4, bytesRecievd);
 			
 			this->_bodyBytesRecieved = bytesRecievd - (index + 4);
+
+			std::cout << this->_bodyBytesRecieved << std::endl;
+			std::cout << bytesRecievd << std::endl;
+			std::cout << index + 4 << std::endl;
 
 			if (body.length())
 				this->bodyRequest(index);
@@ -845,6 +864,11 @@ void	Request::printRequest() const
 	std::cout << "\033[1;90m - " << this->_agent << "\033[0m" << std::endl;
 }
 
+void	Request::errInfoMessage(const std::string &errMsg)
+{
+	std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
+}
+
 void	Request::errMessage(int statusCode, const std::string &errMsg)
 {
 	time_t 		t;
@@ -852,7 +876,7 @@ void	Request::errMessage(int statusCode, const std::string &errMsg)
 
 	std::time(&t);
 	_time = std::ctime(&t);
-	std::cerr << "\033[1;97m[REQUEST]\033[0m \033[1;31merror:\033[0m \033[1;97m" << errMsg << "\033[0m" << std::endl;
+	errInfoMessage(errMsg);
 	std::cerr << "\033[1;34m[" << _time.substr(0, _time.length() - 1) << "]\033[0m";
 	std::cerr << "\033[1;36m [RESPONSE] \033[0m";
 

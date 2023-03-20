@@ -121,9 +121,9 @@ std::string	ft_itos(int nbr)
 }
 
 std::string	getHttpStatusCodeMessage(int statusCode) {
-	int			httpCode[11] = {200, 204, 400, 403, 404, 405, 406, 413, 500, 502, 504};
-	std::string	message[11] = {"OK", "No Content", "Bad Request", "Forbidden", "Not Found",
-							"Method Not Allowed", "Not Acceptable","Request Entity Too Large" ,
+	int			httpCode[12] = {200, 204, 400, 403, 404, 405, 406, 411, 413, 500, 502, 504};
+	std::string	message[12] = {"OK", "No Content", "Bad Request", "Forbidden", "Not Found",
+							"Method Not Allowed", "Not Acceptable", "Length Required", "Request Entity Too Large" ,
 							"Internal Server Error", "Bad Gateway", "Gateway Timeout"};
 
 	for (size_t i = 0; i < 11; i++)
@@ -170,6 +170,16 @@ size_t    tab_len(char **env)
     while (env && env[i])
         i++;
     return (i);
+}
+
+void							formatPath(std::string &path)
+{
+	if (path[0] != '/')
+		path = "/" + path;
+	if (path[0] != '.')
+		path = "." + path;
+	if (path[path.length() - 1] != '/')
+		path += "/";
 }
 
 bool	infileExists(const std::string &file)

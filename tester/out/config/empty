@@ -1,1 +1,1 @@
-Error: File is empty
+./tester.sh: line 22: ../webserv: No such file or directory

@@ -1,1 +1,1 @@
-Error: at line 3 incorrect directive
+./tester.sh: line 22: ../webserv: No such file or directory

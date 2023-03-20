@@ -13,7 +13,7 @@ _hostSet(false), _tooLarge(false), _agentSet(false), _acceptSet(false),
 _methodSet(false), _errRequest(false), _refererSet(false), _badRequest(false),
 _boundarySet(false), _awaitingBody(false), _connectionSet(false), _queryStringSet(false), 
 _bodyFileExists(false), _awaitingHeader(false), _closeConnection(false), _locBlocSelect(false),
-_fd(fd), _epollFd(epollFd), _serverName("Webserv/1.0"), _bodyFilePath(".bodyfile"), _servers(servers),
+_fd(fd), _epollFd(epollFd), _firstReqBytesRecieved(0), _serverName("Webserv/1.0"), _bodyFilePath(".bodyfile"), _servers(servers),
 _clientServerFds(clientServerFds)
 {
 	this->functPtr[0] = &Request::setHostPort;
@@ -57,6 +57,7 @@ Request	&Request::operator=(Request const &rhs) {
 		this->_fd = rhs._fd;
 		this->_epollFd = rhs._epollFd;
 		this->_bodyBytesRecieved = rhs._bodyBytesRecieved;
+		this->_firstReqBytesRecieved = rhs._firstReqBytesRecieved;
 
 		this->_host = rhs._host;
 		this->_path = rhs._path;
@@ -769,6 +770,7 @@ int						Request::awaitingHeader(int fd)
 		this->_awaitingHeader = true;
 		return (-1);
 	}
+
 	if (!this->_methodSet && !setMethodVersionPath(buff))
 	{
 		this->getErrorPage("Invalid HTTP request", 400);
@@ -776,12 +778,13 @@ int						Request::awaitingHeader(int fd)
 		return (-1);
 	}
 
+	this->_firstReqBytesRecieved += bytes;
 	this->_request.append(buff, bytes);
 
 	if (this->_methodSet && (index = this->_request.find("\r\n\r\n")) != (size_t)-1)
 	{
 		this->_awaitingHeader = false;
-		return (bytes);
+		return (this->_firstReqBytesRecieved);
 	}
 
 	this->_awaitingHeader = true;
@@ -805,6 +808,8 @@ void						Request::request(int fd)
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
+		std::cout << "/////	H E A D E R 	/////\n" << header << std::endl;
+
 		this->setHTTPFields(header);
 
 		printRequest();
@@ -816,10 +821,16 @@ void						Request::request(int fd)
 
 		if (this->_methodSet && this->_method == "POST")
 		{
+			if (!this->_contentLength.length())
+				return (this->getErrorPage("Bad Request", 411));
 			if (bytesRecievd > (int)index + 4)
 				body = this->_request.substr(index + 4, bytesRecievd);
 			
 			this->_bodyBytesRecieved = bytesRecievd - (index + 4);
+
+			std::cout << this->_bodyBytesRecieved << std::endl;
+			std::cout << bytesRecievd << std::endl;
+			std::cout << index + 4 << std::endl;
 
 			if (body.length())
 				this->bodyRequest(index);

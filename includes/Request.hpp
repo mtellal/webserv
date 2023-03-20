@@ -87,6 +87,7 @@ class Request {
 		int									_fd;
 		int									_epollFd;
 		size_t								_bodyBytesRecieved;
+		size_t								_firstReqBytesRecieved;
 		
 		std::string							_host;
 		std::string							_path;
