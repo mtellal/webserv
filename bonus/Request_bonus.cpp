@@ -808,8 +808,6 @@ void						Request::request(int fd)
 		index = this->_request.find("\r\n\r\n");
 		header = this->_request.substr(0, index);
 
-		std::cout << "/////	H E A D E R 	/////\n" << header << std::endl;
-
 		this->setHTTPFields(header);
 
 		printRequest();
@@ -827,10 +825,6 @@ void						Request::request(int fd)
 				body = this->_request.substr(index + 4, bytesRecievd);
 			
 			this->_bodyBytesRecieved = bytesRecievd - (index + 4);
-
-			std::cout << this->_bodyBytesRecieved << std::endl;
-			std::cout << bytesRecievd << std::endl;
-			std::cout << index + 4 << std::endl;
 
 			if (body.length())
 				this->bodyRequest(index);
